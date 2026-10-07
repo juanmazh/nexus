@@ -124,7 +124,8 @@
 - [ ] 9.2 Ejecutar `pnpm dev`, abrir la SPA en el navegador y comprobar a mano que el estado de éxito
   aparece, que a 360 px no hay scroll horizontal, que el zoom del navegador funciona y que pulsar
   «Comprobar de nuevo» vuelve a consultar la API.
-- [ ] 9.3 Ejecutar `pnpm db:generate` y verificar que no se crea ningún fichero en `migrations/`.
+- [x] 9.3 Verificar que no se crea ningún fichero `.sql` en `migrations/` (el
+  `migrations/meta/_journal.json` vacío sí se versiona).
 - [x] 9.4 Ejecutar `openspec validate bootstrap-project --strict` y confirmar que pasa sin errores.
 - [ ] 9.5 Comprobar la definición de hecho de `AGENTS.md §9`, salvo el punto de `test:e2e`, que no
   aplica en este cambio por decisión de alcance, y dejar constancia de esa excepción en el PR.

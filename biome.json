@@ -6,6 +6,7 @@
 			"!**/dist",
 			"!**/node_modules",
 			"!**/.wrangler",
+			"!**/migrations/meta",
 			"!**/pnpm-lock.yaml",
 			"!**/worker-configuration.d.ts",
 			"!opencode.json"
