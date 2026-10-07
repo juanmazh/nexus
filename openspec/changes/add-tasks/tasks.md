@@ -55,11 +55,11 @@
 
 ## 9. Documentación y definición de hecho
 
-- [ ] 9.1 Actualizar `docs/ARCHITECTURE.md` §2.1, §2.2 y §4 con lo realmente implementado (la tabla `tasks`, el segundo índice, `routes/tasks.ts`, `services/tasks.ts`, `shared/tasks.ts` y `shared/dates.ts`). Verificar que las tablas del documento coinciden con `worker/db/schema.ts`.
-- [ ] 9.2 Revisar `AGENTS.md §2` para confirmar que las cuatro dependencias ya instaladas figuran como en el stack, y `docs/ROADMAP.md` para marcar `add-tasks` como entregado.
-- [ ] 9.3 Definición de hecho de `AGENTS.md §9`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` y `pnpm test:e2e` en verde, `pnpm db:migrate:local` aplicada, y `openspec validate add-tasks --strict` sin errores.
-- [ ] 9.4 Auditoría de secretos y datos personales (`AGENTS.md §6.5`): `git grep` de `token`, `secret` y `password` sin resultados, ningún email real ni `chat.id` versionado, y los datos de ejemplo de `e2e/fixtures.ts` ficticios.
-- [ ] 9.5 Commit por grupo de tareas, en inglés y con Conventional Commits (`feat(tasks): ...`, `test(tasks): ...`, `docs(tasks): ...`).
+- [x] 9.1 Actualizar `docs/ARCHITECTURE.md` §2.1, §2.2 y §4 con lo realmente implementado (la tabla `tasks`, el segundo índice, `routes/tasks.ts`, `services/tasks.ts`, `shared/tasks.ts` y `shared/dates.ts`). Verificar que las tablas del documento coinciden con `worker/db/schema.ts`.
+- [x] 9.2 Revisar `AGENTS.md §2` para confirmar que las cuatro dependencias ya instaladas figuran como en el stack, y `docs/ROADMAP.md` para marcar `add-tasks` como entregado. Resultado: `AGENTS.md §2` ya las recoge (Zod + `@hono/zod-validator`, date-fns + `@date-fns/tz`) y `docs/ROADMAP.md` no lleva estado por diseño ("el estado real de cada cambio se lleva en `docs/PROGRESS.md`"), así que el cambio se marca allí.
+- [x] 9.3 Definición de hecho de `AGENTS.md §9`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` y `pnpm test:e2e` en verde, `pnpm db:migrate:local` aplicada, y `openspec validate add-tasks --strict` sin errores.
+- [x] 9.4 Auditoría de secretos y datos personales (`AGENTS.md §6.5`): `git grep` de `token`, `secret` y `password` sin resultados, ningún email real ni `chat.id` versionado, y los datos de ejemplo de `e2e/fixtures.ts` ficticios.
+- [x] 9.5 Commit por grupo de tareas, en inglés y con Conventional Commits (`feat(tasks): ...`, `test(tasks): ...`, `docs(tasks): ...`).
 
 ## Workflow follow-up
 
