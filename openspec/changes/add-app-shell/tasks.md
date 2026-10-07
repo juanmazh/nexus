@@ -135,24 +135,24 @@
 
 ## 6. Verificación responsive con Playwright
 
-- [ ] 6.1 Crear `e2e/fixtures.ts` con el stub de `**/api/**` (que devuelve `{ user: { email:
+- [x] 6.1 Crear `e2e/fixtures.ts` con el stub de `**/api/**` (que devuelve `{ user: { email:
   "owner@nexus.test" } }` y `{ status: "ok" }`) y los ayudantes de aserción de `docs/DESIGN.md §6`
   (sin scroll horizontal, acción principal visible, altura de los interactivos con 0,5 px de
   tolerancia); verificar con `git grep -in "@nexus.test" -- ':!e2e'` que el email ficticio solo aparece
   dentro de `e2e/`.
-- [ ] 6.2 Crear `e2e/shell.spec.ts` con las tres comprobaciones de `docs/DESIGN.md §6` aplicadas a
+- [x] 6.2 Crear `e2e/shell.spec.ts` con las tres comprobaciones de `docs/DESIGN.md §6` aplicadas a
   cada ruta (`/`, `/tasks`, `/notes`, `/more` y una ruta inexistente) en los dos proyectos; ejecutar
   `pnpm exec playwright install chromium` si hace falta y `pnpm test:e2e`; verificar que está en verde
   y que un test que rompe a propósito el ancho falla, quitando después el cambio.
-- [ ] 6.3 Ampliar `e2e/shell.spec.ts` con la navegación a las cuatro secciones, con la comprobación de
+- [x] 6.3 Ampliar `e2e/shell.spec.ts` con la navegación a las cuatro secciones, con la comprobación de
   que la tecla `N` enfoca la barra de captura en escritorio y de que en 360 px la barra de captura es
   visible sin desplazamiento; verificar con `pnpm test:e2e` en verde en los dos proyectos.
-- [ ] 6.4 Añadir a `.github/workflows/ci.yml` el job `e2e` (checkout, `pnpm/action-setup`,
+- [x] 6.4 Añadir a `.github/workflows/ci.yml` el job `e2e` (checkout, `pnpm/action-setup`,
   `setup-node` con caché, `pnpm install --frozen-lockfile`, `pnpm build`,
   `pnpm exec playwright install --with-deps chromium` y `pnpm test:e2e`) con `needs` ninguno para que
   corra en paralelo a `verify`; verificar que el fichero sigue siendo YAML válido y que el job no
   despliega ni usa secretos.
-- [ ] 6.5 Añadir `"test:e2e": "playwright test"` al `scripts` de `package.json` y quitar de
+- [x] 6.5 Añadir `"test:e2e": "playwright test"` al `scripts` de `package.json` y quitar de
   `AGENTS.md §4` la nota de que `pnpm test:e2e` todavía no existe; verificar que `pnpm test:e2e`
   funciona tal cual desde la raíz.
 

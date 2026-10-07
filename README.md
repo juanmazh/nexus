@@ -86,14 +86,16 @@ verdad, deja el atajo desactivado y pega en `.dev.vars` el **AUD tag** de la apl
 | `pnpm typecheck` | `tsc` en modo estricto, sin emitir |
 | `pnpm lint` / `pnpm format` | Biome (check / write) |
 | `pnpm test` | Vitest (proyectos `worker` y `web`) |
+| `pnpm test:e2e` | Playwright (proyectos móvil 360 px y escritorio 1280 px) |
 | `pnpm db:generate` | Genera la migración SQL desde `worker/db/schema.ts` |
 | `pnpm db:migrate:local` | Aplica migraciones en la D1 local |
 | `pnpm db:migrate:remote` | Aplica migraciones en producción (**solo la persona propietaria**) |
 | `pnpm cf-typegen` | `wrangler types`: regenera los tipos de `Env` |
 | `pnpm deploy` | Despliegue (**solo la persona propietaria o la CI**) |
 
-`pnpm test:e2e` (Playwright, móvil 360 px y escritorio 1280 px) **todavía no existe**: llega con
-`add-app-shell`.
+`pnpm test:e2e` levanta por su cuenta el build con `vite preview` e intercepta las peticiones a
+`/api/*`, así que no necesita `ACCESS_AUD` ni nada escrito en `.dev.vars`. La primera vez en cada
+equipo hay que instalar el navegador: `pnpm exec playwright install chromium`.
 
 ### Despliegue
 

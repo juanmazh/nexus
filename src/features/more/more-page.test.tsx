@@ -21,7 +21,7 @@ vi.mock("@/lib/api", () => ({
 }));
 
 function meResponse() {
-	return { json: async () => ({ user: { email: "owner@nexus.test" } }) };
+	return { json: async () => ({ user: { email: "owner@example.test" } }) };
 }
 
 function okResponse() {
@@ -71,7 +71,7 @@ describe("MorePage", () => {
 
 		renderPage();
 
-		expect(await screen.findByText("owner@nexus.test")).toBeInTheDocument();
+		expect(await screen.findByText("owner@example.test")).toBeInTheDocument();
 	});
 
 	it("shows an error with a way to retry when the session cannot be checked", async () => {
@@ -85,7 +85,7 @@ describe("MorePage", () => {
 
 		await user.click(screen.getByRole("button", { name: "Reintentar" }));
 
-		expect(await screen.findByText("owner@nexus.test")).toBeInTheDocument();
+		expect(await screen.findByText("owner@example.test")).toBeInTheDocument();
 		expect(meGet).toHaveBeenCalledTimes(2);
 	});
 

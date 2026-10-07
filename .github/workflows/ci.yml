@@ -37,3 +37,36 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  # A separate job, not another step: a responsive failure is then read in a job
+  # called "responsive" instead of inside "lint, typecheck, test and build", and
+  # the two run in parallel so the CI does not grow linearly (design.md D10).
+  # No secrets and no deployment: the suite intercepts every /api request itself,
+  # so it needs neither ACCESS_AUD nor the local bypass (design.md D8).
+  e2e:
+    name: Responsive (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # Only Chromium: on ubuntu-latest some of its system libraries are missing,
+      # and Firefox or WebKit would multiply the time without finding a bug that
+      # the mobile-first rules describe today.
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Responsive tests
+        run: pnpm test:e2e

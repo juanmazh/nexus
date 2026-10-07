@@ -25,7 +25,10 @@ export default defineConfig({
 	projects: [
 		{
 			name: "mobile",
-			use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 780 } },
+			// A real device descriptor with the reference viewport of
+			// docs/DESIGN.md §2 forced on top, so the project reports `isMobile`
+			// and emulates touch instead of pretending to be a narrow desktop.
+			use: { ...devices["Pixel 5"], viewport: { width: 360, height: 780 } },
 		},
 		{
 			name: "desktop",

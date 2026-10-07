@@ -115,7 +115,7 @@ Estos scripts se crean en la fase 0. Si un script no existe, **no inventes un su
 | `pnpm typecheck` | `tsc` en modo estricto, sin emitir |
 | `pnpm lint` / `pnpm format` | Biome (check / write) |
 | `pnpm test` | Vitest |
-| `pnpm test:e2e` | Playwright (proyectos móvil 360 px y escritorio 1280 px). **No existe todavía**: llega con `add-app-shell` |
+| `pnpm test:e2e` | Playwright (proyectos móvil 360 px y escritorio 1280 px). Requiere `pnpm exec playwright install chromium` una vez por equipo |
 | `pnpm db:generate` | drizzle-kit genera la migración SQL desde `worker/db/schema.ts` |
 | `pnpm db:migrate:local` | Aplica migraciones en la D1 local |
 | `pnpm db:migrate:remote` | Aplica migraciones en producción (**solo lo ejecuta el humano**) |
