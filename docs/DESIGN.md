@@ -121,10 +121,13 @@
 
 ---
 
-## 5. Dirección visual — propuesta v1
+## 5. Dirección visual — v1
 
-> **Pendiente de validar** en el cambio `add-app-shell`, viéndola en pantalla. Todo vive en *tokens*
-> (variables CSS del tema de shadcn), así que cambiarla luego cuesta muy poco.
+> **Adoptada** en el cambio `add-app-shell` (0.3), donde se ve por primera vez en pantalla. Todo
+> vive en *tokens* (variables CSS del tema de shadcn), así que cambiarla después cuesta muy poco.
+> Los tokens que este documento no fija (`muted-foreground`, `border`, `input`, `ring`,
+> `chart-*`, `sidebar-*`) se derivan y se explican comentados en `src/index.css`, y
+> `src/lib/contrast.test.ts` lee ese fichero y falla `pnpm test` si un par baja de AA.
 
 **Concepto: "olivar".** Nexus nace en Jaén. La paleta sale del olivar (verde oliva, el dorado del
 aceite, la piedra caliza) en lugar del azul SaaS de siempre. Sobria para el día a día, con un único

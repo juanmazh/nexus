@@ -158,16 +158,16 @@
 
 ## 7. Documentación
 
-- [ ] 7.1 Actualizar `docs/ARCHITECTURE.md`: `§2.2` con las piezas nuevas del front y la regla de un
+- [x] 7.1 Actualizar `docs/ARCHITECTURE.md`: `§2.2` con las piezas nuevas del front y la regla de un
   único overlay, y añadir **ADR-010 · El tema se resuelve en JavaScript y sin script en línea, por la
   CSP**; enmendar **ADR-008** para dejar constancia de que la verificación responsive se ejecuta sin
   credenciales, interceptando `**/api/*`; verificar con `git diff` que ambas entradas explican el
   porqué y no solo el qué.
-- [ ] 7.2 Actualizar `docs/DESIGN.md §5` para quitar "pendiente de validar" y dejar la decisión
+- [x] 7.2 Actualizar `docs/DESIGN.md §5` para quitar "pendiente de validar" y dejar la decisión
   adoptada, y `docs/PROGRESS.md` con el estado del cambio 0.3, el siguiente paso exacto y
   `pnpm exec playwright install chromium` en la sección "Preparar un equipo nuevo"; verificar que la
   tabla de cambios de OpenSpec refleja el estado real.
-- [ ] 7.3 Revisar `README.md` y `AGENTS.md` por si describen la pantalla inicial o la ausencia de
+- [x] 7.3 Revisar `README.md` y `AGENTS.md` por si describen la pantalla inicial o la ausencia de
   `test:e2e`; verificar con `git diff` que ninguna afirmación queda desactualizada.
 
 ## 8. Verificación manual y cierre
