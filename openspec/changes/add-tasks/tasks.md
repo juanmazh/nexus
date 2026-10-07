@@ -49,8 +49,8 @@
 
 ## 8. End-to-end y verificación manual
 
-- [ ] 8.1 `e2e/fixtures.ts`: ramas por método y ruta para `/api/tasks`, con el array en memoria de `design.md D15`. Verificar que `pnpm test:e2e` deja `shell.spec.ts` en verde sin tocarlo.
-- [ ] 8.2 `e2e/tasks.spec.ts`: crear desde la barra de captura, completar con el check, abrir el detalle como hoja inferior en móvil y como diálogo en escritorio, y borrar con confirmación. Con `expectNoHorizontalScroll` y `expectTactileTargets` en cada vista nueva, en los dos viewports. Verificar con `pnpm test:e2e` en verde.
+- [x] 8.1 `e2e/fixtures.ts`: ramas por método y ruta para `/api/tasks`, con el array en memoria de `design.md D15`. Verificar que `pnpm test:e2e` deja `shell.spec.ts` en verde sin tocarlo.
+- [x] 8.2 `e2e/tasks.spec.ts`: crear desde la barra de captura, completar con el check, abrir el detalle como hoja inferior en móvil y como diálogo en escritorio, y borrar con confirmación. Con `expectNoHorizontalScroll` y `expectTactileTargets` en cada vista nueva, en los dos viewports. Verificar con `pnpm test:e2e` en verde.
 - [ ] 8.3 Verificación manual de `docs/DESIGN.md §6`: 360, 390, 768 y 1280 px en DevTools, 320 px sin romperse, teclado virtual abierto en el detalle sin tapar el botón de guardar, modo claro y oscuro, y **un móvil real** sobre el despliegue (con `pnpm dev --host` la API responde `401`, porque el atajo local solo vale para `localhost`). Anotar el resultado en `docs/PROGRESS.md`.
 
 ## 9. Documentación y definición de hecho

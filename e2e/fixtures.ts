@@ -19,19 +19,113 @@ const TACTILE_MIN_PX = 44;
 /** Browsers report fractional boxes, so a strict `>= 44` fails intermittently. */
 const TACTILE_TOLERANCE_PX = 0.5;
 
-export async function stubApi(page: Page): Promise<void> {
-	await page.route("**/api/**", async (route) => {
-		const { pathname } = new URL(route.request().url());
-		const body = pathname.endsWith("/api/me")
-			? { user: { email: SESSION_EMAIL } }
-			: { status: "ok" };
+/** The row the API returns. Kept loose on purpose: the stub is not the contract. */
+export type StubTask = {
+	id: string;
+	title: string;
+	notes: string | null;
+	status: "todo" | "done";
+	priority: "low" | "medium" | "high";
+	due_at: number | null;
+	completed_at: number | null;
+	created_at: number;
+	updated_at: number;
+};
 
-		await route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify(body),
-		});
+/** A fictional task, so the fixtures carry no real personal data (AGENTS.md §6.5). */
+export function stubTask(overrides: Partial<StubTask> = {}): StubTask {
+	const now = Date.now();
+	return {
+		id: crypto.randomUUID(),
+		title: "Tarea de ejemplo",
+		notes: null,
+		status: "todo",
+		priority: "medium",
+		due_at: null,
+		completed_at: null,
+		created_at: now,
+		updated_at: now,
+		...overrides,
+	};
+}
+
+/** `YYYY-MM-DD` → 00:00 of that day in Madrid, close enough for a stub. */
+function dueDateToMs(date: string | null | undefined): number | null {
+	return date ? new Date(`${date}T00:00:00+02:00`).getTime() : null;
+}
+
+/**
+ * Stubs every request under `/api`. `/api/tasks` is backed by an in-memory array
+ * per test (design.md D15): a task created by a step must still be there in the
+ * next one, or the suite would be testing the mock and not the app. The array is
+ * returned so a test can seed it or look at it.
+ */
+export async function stubApi(page: Page, tasks: StubTask[] = []): Promise<StubTask[]> {
+	await page.route("**/api/**", async (route) => {
+		const request = route.request();
+		const url = new URL(request.url());
+		const { pathname } = url;
+		const json = (status: number, body?: unknown) =>
+			route.fulfill({
+				status,
+				contentType: "application/json",
+				body: body === undefined ? "" : JSON.stringify(body),
+			});
+		const notFound = () =>
+			json(404, { error: { code: "not_found", message: "Esta tarea ya no existe." } });
+
+		if (pathname.endsWith("/api/me")) {
+			return json(200, { user: { email: SESSION_EMAIL } });
+		}
+
+		if (pathname.endsWith("/api/tasks")) {
+			if (request.method() === "POST") {
+				const body = request.postDataJSON() as { title: string };
+				const task = stubTask({ title: body.title.trim() });
+				tasks.push(task);
+				return json(201, task);
+			}
+			const status = url.searchParams.get("status") ?? "todo";
+			return json(
+				200,
+				tasks.filter((task) => task.status === status),
+			);
+		}
+
+		const id = pathname.match(/\/api\/tasks\/([^/]+)$/)?.[1];
+		if (id !== undefined) {
+			const index = tasks.findIndex((task) => task.id === id);
+			const task = tasks[index];
+			if (task === undefined) {
+				return notFound();
+			}
+			if (request.method() === "DELETE") {
+				tasks.splice(index, 1);
+				return route.fulfill({ status: 204 });
+			}
+			const patch = request.postDataJSON() as Partial<StubTask> & { due_date?: string | null };
+			const now = Date.now();
+			const { due_date, ...fields } = patch;
+			const updated: StubTask = {
+				...task,
+				...fields,
+				...(due_date === undefined ? {} : { due_at: dueDateToMs(due_date) }),
+				completed_at:
+					patch.status === "done"
+						? (task.completed_at ?? now)
+						: patch.status === "todo"
+							? null
+							: task.completed_at,
+				updated_at: now,
+			};
+			tasks[index] = updated;
+			return json(200, updated);
+		}
+
+		return json(200, { status: "ok" });
 	});
+
+	return tasks;
 }
 
 /**
@@ -62,6 +156,13 @@ export async function expectNoHorizontalScroll(page: Page): Promise<void> {
 		for (const element of document.querySelectorAll<HTMLElement>("body *")) {
 			const rect = element.getBoundingClientRect();
 			if (rect.width === 0 && rect.height === 0) {
+				continue;
+			}
+			// Visually hidden on purpose (`sr-only`, Base UI's focus guards): clipped
+			// to nothing, so it paints nothing that could be cut off. A real scroll
+			// would still be caught by the `scrollWidth` check below.
+			const style = getComputedStyle(element);
+			if (style.clip === "rect(0px, 0px, 0px, 0px)" || style.clipPath === "inset(50%)") {
 				continue;
 			}
 			if (rect.right > window.innerWidth + 0.5 || rect.left < -0.5) {
@@ -145,11 +246,15 @@ export async function expectTactileTargets(targets: Locator): Promise<void> {
 	}
 }
 
-export const test = base.extend({
-	page: async ({ page }, use) => {
-		await stubApi(page);
-		await use(page);
-	},
+export const test = base.extend<{ tasks: StubTask[] }>({
+	// Automatic, so every test runs against the stub whether it reads the array
+	// or not. One array per test: seed it before navigating, read it after acting.
+	tasks: [
+		async ({ page }, use) => {
+			await use(await stubApi(page));
+		},
+		{ auto: true },
+	],
 });
 
 export { expect };
