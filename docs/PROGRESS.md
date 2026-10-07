@@ -12,10 +12,10 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 0 — Cimientos |
-| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — propuesta generada y revisada |
-| **Rama** | `change/bootstrap-project` (propuesta sin commitear hasta que `main` tenga los PR #1 y #2) |
-| **Siguiente acción exacta** | Mergear PR #1 (`chore/openspec-init`) y PR #2 (`chore/docs-free-models`) → poner al día `change/bootstrap-project` → repetir la prueba de `.dev.vars` → commit de la propuesta → `/opsx-apply` en una sesión nueva de OpenCode |
-| **Bloqueos** | Ninguno |
+| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — **implementado a medias: 28/36 tareas** |
+| **Rama** | `change/bootstrap-project` (andamiaje commiteado, sin push) |
+| **Siguiente acción exacta** | `/opsx-apply bootstrap-project` en una sesión nueva → terminar las tareas 8.1–8.4 (documentación), 9.2 (comprobar `pnpm dev` a mano a 360 px) y 9.5 → commit → `git push -u origin change/bootstrap-project` → abrir el PR (la CI lo dispara y **verifica los cuatro pasos en verde**, tarea 7.2) |
+| **Bloqueos** | 9.3 no se puede marcar tal como está escrita: `pnpm db:generate` **sí** escribe `migrations/meta/_journal.json` (vacío, `entries: []`). Decidir: aceptar el fichero y corregir el texto de la tarea, o ignorarlo en git |
 | **Última actualización** | 2026-10-07 · oficina |
 
 ---
@@ -76,7 +76,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 | # | change-id | Estado | Rama / PR | Pasos manuales asociados |
 |---|---|---|---|---|
-| 0.1 | `bootstrap-project` | ⬜ | | Crear la D1: `pnpm wrangler d1 create nexus-db` y pegar el `database_id` en `wrangler.jsonc`. Primer `pnpm deploy`. **Justo después:** activar Cloudflare Access en el Worker `nexus` (producción y previews) permitiendo solo tu email |
+| 0.1 | `bootstrap-project` | 🟡 | `change/bootstrap-project` (sin PR) | Crear la D1: `pnpm wrangler d1 create nexus-db` y pegar el `database_id` en `wrangler.jsonc`. Primer `pnpm deploy`. **Justo después:** activar Cloudflare Access en el Worker `nexus` (producción y previews) permitiendo solo tu email |
 | 0.2 | `add-access-auth` | ⬜ | | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` |
 | 0.3 | `add-app-shell` | ⬜ | | Validar en un móvil real la dirección visual "olivar" (`docs/DESIGN.md §5`) |
 | 1.1 | `add-tasks` | ⬜ | | `pnpm db:migrate:remote` antes del deploy |
@@ -127,6 +127,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 
+- **2026-10-07 · oficina** — `/opsx-apply bootstrap-project`: 28/36 tareas hechas y commiteadas. Base del proyecto (package.json, pnpm, 4 tsconfig, Biome), Worker con `GET /api/health` (+ 405/404 con la forma de error), SPA mínima con los tres estados, Vitest con dos proyectos (**9 tests en verde**), CI sin despliegue. pnpm, Node y `@cloudflare/vitest-plugin` ya estaban disponibles: **no hizo falta `corepack enable`**. Dos desviaciones del `design.md`: el 405 va en un middleware en vez de un `.all()` (`.get()`+`.all()` en la misma ruta colapsa el tipo de `$get` a `never` en el cliente RPC) y los alias se declaran en forma de regex (la forma objeto no resolvía dentro de Vitest 4). Pendiente: documentación (8.1–8.4), comprobación manual de `pnpm dev` (9.2) y push/PR. → Siguiente: retomar con `/opsx-apply bootstrap-project`.
 - **2026-10-07 · oficina** — Parche de modelos gratuitos aplicado de verdad (`opencode.json` en la raíz, sin fijar modelo). Propuesta de `bootstrap-project` generada con `/opsx-propose` y revisada con Claude; correcciones aplicadas (404/405 con la forma de error, tsconfig, alias sin dependencias extra). → Siguiente: mergear PR #1 y #2 y `/opsx-apply`.
 - **2026-10-07 · oficina** — Configuración inicial S1–S5 completada: repo `juanmazh/nexus` (con la identidad de git personal separada de la del trabajo), Cloudflare (`nexus.juanmazh-dev.workers.dev`, Zero Trust `juanmazh`), bot de Telegram y OpenSpec inicializado por PR. Decidido usar modelos gratuitos de OpenCode en modo anónimo en lugar de OpenRouter de pago. Access en el Worker se activará tras el primer deploy. → Siguiente: S6 (`opencode.json`), PR de documentación y cambio 0.1.
 - **2026-10-07 · oficina** — Mobile-first como pilar: nuevo `docs/DESIGN.md`, cambio `add-app-shell` (0.3), PWA adelantada a la fase 1 (1.3) y Playwright con viewports móvil/escritorio en CI (ADR-008).
