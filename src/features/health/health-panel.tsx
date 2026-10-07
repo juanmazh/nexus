@@ -1,22 +1,26 @@
 import { useHealth } from "./use-health";
 
 /**
- * The bootstrap view: it asks the API whether it is alive and shows the result.
+ * A diagnostic panel, not a page: since the shell exists, the check of the API
+ * lives in "Más" instead of occupying the screen the person lands on
+ * (`api-health`, "Comprobación desde la SPA").
+ *
  * Mobile-first (docs/DESIGN.md §4): designed at 360 px and widened with `lg:`.
  * There is no "empty" state because there is no list to show, just a result.
  */
-export function HealthPage() {
+export function HealthPanel() {
 	const { data, error, isPending, isFetching, refetch } = useHealth();
 
 	return (
-		<main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-4 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:justify-center lg:gap-6 lg:p-8">
-			<h1 className="text-2xl font-semibold tracking-tight">Nexus</h1>
+		<section
+			aria-labelledby="salud-titulo"
+			className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 text-card-foreground"
+		>
+			<h2 id="salud-titulo" className="font-heading text-base font-medium">
+				Estado de la API
+			</h2>
 
-			<div
-				role="status"
-				aria-live="polite"
-				className="rounded-lg border border-border bg-card p-4 text-card-foreground"
-			>
+			<div role="status" aria-live="polite" className="flex flex-col gap-1">
 				{isPending ? <p className="text-muted-foreground">Comprobando la API…</p> : null}
 
 				{error ? (
@@ -28,7 +32,7 @@ export function HealthPage() {
 
 				{data ? (
 					<p className="flex flex-col gap-1">
-						<span className="text-muted-foreground">Estado de la API</span>
+						<span className="text-muted-foreground">Respuesta de GET /api/health</span>
 						<span className="font-mono text-lg font-medium tabular-nums">{data.status}</span>
 					</p>
 				) : null}
@@ -38,7 +42,7 @@ export function HealthPage() {
 				type="button"
 				// 44 px minimum touch area (docs/DESIGN.md §4). Feedback uses
 				// `active`, never `hover`: a hover style would stick on touch.
-				className="mt-auto min-h-11 w-full rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60 lg:mt-0"
+				className="min-h-11 w-full rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
 				onClick={() => {
 					void refetch();
 				}}
@@ -46,7 +50,7 @@ export function HealthPage() {
 			>
 				{isFetching ? "Comprobando…" : "Comprobar de nuevo"}
 			</button>
-		</main>
+		</section>
 	);
 }
 

@@ -46,7 +46,7 @@
   Atkinson Hyperlegible Next, quitando el alias `--font-heading: var(--font-sans)` y la importación de
   Geist; verificar con `pnpm build` que los `.woff2` salen en `dist/client/assets` y que la hoja de
   estilos los referencia desde el propio origen (sin peticiones a terceros).
-- [ ] 2.5 Añadir `--accent-strong` (`#A8841A` en claro, igual que `--accent` en oscuro) y usarlo en el
+- [x] 2.5 Añadir `--accent-strong` (`#A8841A` en claro, igual que `--accent` en oscuro) y usarlo en el
   marcador de "ahora"; fijar `--muted-foreground` en `#5F635A` (claro) y `#A8ABA1` (oscuro). Crear
   `src/lib/contrast.test.ts`, que importe `src/index.css?raw`, extraiga los tokens de `:root` y `.dark`
   y compruebe ≥ 4,5:1 en `foreground`/`background`, `muted-foreground` sobre `background` y sobre
@@ -82,54 +82,54 @@
 
 ## 4. Shell
 
-- [ ] 4.1 Crear `src/app/navigation.ts` con `NAV_ITEMS` (**Hoy**, **Tareas**, **Notas**, **Más**) y
+- [x] 4.1 Crear `src/app/navigation.ts` con `NAV_ITEMS` (**Hoy**, **Tareas**, **Notas**, **Más**) y
   sus iconos de `lucide-react`; escribir `src/app/navigation.test.ts` que compruebe que hay cuatro
   entradas, que las cuatro rutas son distintas, que cada etiqueta es no vacía y que cada entrada tiene
   icono; verificar con `pnpm test`.
-- [ ] 4.2 Crear `src/components/empty-state.tsx` (título, texto que invita a actuar y acción) y
+- [x] 4.2 Crear `src/components/empty-state.tsx` (título, texto que invita a actuar y acción) y
   `src/components/skeleton.tsx` (la forma del contenido, sin spinner); escribir
   `src/components/empty-state.test.tsx` que compruebe que el texto y la acción son alcanzables por rol;
   verificar con `pnpm test`.
-- [ ] 4.3 Crear `src/app/layout/view-header.tsx` (título de la vista y un hueco para una acción, con
+- [x] 4.3 Crear `src/app/layout/view-header.tsx` (título de la vista y un hueco para una acción, con
   `env(safe-area-inset-top)`) y `src/app/layout/capture-bar.tsx` (campo con `enterkeyhint="send"` y
   botón de enviar de al menos 44 × 44 px, atajo `N` para enfocar el campo, **sin** persistencia ni
   llamada a la API); escribir `src/app/layout/capture-bar.test.tsx` y `view-header.test.tsx` que
   comprueben los atributos del campo, que el botón mide 44 px o más, que enviar no llama a `client` y
   que `N` enfoca el campo y que **no** lo hace con el foco en otro campo, con un overlay abierto ni
   con Ctrl, Cmd o Alt pulsados; verificar con `pnpm test`.
-- [ ] 4.4 Crear `src/app/layout/tab-bar.tsx` (visible por debajo de 1024 px, altura mínima de 44 px,
+- [x] 4.4 Crear `src/app/layout/tab-bar.tsx` (visible por debajo de 1024 px, altura mínima de 44 px,
   `padding-bottom: env(safe-area-inset-bottom)`) y `src/app/layout/sidebar.tsx` (visible a partir de
   1024 px), ambos recorriendo `NAV_ITEMS` y marcando la activa con
   `aria-current="page"`; escribir `src/app/layout/tab-bar.test.tsx` y `sidebar.test.tsx` que
   comprueben que en 360 px existe la tab bar y **no** la barra lateral, y a 1280 px lo contrario;
   verificar con `pnpm test`.
-- [ ] 4.5 Crear `src/app/layout/app-shell.tsx` con `h-dvh`, cabecera `shrink-0`, `<Outlet/>` dentro de
+- [x] 4.5 Crear `src/app/layout/app-shell.tsx` con `h-dvh`, cabecera `shrink-0`, `<Outlet/>` dentro de
   `flex-1 min-h-0 overflow-y-auto` y barra inferior `shrink-0`, de modo que el documento nunca haga
   scroll y el contenido vuelva al principio al cambiar de ruta; escribir
   `src/app/layout/app-shell.test.tsx` que compruebe la estructura, que el `ToastHost` está montado una
   sola vez y que cambiar de sección devuelve el scroll al principio; verificar con `pnpm test`.
-- [ ] 4.6 Reescribir `src/app/router.tsx` con una ruta raíz de layout que anida `/`, `/tasks`,
+- [x] 4.6 Reescribir `src/app/router.tsx` con una ruta raíz de layout que anida `/`, `/tasks`,
   `/notes` y `/more`, las cuatro con `lazy()`, más `*` → `src/app/layout/not-found-view.tsx` con su
   enlace a **Hoy**; verificar con `pnpm typecheck` que `client.api` sigue exponiendo las mismas rutas
   del Worker y que la raíz ya no renderiza `HealthPage`.
 
 ## 5. Vistas
 
-- [ ] 5.1 Crear `src/features/today/today-page.tsx`, `src/features/tasks/tasks-page.tsx` y
+- [x] 5.1 Crear `src/features/today/today-page.tsx`, `src/features/tasks/tasks-page.tsx` y
   `src/features/notes/notes-page.tsx` como marcadores de posición con su título y su estado vacío
   (texto que explica qué cabrá ahí e invita a añadirlo, sin datos); escribir
   `src/features/today/today-page.test.tsx` que compruebe el estado vacío y que no hay scroll horizontal
   con el ancho de 360 px simulado; verificar con `pnpm test`.
-- [ ] 5.2 Convertir `src/features/health/health-page.tsx` en `src/features/health/health-panel.tsx`
+- [x] 5.2 Convertir `src/features/health/health-page.tsx` en `src/features/health/health-panel.tsx`
   (componente de diagnóstico, no página) y adaptar `health-page.test.tsx` a `health-panel.test.tsx`
   con sus cuatro casos (carga, éxito, error y reintento); verificar con `pnpm test` que
   `src/features/health/api.ts` y `use-health.ts` no han necesitado cambios.
-- [ ] 5.3 Crear `src/features/more/use-session.ts` con `useQuery` sobre `client.api.me.$get()` y
+- [x] 5.3 Crear `src/features/more/use-session.ts` con `useQuery` sobre `client.api.me.$get()` y
   `src/features/more/more-page.tsx` con el indicador de sesión y el panel de salud; escribir
   `src/features/more/more-page.test.tsx` que cubra los estados de carga y de error de la sesión, que
   la consulta **no** se lanza desde las otras secciones (renderizando `app-shell` con `/` y
   comprobando que `$get` no se ha llamado) y que aparece el panel de salud; verificar con `pnpm test`.
-- [ ] 5.4 Montar `ThemeToggle` en la barra de vista de **Más** y comprobar que en 360 px la barra de
+- [x] 5.4 Montar `ThemeToggle` en la barra de vista de **Más** y comprobar que en 360 px la barra de
   captura, la tab bar y el conmutador caben sin scroll horizontal; ampliar el test de
   `more-page.test.tsx` con esa comprobación; verificar con `pnpm test`.
 
