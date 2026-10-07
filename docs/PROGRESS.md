@@ -12,11 +12,11 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 0 — Cimientos |
-| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — **33/36 tareas hechas** |
-| **Rama** | `change/bootstrap-project` (andamiaje y documentación commiteados, sin push) |
-| **Siguiente acción exacta** | Commit de la documentación → `git push -u origin change/bootstrap-project` → abrir el PR (eso dispara la CI; **comprobar los cuatro pasos en verde**, tarea 7.2) → comprobar `pnpm dev` a mano a 360 px (9.2) → dejar en el PR la constancia de la excepción de `test:e2e` (9.5) → mergear |
-| **Bloqueos** | Ninguno técnico. Quedan **tres tareas que son humanas**: 7.2 (ver la CI en GitHub), 9.2 (comprobar la SPA en un navegador) y la constancia de 9.5 (necesita el PR). Resuelto el bloqueo anterior de 9.3: `pnpm db:generate` sí escribe `migrations/meta/_journal.json` (vacío, `entries: []`); se acepta ese fichero, se versiona y se excluye de Biome con `!**/migrations/meta` |
-| **Última actualización** | 2026-10-07 · oficina |
+| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — **34/36 tareas**; PR #3 abierto con la CI en verde |
+| **Rama** | `change/bootstrap-project` (pusheada, PR #3) |
+| **Siguiente acción exacta** | Comprobar `pnpm dev` a mano a 360 px (9.2) → marcar 9.2 y 9.5 → descripción del PR con 9.1, 9.2 y la excepción de `test:e2e` → `/opsx-archive bootstrap-project` en la rama → squash merge → proteger `main` (S7) → D1 + primer deploy + Access |
+| **Bloqueos** | Ninguno |
+| **Última actualización** | 2026-10-07 · casa |
 
 ---
 
@@ -34,7 +34,7 @@ Márcalos con `[x]` al completarlos y haz commit.
 ### S2 · Herramientas (en **cada** equipo — ver "Preparar un equipo nuevo")
 
 - [x] Equipo de la oficina preparado
-- [ ] Equipo de casa preparado
+- [x] Equipo de casa preparado
 
 ### S3 · Cuenta de Cloudflare ✅
 

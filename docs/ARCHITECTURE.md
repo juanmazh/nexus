@@ -96,7 +96,7 @@ Refleja la configuración real del andamiaje. Los bloques que aún no existen se
   // TODO(add-reminders): el cron único "*/5 * * * *" se añade con ese cambio.
   //   Sin jobs, un cron ocuparía uno de los 5 Cron Triggers de la cuenta sin hacer nada.
   "vars": { "APP_TIMEZONE": "Europe/Madrid" }
-  // TODO(add-access-auth): ACCESS_TEAM_DOMAIN (nosecreto) llega con el middleware de Access.
+  // TODO(add-access-auth): ACCESS_TEAM_DOMAIN (no secreto) llega con el middleware de Access.
   // Secretos (wrangler secret put): ACCESS_AUD, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 }
 ```
