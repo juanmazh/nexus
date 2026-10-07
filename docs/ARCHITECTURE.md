@@ -70,7 +70,9 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
 | `src/features/*` | Una carpeta por feature con sus componentes, hooks de TanStack Query y tipos |
 | `src/components/ui/` | Componentes de shadcn/ui |
 
-### 2.3 Configuración del Worker (`wrangler.jsonc`, orientativo)
+### 2.3 Configuración del Worker (`wrangler.jsonc`)
+
+Refleja la configuración real del andamiaje. Los bloques que aún no existen se marcan con `TODO`.
 
 ```jsonc
 {
@@ -82,10 +84,19 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
     "run_worker_first": ["/api/*"]
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "nexus-db", "database_id": "<id>", "migrations_dir": "migrations" }
+    {
+      "binding": "DB",
+      "database_name": "nexus-db",
+      "migrations_dir": "migrations",
+      // TODO(setup): sustituye este UUID por el que devuelva
+      //   pnpm wrangler d1 create nexus-db
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
   ],
-  "triggers": { "crons": ["*/5 * * * *"] },
-  "vars": { "APP_TIMEZONE": "Europe/Madrid", "ACCESS_TEAM_DOMAIN": "<equipo>.cloudflareaccess.com" }
+  // TODO(add-reminders): el cron único "*/5 * * * *" se añade con ese cambio.
+  //   Sin jobs, un cron ocuparía uno de los 5 Cron Triggers de la cuenta sin hacer nada.
+  "vars": { "APP_TIMEZONE": "Europe/Madrid" }
+  // TODO(add-access-auth): ACCESS_TEAM_DOMAIN (nosecreto) llega con el middleware de Access.
   // Secretos (wrangler secret put): ACCESS_AUD, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 }
 ```

@@ -53,7 +53,7 @@ No añadas, sustituyas ni elimines piezas del stack sin un `design.md` aprobado 
 | Fechas | date-fns + @date-fns/tz |
 | Auth | Cloudflare Access (delante del Worker) + validación del JWT en el Worker |
 | Avisos | Bot de Telegram (Bot API vía `fetch`) disparado por un Cron Trigger |
-| Tests | Vitest (+ `@cloudflare/vitest-pool-workers` para el Worker) |
+| Tests | Vitest (+ `@cloudflare/vitest-plugin` para el Worker) |
 | Tests e2e / responsive | Playwright (viewports móvil y escritorio, en CI) |
 | Lint / formato | Biome |
 | Gestor de paquetes | pnpm |
@@ -115,7 +115,7 @@ Estos scripts se crean en la fase 0. Si un script no existe, **no inventes un su
 | `pnpm typecheck` | `tsc` en modo estricto, sin emitir |
 | `pnpm lint` / `pnpm format` | Biome (check / write) |
 | `pnpm test` | Vitest |
-| `pnpm test:e2e` | Playwright (proyectos móvil 360 px y escritorio 1280 px) |
+| `pnpm test:e2e` | Playwright (proyectos móvil 360 px y escritorio 1280 px). **No existe todavía**: llega con `add-app-shell` |
 | `pnpm db:generate` | drizzle-kit genera la migración SQL desde `worker/db/schema.ts` |
 | `pnpm db:migrate:local` | Aplica migraciones en la D1 local |
 | `pnpm db:migrate:remote` | Aplica migraciones en producción (**solo lo ejecuta el humano**) |
@@ -181,7 +181,7 @@ Estos scripts se crean en la fase 0. Si un script no existe, **no inventes un su
 
 1. **Secretos fuera del repo y fuera del contexto.** Los modelos que se usan pueden entrenar con los prompts, así que un secreto que se lee es un secreto filtrado. Los secretos de producción se crean con `wrangler secret put`; en local viven en `.dev.vars` (ignorado por git). **Nunca** leas, muestres, copies ni commitees `.dev.vars` ni ningún token. Si un secreto es necesario, añade el nombre a `.dev.vars.example` sin valor. Además, `opencode.json` bloquea a nivel de herramienta la lectura de esos ficheros y los comandos de despliegue y de secretos: **no intentes sortear esos bloqueos**; si necesitas algo de ahí, pídeselo al humano.
 2. **Auth en dos capas.** Cloudflare Access protege el Worker, y además el middleware `worker/middleware/access.ts` valida el JWT de la cabecera `Cf-Access-Jwt-Assertion` (firma con las claves públicas del equipo de Access, `aud`, `iss` y expiración). Si falta o no es válido → `401`. **Fail closed**: ante cualquier duda, se deniega.
-3. Toda ruta bajo `/api/*` pasa por ese middleware. No existen endpoints privados "temporalmente abiertos".
+3. Toda ruta bajo `/api/*` pasa por ese middleware. No existen endpoints privados "temporalmente abiertos". Única excepción: `GET /api/health`, que no pasa por Access porque no devuelve ningún dato (ver `docs/ROADMAP.md`, cambio 0.2).
 4. Nada de `dangerouslySetInnerHTML`, salvo el renderizado del blog (fase 3), y siempre con HTML saneado.
 5. **Repo público:** ni datos personales reales, ni emails, ni IDs de chat de Telegram en el código o en los seeds. Los datos de ejemplo son ficticios. La configuración sensible va en variables o secretos.
 6. Cabeceras de seguridad en las respuestas (CSP razonable, `X-Content-Type-Options`, `Referrer-Policy`).

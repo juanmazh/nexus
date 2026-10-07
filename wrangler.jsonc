@@ -1,0 +1,35 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "nexus",
+	"main": "./worker/index.ts",
+	"compatibility_date": "2026-10-07",
+	"assets": {
+		"directory": "./dist/client",
+		"binding": "ASSETS",
+		// Cualquier ruta que no sea un asset real devuelve index.html para que la
+		// resuelva el router del cliente. Con esto, las navegaciones NO invocan el
+		// Worker y no gastan invocaciones del plan gratuito.
+		"not_found_handling": "single-page-application",
+		// Salvo /api/*, que sí la atiende el Worker.
+		"run_worker_first": ["/api/*"]
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "nexus-db",
+			"migrations_dir": "migrations",
+			// TODO(setup): sustituye este UUID por el que devuelva
+			//   pnpm wrangler d1 create nexus-db
+			// Hasta entonces, `pnpm dev` usa la D1 local de Miniflare y funciona igual.
+			"database_id": "00000000-0000-0000-0000-000000000000"
+		}
+	],
+	// "triggers" llega con add-reminders: sin jobs, un cron ocuparía uno de los
+	// 5 Cron Triggers de la cuenta sin hacer nada.
+	"vars": {
+		"APP_TIMEZONE": "Europe/Madrid"
+	},
+	"observability": {
+		"enabled": true
+	}
+}

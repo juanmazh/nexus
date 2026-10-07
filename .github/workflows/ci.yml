@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+# No deployment step and no secrets: the first deploy is manual
+# (add-home-dashboard, roadmap 2.3).
+jobs:
+  verify:
+    name: Lint, typecheck, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Reads the pnpm version from "packageManager" in package.json.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
