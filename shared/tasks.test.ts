@@ -113,6 +113,13 @@ describe("updateTaskSchema", () => {
 		expect(updateTaskSchema.safeParse({ title: "Algo", id: VALID_UUID }).success).toBe(false);
 	});
 
+	it("accepts a state change and names the state when it is wrong", () => {
+		expect(updateTaskSchema.parse({ status: "done" }).status).toBe("done");
+
+		const wrong = updateTaskSchema.safeParse({ status: "doing" });
+		expect(wrong.error?.issues[0]?.message).toBe("El estado solo puede ser todo o done.");
+	});
+
 	it("accepts an empty body, which means nothing to change", () => {
 		expect(updateTaskSchema.safeParse({}).success).toBe(true);
 	});

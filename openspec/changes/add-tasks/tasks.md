@@ -26,8 +26,8 @@
 
 ## 4. Rutas de la API
 
-- [ ] 4.1 `worker/routes/tasks.ts` con los `validator` propios de `design.md D5` (json, query y param), `.route("/tasks", tasks)` en `worker/app.ts` y el `405` como `.use("*")` siguiendo el patrón de `health.ts`. Verificar que `AppType` sigue exponiendo la ruta nueva sin tocar nada más.
-- [ ] 4.2 `worker/routes/tasks.test.ts`: `200` con lista vacía, `201` al crear con el título normalizado, `400` de validación con la forma `{ error: { code, message } }`, `401` sin sesión, `404` al editar o borrar algo inexistente, `405` con `Allow` en un método no admitido, y el contrato derivado de `AppType` como hace `me.test.ts`. Verificar con `pnpm test` en verde.
+- [x] 4.1 `worker/routes/tasks.ts` con los `validator` propios de `design.md D5` (json, query y param), `.route("/tasks", tasks)` en `worker/app.ts` y el `405` como `.use("*")` siguiendo el patrón de `health.ts`. Verificar que `AppType` sigue exponiendo la ruta nueva sin tocar nada más.
+- [x] 4.2 `worker/routes/tasks.test.ts`: `200` con lista vacía, `201` al crear con el título normalizado, `400` de validación con la forma `{ error: { code, message } }`, `401` sin sesión, `404` al editar o borrar algo inexistente, `405` con `Allow` en un método no admitido, y el contrato derivado de `AppType` como hace `me.test.ts`. Verificar con `pnpm test` en verde.
 
 ## 5. Front: capa de datos
 

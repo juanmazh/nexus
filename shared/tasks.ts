@@ -81,6 +81,11 @@ export const createTaskSchema = z.strictObject({
  * to clear a field it has to be sent explicitly as `null`.
  */
 export const updateTaskSchema = z.strictObject({
+	/**
+	 * Completing and undoing go through the same `PATCH`, but the route hands the
+	 * state to `updateTaskStatus`, the only writer of `completed_at` (design.md D11).
+	 */
+	status: taskStatusSchema.optional(),
 	title: titleSchema.optional(),
 	notes: notesSchema,
 	priority: taskPrioritySchema.optional(),

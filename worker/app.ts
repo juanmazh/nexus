@@ -6,6 +6,7 @@ import { notFound, onError } from "./middleware/errors";
 import { securityHeaders } from "./middleware/security-headers";
 import { HEALTH_PATH, health } from "./routes/health";
 import { me } from "./routes/me";
+import { tasks } from "./routes/tasks";
 import { getAccessJwks } from "./services/access-jwks";
 
 export interface AppDeps {
@@ -37,7 +38,7 @@ export function createApp(deps: AppDeps = {}) {
 		return isOpenHealthCheck ? next() : requireSession(c, next);
 	});
 
-	const routes = app.route("/health", health).route("/me", me);
+	const routes = app.route("/health", health).route("/me", me).route("/tasks", tasks);
 
 	return { app, routes };
 }
