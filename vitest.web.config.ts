@@ -7,7 +7,10 @@ export default defineProject({
 	test: {
 		name: "web",
 		environment: "jsdom",
-		include: ["src/**/*.test.{ts,tsx}"],
+		// `shared/` holds the code the SPA and the Worker share, and its tests are
+		// pure: no DOM, no network. They run here because this is the project that
+		// already resolves `@shared/*`.
+		include: ["src/**/*.test.{ts,tsx}", "shared/**/*.test.ts"],
 		setupFiles: ["@testing-library/jest-dom/vitest"],
 		// The same aliases as vite.config.ts, so a test imports exactly what the
 		// SPA imports.
