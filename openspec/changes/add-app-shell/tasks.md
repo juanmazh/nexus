@@ -2,22 +2,22 @@
 
 ## 1. Dependencias, tipos y comprobación temprana del entorno de pruebas
 
-- [ ] 1.1 `pnpm add @fontsource-variable/bricolage-grotesque @fontsource-variable/atkinson-hyperlegible-next`
+- [x] 1.1 `pnpm add @fontsource-variable/bricolage-grotesque @fontsource-variable/atkinson-hyperlegible-next`
   y `pnpm remove @fontsource-variable/geist`; verificar con `git diff package.json` que aparecen las
   dos altas y la baja, que no hay ningún otro cambio y que `pnpm typecheck` sigue devolviendo `0`.
-- [ ] 1.2 `pnpm add -D @playwright/test` y `pnpm exec playwright install chromium`; verificar que
+- [x] 1.2 `pnpm add -D @playwright/test` y `pnpm exec playwright install chromium`; verificar que
   `pnpm exec playwright --version` responde y que el navegador queda instalado en el equipo
   (`~/.cache/ms-playwright` o su equivalente en Windows).
-- [ ] 1.3 `pnpm exec shadcn add drawer dialog toast`; verificar que existen
+- [x] 1.3 `pnpm exec shadcn add drawer dialog toast`; verificar que existen
   `src/components/ui/drawer.tsx`, `src/components/ui/dialog.tsx` y `src/components/ui/toast.tsx`, y
   que `git diff package.json` **no** muestra ninguna dependencia nueva (los tres se apoyan en
   `@base-ui/react`, que ya estaba).
-- [ ] 1.4 Crear `tsconfig.e2e.json` (target `es2022`, `lib` con `dom`, `types` con
+- [x] 1.4 Crear `tsconfig.e2e.json` (target `es2022`, `lib` con `dom`, `types` con
   `@playwright/test` y `node`, `strict`, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`,
   `noEmit`) con `include: ["e2e"]`, añadirlo a `references` de `tsconfig.json` y añadir
   `playwright.config.ts` al `include` de `tsconfig.node.json`; crear `playwright.config.ts` con los
   dos proyectos y el `webServer`, todavía sin tests; verificar que `pnpm typecheck` sigue en `0`.
-- [ ] 1.5 **Riesgo temprano** (`design.md D8`): ejecutar `pnpm build` y después
+- [x] 1.5 **Riesgo temprano** (`design.md D8`): ejecutar `pnpm build` y después
   `pnpm exec vite preview --port 4173 --strictPort`, y comprobar que `/` devuelve el `index.html` con
   `200` y que `dist/client/_headers` existe con la CSP de la SPA. Verificado en la revisión
   de la propuesta: `vite preview` ejecuta el Worker y aplica `_headers` también al fallback de la SPA.
