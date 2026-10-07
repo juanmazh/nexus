@@ -5,6 +5,13 @@
 # Cloudflare Access — "AUD tag" of the Access application protecting the Worker
 ACCESS_AUD=
 
+# Local development only. Set to 1 to call /api/* without an Access session.
+# It has TWO conditions to activate: this variable AND a request coming from
+# localhost. It is never deployed (it lives here, in .dev.vars), and if it ever
+# reached a deployment the hostname check would still deny every request.
+# Leave it commented out (or unset) to exercise the real authentication.
+# ACCESS_DEV_BYPASS=1
+
 # Telegram bot (from @BotFather) and your chat id (from getUpdates)
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=

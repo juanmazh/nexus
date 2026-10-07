@@ -109,7 +109,7 @@ Fuera de alcance: recordatorios, etiquetas, subtareas, repetición.
 <summary>Prompt para <code>/opsx-propose add-reminders</code></summary>
 
 ```text
-Implementa los recordatorios según docs/ARCHITECTURE.md §3.2 y §4 (tabla reminders).
+Implementa los recordatorios según docs/ARCHITECTURE.md §3.3 y §4 (tabla reminders).
 API: GET /api/tasks/:id/reminders, POST /api/tasks/:id/reminders (remind_at en el futuro; si no,
 400), DELETE /api/reminders/:id (pasa a cancelled). Completar una tarea cancela sus recordatorios
 pendientes. Job en worker/jobs/reminders.ts disparado por el cron */5 * * * *: lote máximo de 20,

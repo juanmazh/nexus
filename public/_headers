@@ -1,0 +1,17 @@
+# Cloudflare applies this file to the responses of the asset manager: the SPA's
+# index.html and its assets. It does NOT apply to the responses the Worker builds
+# for /api/*, which carry their own, stricter policy
+# (worker/middleware/security-headers.ts). That is why there are two lists.
+#
+# One rule covers everything on purpose: adding an /assets/* rule would match the
+# same requests and make Cloudflare send every header twice.
+#
+# 'unsafe-inline' appears only in style-src: Tailwind and the component library
+# apply styles inline, and React uses style attributes. It is never allowed in
+# script-src.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'

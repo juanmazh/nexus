@@ -68,9 +68,14 @@ pnpm dev
 ```
 
 `pnpm dev` levanta a la vez el servidor de Vite y el Worker con la **D1 local** de Miniflare, así que
-la SPA y la API quedan disponibles en el mismo origen (`http://localhost:5173`) **sin credenciales de
-Cloudflare** y sin `.dev.vars`: hoy el Worker todavía no lee ningún secreto. Ese fichero hará falta con
-`add-access-auth` y `add-reminders`.
+la SPA y la API quedan disponibles en el mismo origen (`http://localhost:5173`).
+
+`/api/*` **exige una sesión de Cloudflare Access**; la única excepción es `GET /api/health`. Como en
+local no hay Access delante, se puede activar el atajo de desarrollo poniendo `ACCESS_DEV_BYPASS=1` en
+`.dev.vars`: solo sirve si además la petición viene de `localhost`, así que en un despliegue denegaría
+igual (ver [`docs/ARCHITECTURE.md` ADR-009](docs/ARCHITECTURE.md)). Para tocar rutas autenticadas de
+verdad, deja el atajo desactivado y pega en `.dev.vars` el **AUD tag** de la aplicación de Access
+(`ACCESS_AUD`).
 
 ### Comandos
 
@@ -96,8 +101,17 @@ La base de datos D1 de producción (`nexus-db`) ya está creada y su `database_i
 `wrangler.jsonc`. En local se usa siempre la D1 de Miniflare.
 
 ```bash
-pnpm deploy   # hace el build y despliega; solo la persona propietaria
+pnpm wrangler secret put ACCESS_AUD   # AUD tag de la aplicación de Access; solo la persona propietaria
+pnpm deploy                           # hace el build y despliega; solo la persona propietaria
 ```
+
+Después del primer despliegue hay que comprobar a mano, en el dominio real:
+
+- `GET /api/health` → `200` **sin** sesión.
+- `GET /api/me` → `401` sin sesión y `200` con la sesión del navegador.
+- La SPA carga **sin violaciones de CSP** en la consola del navegador.
+
+Ningún paso de despliegue lo hace el agente: `opencode.json` los bloquea a propósito.
 
 ## Autor
 

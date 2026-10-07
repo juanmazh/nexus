@@ -184,7 +184,7 @@ Estos scripts se crean en la fase 0. Si un script no existe, **no inventes un su
 3. Toda ruta bajo `/api/*` pasa por ese middleware. No existen endpoints privados "temporalmente abiertos". Única excepción: `GET /api/health`, que no pasa por Access porque no devuelve ningún dato (ver `docs/ROADMAP.md`, cambio 0.2).
 4. Nada de `dangerouslySetInnerHTML`, salvo el renderizado del blog (fase 3), y siempre con HTML saneado.
 5. **Repo público:** ni datos personales reales, ni emails, ni IDs de chat de Telegram en el código o en los seeds. Los datos de ejemplo son ficticios. La configuración sensible va en variables o secretos.
-6. Cabeceras de seguridad en las respuestas (CSP razonable, `X-Content-Type-Options`, `Referrer-Policy`).
+6. Cabeceras de seguridad en **todas** las respuestas, en dos sitios porque Cloudflare solo las aplica en uno cada vez: `/api/*` desde `worker/middleware/security-headers.ts` (`CSP` restringida, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`) y la SPA y sus assets desde `public/_headers` (el Worker nunca ve el HTML, lo sirve el gestor de static assets). Ninguna de las dos listas se aplica a la otra.
 7. Dependencias nuevas: solo si están mantenidas, son conocidas y se justifican en `design.md`. Menos dependencias es mejor.
 
 ---
