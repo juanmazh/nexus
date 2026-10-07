@@ -60,14 +60,47 @@ El proceso completo está en [`docs/WORKFLOW.md`](docs/WORKFLOW.md).
 
 ## Desarrollo local
 
-> Disponible a partir del cambio `bootstrap-project` (fase 0).
+Requiere **Node ≥ 20.19** y **pnpm** (`corepack enable` si Node ≤ 24; con Node ≥ 25, `npm i -g pnpm`).
 
 ```bash
 pnpm install
-cp .dev.vars.example .dev.vars   # y rellena los valores
-pnpm db:migrate:local
 pnpm dev
 ```
+
+`pnpm dev` levanta a la vez el servidor de Vite y el Worker con la **D1 local** de Miniflare, así que
+la SPA y la API quedan disponibles en el mismo origen (`http://localhost:5173`) **sin credenciales de
+Cloudflare** y sin `.dev.vars`: hoy el Worker todavía no lee ningún secreto. Ese fichero hará falta con
+`add-access-auth` y `add-reminders`.
+
+### Comandos
+
+| Comando | Qué hace |
+|---|---|
+| `pnpm dev` | Servidor local (Vite + Worker + D1 local) |
+| `pnpm build` | Build de producción |
+| `pnpm typecheck` | `tsc` en modo estricto, sin emitir |
+| `pnpm lint` / `pnpm format` | Biome (check / write) |
+| `pnpm test` | Vitest (proyectos `worker` y `web`) |
+| `pnpm db:generate` | Genera la migración SQL desde `worker/db/schema.ts` |
+| `pnpm db:migrate:local` | Aplica migraciones en la D1 local |
+| `pnpm db:migrate:remote` | Aplica migraciones en producción (**solo la persona propietaria**) |
+| `pnpm cf-typegen` | `wrangler types`: regenera los tipos de `Env` |
+| `pnpm deploy` | Despliegue (**solo la persona propietaria o la CI**) |
+
+`pnpm test:e2e` (Playwright, móvil 360 px y escritorio 1280 px) **todavía no existe**: llega con
+`add-app-shell`.
+
+### Antes del primer despliegue
+
+La base de datos D1 se crea a mano, una sola vez, y solo la necesita el despliegue (en local usa la D1
+de Miniflare):
+
+```bash
+pnpm wrangler d1 create nexus-db
+```
+
+El `database_id` que imprime hay que pegarlo en `wrangler.jsonc`, sustituyendo el UUID de ceros que
+actualmente lleva el `TODO(setup)`. Hasta entonces, `pnpm deploy` fallará al enlazar D1.
 
 ## Autor
 

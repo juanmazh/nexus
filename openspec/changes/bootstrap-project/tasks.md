@@ -104,16 +104,16 @@
 
 ## 8. Documentación
 
-- [ ] 8.1 Corregir `AGENTS.md §2`: `@cloudflare/vitest-pool-workers` → `@cloudflare/vitest-plugin`;
+- [x] 8.1 Corregir `AGENTS.md §2`: `@cloudflare/vitest-pool-workers` → `@cloudflare/vitest-plugin`;
   corregir `AGENTS.md §4` para marcar que `test:e2e` no existe todavía y llega con `add-app-shell`;
   añadir en `AGENTS.md §6.3` la excepción de `/api/health` (`design.md §10`).
-- [ ] 8.2 Actualizar `docs/ARCHITECTURE.md §2.3` con la configuración real (placeholder del
+- [x] 8.2 Actualizar `docs/ARCHITECTURE.md §2.3` con la configuración real (placeholder del
   `database_id`, sin cron) y anotar que el cron único se añade con `add-reminders`; verificar que no
   queda ningún `triggers` en el ejemplo.
-- [ ] 8.3 Actualizar `README.md` con la puesta en marcha (`pnpm install`, `pnpm dev`, comandos) y el
+- [x] 8.3 Actualizar `README.md` con la puesta en marcha (`pnpm install`, `pnpm dev`, comandos) y el
   paso manual de crear la D1; actualizar `docs/PROGRESS.md` con el cambio 0.1 y el siguiente paso
   exacto.
-- [ ] 8.4 Revisar que ningún fichero versionado contiene secretos, emails reales ni el valor de
+- [x] 8.4 Revisar que ningún fichero versionado contiene secretos, emails reales ni el valor de
   `.dev.vars`; verificar con `git grep -iE "(token|secret|password)\s*[:=]\s*['\"][^'\"]{8}"` que solo
   aparecen nombres de variables.
 

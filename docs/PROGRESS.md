@@ -12,10 +12,10 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 0 — Cimientos |
-| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — **implementado a medias: 28/36 tareas** |
-| **Rama** | `change/bootstrap-project` (andamiaje commiteado, sin push) |
-| **Siguiente acción exacta** | `/opsx-apply bootstrap-project` en una sesión nueva → terminar las tareas 8.1–8.4 (documentación), 9.2 (comprobar `pnpm dev` a mano a 360 px) y 9.5 → commit → `git push -u origin change/bootstrap-project` → abrir el PR (la CI lo dispara y **verifica los cuatro pasos en verde**, tarea 7.2) |
-| **Bloqueos** | 9.3 no se puede marcar tal como está escrita: `pnpm db:generate` **sí** escribe `migrations/meta/_journal.json` (vacío, `entries: []`). Decidir: aceptar el fichero y corregir el texto de la tarea, o ignorarlo en git |
+| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — **33/36 tareas hechas** |
+| **Rama** | `change/bootstrap-project` (andamiaje y documentación commiteados, sin push) |
+| **Siguiente acción exacta** | Commit de la documentación → `git push -u origin change/bootstrap-project` → abrir el PR (eso dispara la CI; **comprobar los cuatro pasos en verde**, tarea 7.2) → comprobar `pnpm dev` a mano a 360 px (9.2) → dejar en el PR la constancia de la excepción de `test:e2e` (9.5) → mergear |
+| **Bloqueos** | Ninguno técnico. Quedan **tres tareas que son humanas**: 7.2 (ver la CI en GitHub), 9.2 (comprobar la SPA en un navegador) y la constancia de 9.5 (necesita el PR). Resuelto el bloqueo anterior de 9.3: `pnpm db:generate` sí escribe `migrations/meta/_journal.json` (vacío, `entries: []`); se acepta ese fichero, se versiona y se excluye de Biome con `!**/migrations/meta` |
 | **Última actualización** | 2026-10-07 · oficina |
 
 ---
@@ -105,10 +105,10 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 - [ ] **OpenCode** instalado (modo anónimo; no hace falta login). El modelo lo fija `opencode.json`.
 - [ ] Clonar con tu usuario en la URL (evita choques con otras cuentas de GitHub del equipo):
       `git clone https://juanmazh@github.com/juanmazh/nexus.git`
-- [ ] `pnpm install` (cuando exista `package.json`, desde el cambio 0.1).
-- [ ] `pnpm wrangler login` (desde el cambio 0.1).
-- [ ] Copiar `.dev.vars` desde el gestor de contraseñas y comprobar con `git status` que no aparece.
-- [ ] `pnpm db:migrate:local` y `pnpm dev` → la app arranca.
+- [ ] `pnpm install` (desde el cambio 0.1; `package.json` ya existe).
+- [ ] `pnpm wrangler login` (solo hace falta para desplegar o para la D1 remota; `pnpm dev` no lo pide).
+- [ ] Copiar `.dev.vars` desde el gestor de contraseñas y comprobar con `git status` que no aparece (aún no es necesario: hasta `add-access-auth` el Worker no lee secretos).
+- [ ] `pnpm dev` → la app arranca en `http://localhost:5173`. (`pnpm db:migrate:local` todavía no hace falta: no hay migraciones.)
 
 ---
 
@@ -127,6 +127,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 
+- **2026-10-07 · oficina** — `/opsx-apply bootstrap-project`: **33/36 tareas**, documentación cerrada (8.1–8.4). `AGENTS.md` corregido (`@cloudflare/vitest-plugin`, `test:e2e` inexistente hasta `add-app-shell`, excepción de `/api/health` en §6.3), `docs/ARCHITECTURE.md §2.3` con la configuración real (placeholder del `database_id`, sin `triggers`) y `README.md` con la puesta en marcha y el paso manual de crear la D1. 9.1 re-ejecutada de verdad: typecheck, lint, test (9/9) y build en verde; `openspec validate --strict` en verde. Auditoría 8.4: ningún secreto, email ni `chat.id` versionado (`.dev.vars` ignorado, solo se versiona `.dev.vars.example` con valores vacíos). Quedan **7.2, 9.2 y 9.5**, las tres humanas (CI, navegador y PR). **Desviación pendiente de decidir:** `design.md §3` sigue describiendo el 405 como un `.all()` en la ruta cuando acabó siendo un middleware, y los alias como objeto cuando son regex. → Siguiente: commit, `git push -u origin change/bootstrap-project`, abrir el PR y verificar la CI.
 - **2026-10-07 · oficina** — `/opsx-apply bootstrap-project`: 28/36 tareas hechas y commiteadas. Base del proyecto (package.json, pnpm, 4 tsconfig, Biome), Worker con `GET /api/health` (+ 405/404 con la forma de error), SPA mínima con los tres estados, Vitest con dos proyectos (**9 tests en verde**), CI sin despliegue. pnpm, Node y `@cloudflare/vitest-plugin` ya estaban disponibles: **no hizo falta `corepack enable`**. Dos desviaciones del `design.md`: el 405 va en un middleware en vez de un `.all()` (`.get()`+`.all()` en la misma ruta colapsa el tipo de `$get` a `never` en el cliente RPC) y los alias se declaran en forma de regex (la forma objeto no resolvía dentro de Vitest 4). Pendiente: documentación (8.1–8.4), comprobación manual de `pnpm dev` (9.2) y push/PR. → Siguiente: retomar con `/opsx-apply bootstrap-project`.
 - **2026-10-07 · oficina** — Parche de modelos gratuitos aplicado de verdad (`opencode.json` en la raíz, sin fijar modelo). Propuesta de `bootstrap-project` generada con `/opsx-propose` y revisada con Claude; correcciones aplicadas (404/405 con la forma de error, tsconfig, alias sin dependencias extra). → Siguiente: mergear PR #1 y #2 y `/opsx-apply`.
 - **2026-10-07 · oficina** — Configuración inicial S1–S5 completada: repo `juanmazh/nexus` (con la identidad de git personal separada de la del trabajo), Cloudflare (`nexus.juanmazh-dev.workers.dev`, Zero Trust `juanmazh`), bot de Telegram y OpenSpec inicializado por PR. Decidido usar modelos gratuitos de OpenCode en modo anónimo en lugar de OpenRouter de pago. Access en el Worker se activará tras el primer deploy. → Siguiente: S6 (`opencode.json`), PR de documentación y cambio 0.1.
