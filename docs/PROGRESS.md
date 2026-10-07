@@ -2,6 +2,8 @@
 
 > **Este es el fichero para retomar.** Léelo al empezar cada sesión y actualízalo al terminarla
 > (ver `docs/WORKFLOW.md §2`). Si solo lees un documento antes de ponerte a trabajar, que sea este.
+>
+> Numeración: los pasos de configuración inicial son **S1–S7**; los cambios de OpenSpec usan **0.1, 0.2, 1.1…**
 
 ---
 
@@ -10,68 +12,59 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 0 — Cimientos |
-| **Paso / cambio** | Paso 0.1 — Crear el repositorio y subir la documentación |
-| **Rama** | `main` (todavía no hay ramas de cambio) |
-| **Siguiente acción exacta** | Ejecutar los comandos del paso 0.1 |
+| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — propuesta generada y revisada |
+| **Rama** | `change/bootstrap-project` (propuesta sin commitear hasta que `main` tenga los PR #1 y #2) |
+| **Siguiente acción exacta** | Mergear PR #1 (`chore/openspec-init`) y PR #2 (`chore/docs-free-models`) → poner al día `change/bootstrap-project` → repetir la prueba de `.dev.vars` → commit de la propuesta → `/opsx-apply` en una sesión nueva de OpenCode |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-07 · oficina |
 
 ---
 
-## Paso 0 — Puesta en marcha (una sola vez, manual)
+## Configuración inicial (una sola vez, manual)
 
 Estos pasos no pasan por OpenSpec: son configuración de cuentas y herramientas.
 Márcalos con `[x]` al completarlos y haz commit.
 
-### 0.1 · Crear el repositorio y subir la documentación
+### S1 · Crear el repositorio y subir la documentación ✅
 
-> Hazlo **primero**, aunque estés en la oficina: así los documentos estarán disponibles en casa.
-
-- [x] Crear en GitHub un repo **público** llamado `nexus`, **sin** README, sin .gitignore y sin licencia (ya los tenemos).
-- [x] En local, dentro de la carpeta `nexus/` con estos ficheros:
-
-```bash
-git init -b main
-git add -A
-git commit -m "docs: add project guidelines, architecture and roadmap"
-git remote add origin https://github.com/<tu-usuario>/nexus.git
-git push -u origin main
-```
-
+- [x] Crear en GitHub el repo **público** `juanmazh/nexus`, sin README, sin .gitignore y sin licencia.
+- [x] Primer commit y push de la documentación.
 - [x] Comprobar en GitHub que están `AGENTS.md`, `docs/`, `openspec/config.yaml`, `.gitignore`, `.gitattributes` y `.dev.vars.example`.
 
-### 0.2 · Herramientas (en **cada** equipo — ver "Preparar un equipo nuevo")
+### S2 · Herramientas (en **cada** equipo — ver "Preparar un equipo nuevo")
 
 - [x] Equipo de la oficina preparado
 - [ ] Equipo de casa preparado
 
-### 0.3 · Cuenta de Cloudflare
+### S3 · Cuenta de Cloudflare ✅
 
-- [x] Cuenta creada (o la existente) y sesión iniciada en el dashboard.
-- [x] Elegido el subdominio `workers.dev` (Workers & Pages → tu subdominio). La URL final será `nexus.<subdominio>.workers.dev`.
-- [x] Zero Trust activado con el **plan Free** (te pedirá un nombre de equipo: `<equipo>.cloudflareaccess.com`). Apuntar ese nombre aquí: `juanmazh.cloudflareaccess.com`
+- [x] Cuenta creada, con la sesión iniciada en el dashboard.
+- [x] Subdominio `workers.dev`: `juanmazh-dev` → URL de la app: **`nexus.juanmazh-dev.workers.dev`**
+- [x] Zero Trust activado con el **plan Free**. Equipo: **`juanmazh.cloudflareaccess.com`** (valor de `ACCESS_TEAM_DOMAIN`)
+- [ ] Access en el Worker: **pendiente a propósito**. Se activa justo después del primer deploy de `bootstrap-project` (ver la tabla de cambios).
 
-### 0.4 · Bot de Telegram
+### S4 · Bot de Telegram ✅
 
-- [ ] En Telegram, hablar con `@BotFather` → `/newbot` → guardar el **token** en tu gestor de contraseñas (nunca en el repo).
-- [ ] Enviarle cualquier mensaje a tu bot nuevo.
-- [ ] Abrir `https://api.telegram.org/bot<TOKEN>/getUpdates` en el navegador y copiar `message.chat.id` → gestor de contraseñas.
-- [ ] Crear `.dev.vars` a partir de `.dev.vars.example` con esos valores (en cada equipo).
+- [x] Bot creado con `@BotFather`; **token** guardado en el gestor de contraseñas (nunca en el repo).
+- [x] Mensaje enviado al bot.
+- [x] `chat.id` obtenido con `getUpdates` y guardado en el gestor de contraseñas.
+- [x] `.dev.vars` creado a partir de `.dev.vars.example` en el equipo de la oficina (comprobado que git lo ignora).
 
-### 0.5 · OpenSpec
+### S5 · OpenSpec ✅
 
-- [ ] Ejecutar en la raíz del repo: `openspec init` (elige **OpenCode** como herramienta y español si te pregunta el idioma).
-- [ ] Fusionar `openspec/config.yaml`: conserva las claves que añadió `init` y deja nuestro `schema`, `context` y `rules`.
-- [ ] `git diff`: si `init` añadió un bloque gestionado a `AGENTS.md`, déjalo **al final** del fichero y comprueba que nuestras secciones siguen intactas.
-- [ ] Commit: `chore(openspec): initialize openspec for opencode`.
+- [x] `openspec init` con OpenCode. No tocó `config.yaml` ni `AGENTS.md`; añadió `.opencode/` (comandos y skills) y las carpetas `openspec/changes/` y `openspec/specs/`.
+- [x] Commit `chore(openspec): initialize openspec for opencode`, mergeado por PR.
+- Comandos en OpenCode (**con guion**): `/opsx-explore`, `/opsx-propose <id>`, `/opsx-apply`, `/opsx-archive`, `/opsx-update`, `/opsx-sync`.
 
-### 0.6 · OpenCode y modelos
+### S6 · OpenCode y modelo (100 % gratis)
 
-- [ ] `opencode auth login` → OpenRouter (en cada equipo).
-- [ ] Poner un **límite de crédito** en OpenRouter.
-- [ ] Crear `opencode.json` en la raíz con los modelos elegidos (ver "Modelos en uso"), commit y push.
+Decisión: modelos **gratuitos de OpenCode en modo anónimo**; sin OpenRouter y sin cuenta de pago (ver "Modelos en uso").
 
-### 0.7 · Proteger `main` (después del cambio 0.1, cuando exista la CI)
+- [x] OpenCode funcionando en modo anónimo con un modelo gratuito.
+- [x] Decidido **no fijar el modelo** en `opencode.json`: OpenCode usa el gratuito que tengas seleccionado (`/models`). Así no se rompe cuando OpenCode rota sus modelos gratuitos.
+- [x] `opencode.json` en la raíz (PR `chore/docs-free-models`): **bloquea al agente** la lectura de `.dev.vars`/`.env`, los comandos de despliegue (`pnpm deploy`, migraciones remotas, `wrangler secret`) y `push --force`, y pide confirmación para cualquier comando no habitual.
+
+### S7 · Proteger `main` (después del cambio 0.1, cuando exista la CI)
 
 - [ ] GitHub → Settings → Branches → regla para `main`: exigir PR y que pase la CI, y prohibir force push.
 
@@ -83,8 +76,8 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 | # | change-id | Estado | Rama / PR | Pasos manuales asociados |
 |---|---|---|---|---|
-| 0.1 | `bootstrap-project` | ⬜ | | Crear la D1: `pnpm wrangler d1 create nexus-db` y pegar el `database_id` en `wrangler.jsonc`. Primer `pnpm deploy` |
-| 0.2 | `add-access-auth` | ⬜ | | Activar Cloudflare Access en el Worker `nexus` (Workers & Pages; protege producción **y** previews), permitir solo tu email, copiar el **AUD tag** de la aplicación creada (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` |
+| 0.1 | `bootstrap-project` | ⬜ | | Crear la D1: `pnpm wrangler d1 create nexus-db` y pegar el `database_id` en `wrangler.jsonc`. Primer `pnpm deploy`. **Justo después:** activar Cloudflare Access en el Worker `nexus` (producción y previews) permitiendo solo tu email |
+| 0.2 | `add-access-auth` | ⬜ | | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` |
 | 0.3 | `add-app-shell` | ⬜ | | Validar en un móvil real la dirección visual "olivar" (`docs/DESIGN.md §5`) |
 | 1.1 | `add-tasks` | ⬜ | | `pnpm db:migrate:remote` antes del deploy |
 | 1.2 | `add-reminders` | ⬜ | | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; migración remota; deploy; esperar un aviso real |
@@ -107,24 +100,26 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 - [ ] **Node.js ≥ 20.19** (`node -v`). Recomendado: la LTS actual.
 - [ ] **pnpm**: `corepack enable` (o `npm i -g pnpm`).
-- [ ] **Git** configurado con tu nombre y email; en Windows, `git config --global core.autocrlf false` (el `.gitattributes` fuerza LF).
+- [ ] **Git** con tu identidad **solo en este repo** (`git config user.name` / `user.email`, sin `--global`) y, en Windows, `git config --global core.autocrlf false` (el `.gitattributes` fuerza LF).
 - [ ] **OpenSpec CLI**: `npm install -g @fission-ai/openspec@latest`.
-- [ ] **OpenCode** instalado y `opencode auth login` con OpenRouter.
-- [ ] Clonar: `git clone https://github.com/<tu-usuario>/nexus.git`.
+- [ ] **OpenCode** instalado (modo anónimo; no hace falta login). El modelo lo fija `opencode.json`.
+- [ ] Clonar con tu usuario en la URL (evita choques con otras cuentas de GitHub del equipo):
+      `git clone https://juanmazh@github.com/juanmazh/nexus.git`
 - [ ] `pnpm install` (cuando exista `package.json`, desde el cambio 0.1).
 - [ ] `pnpm wrangler login` (desde el cambio 0.1).
-- [ ] Copiar `.dev.vars` desde el gestor de contraseñas.
+- [ ] Copiar `.dev.vars` desde el gestor de contraseñas y comprobar con `git status` que no aparece.
 - [ ] `pnpm db:migrate:local` y `pnpm dev` → la app arranca.
 
 ---
 
 ## 🤖 Modelos en uso
 
-| Rol | Modelo (id de OpenRouter) | Desde | Notas |
+| Rol | Modelo (ID) | Desde | Notas |
 |---|---|---|---|
-| Planificación (`explore` / `propose`) | `__________` | | Modelo fuerte, de razonamiento alto |
-| Implementación (`apply`) | `__________` | | Bueno en código y económico |
-| Escalado / depuración difícil | `__________` | | |
+| Planificación (`explore` / `propose`) | El gratuito seleccionado en OpenCode (sin fijar) | 2026-10-07 | Gratis, anónimo. Puede usar los prompts para entrenar: **nunca secretos en el contexto** |
+| Revisión de propuestas | Claude (claude.ai) | 2026-10-07 | Pegar `proposal.md`, `design.md` y `tasks.md` antes de `/opsx-apply` |
+| Implementación (`apply`) | El gratuito seleccionado en OpenCode (sin fijar) | 2026-10-07 | El mismo de momento; se reevalúa tras el primer cambio |
+| Plan B | OpenRouter `:free` (`qwen/qwen3-coder:free`, `openai/gpt-oss-120b:free`) | — | Solo si OpenCode falla. Límite de 50 peticiones al día |
 
 ---
 
@@ -132,6 +127,8 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 
+- **2026-10-07 · oficina** — Parche de modelos gratuitos aplicado de verdad (`opencode.json` en la raíz, sin fijar modelo). Propuesta de `bootstrap-project` generada con `/opsx-propose` y revisada con Claude; correcciones aplicadas (404/405 con la forma de error, tsconfig, alias sin dependencias extra). → Siguiente: mergear PR #1 y #2 y `/opsx-apply`.
+- **2026-10-07 · oficina** — Configuración inicial S1–S5 completada: repo `juanmazh/nexus` (con la identidad de git personal separada de la del trabajo), Cloudflare (`nexus.juanmazh-dev.workers.dev`, Zero Trust `juanmazh`), bot de Telegram y OpenSpec inicializado por PR. Decidido usar modelos gratuitos de OpenCode en modo anónimo en lugar de OpenRouter de pago. Access en el Worker se activará tras el primer deploy. → Siguiente: S6 (`opencode.json`), PR de documentación y cambio 0.1.
 - **2026-10-07 · oficina** — Mobile-first como pilar: nuevo `docs/DESIGN.md`, cambio `add-app-shell` (0.3), PWA adelantada a la fase 1 (1.3) y Playwright con viewports móvil/escritorio en CI (ADR-008).
 - **2026-10-07 · oficina** — Definidas las directrices (AGENTS.md, ARCHITECTURE, ROADMAP, WORKFLOW, config de OpenSpec). Decisiones: nombre Nexus, idioma mixto, React + TS, avisos por Telegram, dominio aplazado a la fase 3. → Siguiente: paso 0.1.
 
