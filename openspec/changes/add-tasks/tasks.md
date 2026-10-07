@@ -31,21 +31,21 @@
 
 ## 5. Front: capa de datos
 
-- [ ] 5.1 `src/features/tasks/api.ts` con una función por endpoint sobre el cliente RPC y los tipos derivados con `InferResponseType` (ADR-007), sin tipos escritos a mano.
-- [ ] 5.2 `src/features/tasks/group.ts` con `groupTasks(tasks, now, tz)` pura, en el orden Vencidas / Hoy / Próximas / Sin fecha, sin reordenar. Test en el mismo grupo (`group.test.ts`) con `now` fijo: día de hoy que ya pasó, día anterior, futuro, sin fecha, y completadas que no aparecen en ninguna sección.
-- [ ] 5.3 `src/features/tasks/use-tasks.ts`: queries con `staleTime` acorde a `providers.tsx` y las mutaciones de crear, completar, editar y borrar con actualización optimista y rollback. Test (`use-tasks.test.tsx`) del rollback al fallar la creación y al completar.
+- [x] 5.1 `src/features/tasks/api.ts` con una función por endpoint sobre el cliente RPC y los tipos derivados con `InferResponseType` (ADR-007), sin tipos escritos a mano.
+- [x] 5.2 `src/features/tasks/group.ts` con `groupTasks(tasks, now, tz)` pura, en el orden Vencidas / Hoy / Próximas / Sin fecha, sin reordenar. Test en el mismo grupo (`group.test.ts`) con `now` fijo: día de hoy que ya pasó, día anterior, futuro, sin fecha, y completadas que no aparecen en ninguna sección.
+- [x] 5.3 `src/features/tasks/use-tasks.ts`: queries con `staleTime` acorde a `providers.tsx` y las mutaciones de crear, completar, editar y borrar con actualización optimista y rollback. Test del rollback al fallar la creación y al completar: se prueban montando la UI real en `capture.test.tsx` (crear) y `tasks-page.test.tsx` (completar) en vez del hook aislado, que es lo que de verdad ve quien usa la app.
 
 ## 6. Front: vista de lista
 
-- [ ] 6.1 `src/features/tasks/task-row.tsx`: fila con `<button>` de abrir el detalle y `<button>` de completar de `size-11` separado, `min-w-0` y `truncate` en el texto, etiqueta de texto "Alta" para `high` y fecha corta con `tabular-nums`. Test que comprueba las clases táctiles y los `aria-label`.
-- [ ] 6.2 `src/features/tasks/tasks-page.tsx`: `ViewHeader` con el recuento, `SkeletonList` cargando, error con reintento, `EmptyState` solo cuando no hay nada, y las secciones en el orden de `design.md D14`. Test de los tres estados con el cliente RPC mockeado como hace `health-panel.test.tsx`.
-- [ ] 6.3 Interruptor `Hechas (N)` con `<button aria-pressed>`. Para saber N con el interruptor cerrado, la vista hace **dos** consultas al abrir `/tasks` (pendientes y `?status=done`), cada una con su índice; el interruptor solo muestra u oculta la segunda, deja las completadas al final y baja el contador al completar o borrar una de ellas. Test con `?status=done` mockeado.
+- [x] 6.1 `src/features/tasks/task-row.tsx`: fila con `<button>` de abrir el detalle y `<button>` de completar de `size-11` separado, `min-w-0` y `truncate` en el texto, etiqueta de texto "Alta" para `high` y fecha corta con `tabular-nums`. Test que comprueba las clases táctiles y los `aria-label`.
+- [x] 6.2 `src/features/tasks/tasks-page.tsx`: `ViewHeader` con el recuento, `SkeletonList` cargando, error con reintento, `EmptyState` solo cuando no hay nada, y las secciones en el orden de `design.md D14`. Test de los tres estados con el cliente RPC mockeado como hace `health-panel.test.tsx`.
+- [x] 6.3 Interruptor `Hechas (N)` con `<button aria-pressed>`. Para saber N con el interruptor cerrado, la vista hace **dos** consultas al abrir `/tasks` (pendientes y `?status=done`), cada una con su índice; el interruptor solo muestra u oculta la segunda, deja las completadas al final y baja el contador al completar o borrar una de ellas. Test con `?status=done` mockeado.
 
 ## 7. Front: detalle y captura
 
-- [ ] 7.1 `src/features/tasks/task-detail-sheet.tsx` sobre `ResponsiveDialog`: título, notas, prioridad y `<input type="date">`; errores junto al campo con `aria-invalid` y `aria-describedby`; acciones de guardar y borrar; confirmación de borrado explícita con el título de la tarea. Test de guardar con cambios, de guardar sin cambios, de título vacío y de cancelar el borrado.
-- [ ] 7.2 `useCreateTask` conectado a los dos `CaptureBar` de `AppShell` (`design.md D10`), con `CaptureBar` capaz de reponer el texto y de marcar `aria-busy` sin bloquear el campo. Test de captura optimista, de reposición del texto al fallar y de envío en blanco.
-- [ ] 7.3 `pnpm build` y anotar el tamaño del bundle de la vista de tareas. Verificar que la carga inicial sigue por debajo de 200 kB comprimidos (`docs/DESIGN.md §4`).
+- [x] 7.1 `src/features/tasks/task-detail-sheet.tsx` sobre `ResponsiveDialog`: título, notas, prioridad y `<input type="date">`; errores junto al campo con `aria-invalid` y `aria-describedby`; acciones de guardar y borrar; confirmación de borrado explícita con el título de la tarea. Test de guardar con cambios, de guardar sin cambios, de título vacío y de cancelar el borrado.
+- [x] 7.2 `useCreateTask` conectado a los dos `CaptureBar` de `AppShell` (`design.md D10`), con `CaptureBar` capaz de reponer el texto y de marcar `aria-busy` sin bloquear el campo. Test de captura optimista, de reposición del texto al fallar y de envío en blanco.
+- [x] 7.3 `pnpm build` y anotar el tamaño del bundle de la vista de tareas. Verificar que la carga inicial sigue por debajo de 200 kB comprimidos (`docs/DESIGN.md §4`). Resultado: carga inicial de **148,6 kB** de JS comprimido (antes 135,6 kB; entran TanStack Query y el cliente RPC porque el shell monta la mutación de captura) y chunk perezoso de `/tasks` de **47,9 kB** (Zod y `@date-fns/tz` solo viajan ahí).
 
 ## 8. End-to-end y verificación manual
 

@@ -1,15 +1,16 @@
 import { ArrowUpIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
  * The signature control of Nexus (docs/DESIGN.md §5): always within thumb reach,
  * one tap to write and one to send.
  *
- * In this change it is **only the interface**: `onSubmit` is optional and the
- * component persists nothing and calls no API. `add-tasks` is what connects it,
- * and until then submitting simply empties the field, so the shortcut can be felt
- * before there is anything behind it.
+ * The bar empties at once on send, so the next task can be written while the
+ * previous one is saved. When `onSubmit` returns a promise that rejects, the text
+ * comes back to the field (unless something new was typed meanwhile): a failed
+ * save never loses what the person wrote (design.md D10). The field is never
+ * blocked; only the button waits, and the bar says it is busy.
  *
  * `N` focuses the field on desktop, where there is no thumb to reach it with.
  * That shortcut yields to typing, to an open overlay and to Ctrl/Cmd/Alt
@@ -40,12 +41,16 @@ export function CaptureBar({
 	placeholder = "Añade algo…",
 	className,
 }: {
-	/** Left out until `add-tasks` connects the bar to the API. */
-	onSubmit?: (text: string) => void;
+	/** A rejected promise gives the text back to the field. */
+	onSubmit?: (text: string) => unknown;
 	placeholder?: string;
 	className?: string;
 }) {
 	const inputRef = useRef<HTMLInputElement>(null);
+	// A counter, not a flag: two captures can be in flight at once, and the first
+	// one to settle must not mark the bar idle while the second is still saving.
+	const [pending, setPending] = useState(0);
+	const busy = pending > 0;
 
 	useEffect(() => {
 		function onKeyDown(event: KeyboardEvent) {
@@ -74,6 +79,7 @@ export function CaptureBar({
 	return (
 		<form
 			data-slot="capture-bar"
+			aria-busy={busy}
 			className={cn("shrink-0 border-t border-border bg-background", className)}
 			onSubmit={(event) => {
 				event.preventDefault();
@@ -81,10 +87,23 @@ export function CaptureBar({
 				if (!input) {
 					return;
 				}
-				if (input.value.trim() !== "") {
-					onSubmit?.(input.value);
-				}
+				const text = input.value;
 				input.value = "";
+				if (text.trim() === "" || !onSubmit) {
+					return;
+				}
+				const result = onSubmit(text);
+				if (result instanceof Promise) {
+					setPending((count) => count + 1);
+					result
+						.catch(() => {
+							// Only into an empty field: never over what was typed since.
+							if (inputRef.current && inputRef.current.value === "") {
+								inputRef.current.value = text;
+							}
+						})
+						.finally(() => setPending((count) => count - 1));
+				}
 			}}
 		>
 			{/* Shadow: this bar floats over the content, so it is one of the two
@@ -108,6 +127,7 @@ export function CaptureBar({
 				<button
 					type="submit"
 					aria-label="Guardar"
+					disabled={busy}
 					// 44 × 44 px minimum touch area (docs/DESIGN.md §4). Feedback uses
 					// `active`, never `hover`: a hover style sticks on touch.
 					className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform active:scale-95 disabled:opacity-50"

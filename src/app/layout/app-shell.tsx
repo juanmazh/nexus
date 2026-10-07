@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
 import { ToastHost } from "@/components/toast-host";
+import { useCreateTask } from "@/features/tasks/use-tasks";
 import { useIsDesktop } from "@/lib/use-media-query";
 import { CaptureBar } from "./capture-bar";
 import { Sidebar } from "./sidebar";
@@ -31,6 +32,10 @@ export function AppShell() {
 	const isDesktop = useIsDesktop();
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const { pathname } = useLocation();
+	// One mutation for both bars: whichever is on screen creates the task, from
+	// any section (design.md D10).
+	const createTask = useCreateTask();
+	const capture = (title: string) => createTask.mutateAsync({ title });
 
 	// A new section starts at its own beginning, never halfway down.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `pathname` is the trigger, not something the body reads
@@ -50,7 +55,11 @@ export function AppShell() {
 					>
 						{/* Aligned with the content column, not stretched across the whole window. */}
 						<div className="mx-auto w-full max-w-2xl">
-							<CaptureBar placeholder="Añade una tarea…" className="border-t-0" />
+							<CaptureBar
+								placeholder="Añade una tarea…"
+								className="border-t-0"
+								onSubmit={capture}
+							/>
 						</div>
 					</header>
 				) : null}
@@ -66,7 +75,7 @@ export function AppShell() {
 					</div>
 				</main>
 
-				{isDesktop ? null : <CaptureBar placeholder="Añade una tarea…" />}
+				{isDesktop ? null : <CaptureBar placeholder="Añade una tarea…" onSubmit={capture} />}
 
 				{isDesktop ? null : <TabBar />}
 			</div>

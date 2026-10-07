@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -59,18 +60,23 @@ afterEach(() => {
 });
 
 function renderShell(path = "/") {
+	// The shell owns the capture bar's mutation, so it needs a query client even
+	// when no page reads anything.
+	const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 	return render(
-		<MemoryRouter initialEntries={[path]}>
-			<Routes>
-				<Route element={<AppShell />}>
-					<Route path="/" element={<p>Vista de Hoy</p>} />
-					<Route path="/tasks" element={<p>Vista de Tareas</p>} />
-					<Route path="/notes" element={<p>Vista de Notas</p>} />
-					<Route path="/more" element={<p>Vista de Más</p>} />
-					<Route path="*" element={<p>Página no encontrada</p>} />
-				</Route>
-			</Routes>
-		</MemoryRouter>,
+		<QueryClientProvider client={queryClient}>
+			<MemoryRouter initialEntries={[path]}>
+				<Routes>
+					<Route element={<AppShell />}>
+						<Route path="/" element={<p>Vista de Hoy</p>} />
+						<Route path="/tasks" element={<p>Vista de Tareas</p>} />
+						<Route path="/notes" element={<p>Vista de Notas</p>} />
+						<Route path="/more" element={<p>Vista de Más</p>} />
+						<Route path="*" element={<p>Página no encontrada</p>} />
+					</Route>
+				</Routes>
+			</MemoryRouter>
+		</QueryClientProvider>,
 	);
 }
 

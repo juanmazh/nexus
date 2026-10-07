@@ -302,11 +302,15 @@ la barra:
 - Si la API responde bien → el texto ya está vacío y la tarea ya está en la lista (optimista).
 - Si falla → el `onError` del `useMutation` **devuelve el texto a la barra** y avisa con un `toast`.
 
-**Cómo vuelve el texto.** `CaptureBar` acepta `value?: string` y `onValueChange?: (v: string) => void`
-para poder ser controlado cuando hace falta, **sin** convertirlo por defecto en controlado: un input
-controlado con un `setState` por pulsación re-renderiza el shell entero en cada tecla, que es lo
-contrario de lo que `docs/DESIGN.md §4` pide en rendimiento percibido. El campo sigue no controlado
-por defecto; el modo controlado solo se activa cuando hay que reponer el texto.
+**Cómo vuelve el texto.** `onSubmit` puede devolver una promesa: la de `mutateAsync`. Si se rechaza,
+la barra devuelve el texto al campo, **solo si sigue vacío**, para no pisar lo que se haya escrito
+después. Así el campo sigue no controlado (un `setState` por pulsación re-renderizaría el shell entero
+en cada tecla, lo contrario de lo que pide `docs/DESIGN.md §4`) y no hace falta un modo controlado
+`value`/`onValueChange`, que era la idea inicial y añadía una API que nadie más usaría.
+
+**Una fila optimista no se puede tocar.** Su id es provisional (no es un uuid), así que completarla o
+abrirla antes de que responda la API sería un `400`. La fila se ve al instante, dice "Guardando…" y
+sus botones están deshabilitados hasta que `onSuccess` la sustituye por la fila real.
 
 **No se bloquea el campo mientras guarda.** La barra marca `aria-busy` y el botón se deshabilita solo
 durante el envío. Escribir la siguiente tarea mientras la anterior se guarda es el caso normal, y
