@@ -18,10 +18,9 @@
 			"binding": "DB",
 			"database_name": "nexus-db",
 			"migrations_dir": "migrations",
-			// TODO(setup): sustituye este UUID por el que devuelva
-			//   pnpm wrangler d1 create nexus-db
-			// Hasta entonces, `pnpm dev` usa la D1 local de Miniflare y funciona igual.
-			"database_id": "00000000-0000-0000-0000-000000000000"
+			// Creada con `pnpm wrangler d1 create nexus-db`. No es un secreto.
+			// `pnpm dev` usa siempre la D1 local de Miniflare, nunca esta.
+			"database_id": "9e08bf84-912c-4ccf-ae10-e4df4e1af7b0"
 		}
 	],
 	// "triggers" llega con add-reminders: sin jobs, un cron ocuparía uno de los
