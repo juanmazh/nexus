@@ -1,0 +1,28 @@
+{
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"lib": ["es2022"],
+		"types": ["node"],
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"verbatimModuleSyntax": true,
+		"isolatedModules": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"paths": {
+			"@/*": ["./src/*"],
+			"@shared/*": ["./shared/*"]
+		}
+	},
+	"include": [
+		"vite.config.ts",
+		"vitest.config.ts",
+		"vitest.worker.config.ts",
+		"vitest.web.config.ts",
+		"drizzle.config.ts"
+	]
+}
