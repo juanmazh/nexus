@@ -5,7 +5,7 @@
 		"moduleResolution": "bundler",
 		"jsx": "react-jsx",
 		"lib": ["es2022", "dom", "dom.iterable"],
-		"types": ["vite/client", "@testing-library/jest-dom"],
+		"types": ["vite/client", "@testing-library/jest-dom", "node"],
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"noUnusedLocals": true,

@@ -26,23 +26,23 @@
 
 ## 2. Tema "olivar" y tipografía
 
-- [ ] 2.1 Crear `src/lib/theme.ts` con `resolveTheme(stored, prefersDark)` como función pura y
+- [x] 2.1 Crear `src/lib/theme.ts` con `resolveTheme(stored, prefersDark)` como función pura y
   `applyTheme(document)` que pone la clase en `<html>` y guarda la elección en `localStorage`
   (`nexus:theme`) con el acceso envuelto en `try/catch`; escribir `src/lib/theme.test.ts` con las
   cuatro combinaciones de preferencia y elección, más el caso de `localStorage` que lanza; verificar
   que `pnpm test` deja verde el proyecto `web`.
-- [ ] 2.2 Crear `src/components/theme-provider.tsx` (contexto, escucha `prefers-color-scheme` solo
+- [x] 2.2 Crear `src/components/theme-provider.tsx` (contexto, escucha `prefers-color-scheme` solo
   mientras no haya elección manual) y `src/components/theme-toggle.tsx` (conmutador con las tres
   opciones: sistema, claro, oscuro), montado en la barra de vista de **Más**; escribir
   `src/components/theme-provider.test.tsx` que compruebe la clase en `<html>`, que sigue al sistema
   mientras no se elija, y que una elección manual persiste y deja de seguir al sistema; verificar con
   `pnpm test`.
-- [ ] 2.3 Sustituir en `src/index.css` los tokens de `:root` y `.dark` por la paleta de
+- [x] 2.3 Sustituir en `src/index.css` los tokens de `:root` y `.dark` por la paleta de
   `docs/DESIGN.md §5` (cal, tinta, olivo, aceite, piedra, granada), derivando y **documentando en el
   propio fichero** los tokens que el documento no fija (`muted-foreground`, `border`, `input`, `ring`,
   `chart-*`, `sidebar-*`); añadir `color-scheme: light dark` en `:root`; verificar que ningún
   componente usa un color literal con una búsqueda de `#` y `rgb(` en `src/**/*.tsx`.
-- [ ] 2.4 Cambiar en `src/index.css` `--font-heading` a Bricolage Grotesque y `--font-sans` a
+- [x] 2.4 Cambiar en `src/index.css` `--font-heading` a Bricolage Grotesque y `--font-sans` a
   Atkinson Hyperlegible Next, quitando el alias `--font-heading: var(--font-sans)` y la importación de
   Geist; verificar con `pnpm build` que los `.woff2` salen en `dist/client/assets` y que la hoja de
   estilos los referencia desde el propio origen (sin peticiones a terceros).
@@ -54,7 +54,7 @@
   y ≥ 3:1 en `accent-strong`/`background` y `ring`/`background`, en los dos modos; verificar con
   `pnpm test` que pasa, y que cambiar `--muted-foreground` a tinta al 55 % lo hace fallar (deshaciendo
   después el cambio).
-- [ ] 2.6 Añadir en `src/index.css` el bloque `@media (prefers-reduced-motion: reduce)` que desactiva
+- [x] 2.6 Añadir en `src/index.css` el bloque `@media (prefers-reduced-motion: reduce)` que desactiva
   transiciones y animaciones; verificar que `pnpm build` sigue en `0` y que las utilidades
   `data-starting-style` de `Drawer` y `Dialog` quedan anuladas.
 
