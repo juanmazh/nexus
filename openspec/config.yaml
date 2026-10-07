@@ -1,0 +1,67 @@
+# openspec/config.yaml — Nexus
+#
+# Se inyecta en el prompt cada vez que OpenSpec genera un artefacto:
+#   - `context` aparece en TODOS los artefactos.
+#   - `rules.<artefacto>` solo aparece en el artefacto correspondiente.
+#
+# IMPORTANTE: ejecuta primero `openspec init` y después fusiona este fichero con el que
+# genere. Conserva cualquier clave que añada `init` (por ejemplo, la de idioma) y
+# sustituye solo `schema`, `context` y `rules`. (Ver docs/PROGRESS.md, paso 0.5.)
+
+schema: spec-driven
+
+context: |
+  Proyecto: Nexus — suite personal (un único usuario, el dueño) para tareas, recordatorios,
+  notas, enlaces, finanzas y, más adelante, un blog público. Repositorio público en GitHub
+  (debe ser digno de portfolio). Coste objetivo: 0 €/mes en el plan gratuito de Cloudflare.
+
+  Las reglas completas están en AGENTS.md; la arquitectura y las decisiones, en
+  docs/ARCHITECTURE.md; las fases, en docs/ROADMAP.md. Si algo de lo que vas a escribir
+  contradice esos documentos, señálalo en lugar de ignorarlo.
+
+  Idioma: escribe TODOS los artefactos (proposal, specs, design, tasks) en español. Los
+  encabezados que exige OpenSpec y las palabras normativas (SHALL, MUST, WHEN, THEN) se
+  mantienen en inglés. Los identificadores de código, rutas, nombres de tablas y columnas,
+  siempre en inglés.
+
+  Stack cerrado: un único Cloudflare Worker con static assets (Vite + @cloudflare/vite-plugin),
+  Hono para la API bajo /api/*, Zod para validación, D1 + Drizzle ORM (migraciones con
+  drizzle-kit y wrangler), React 19 + TypeScript strict (SPA), React Router, TanStack Query,
+  cliente RPC tipado de Hono, Tailwind + shadcn/ui, date-fns + @date-fns/tz, Vitest, Biome, pnpm.
+
+  Autenticación: Cloudflare Access delante del Worker, más validación del JWT
+  (Cf-Access-Jwt-Assertion) en un middleware del Worker. Fail closed.
+  Avisos: bot de Telegram llamado desde un único Cron Trigger (*/5 * * * *).
+
+  Restricciones duras del plan gratuito: 10 ms de CPU por invocación, 50 subpeticiones por
+  invocación (las queries a D1 cuentan), 100.000 peticiones/día, D1 con 5 M de filas leídas
+  y 100.000 escritas al día, 500 MB por base de datos, máximo 5 Cron Triggers por cuenta.
+  Nada que requiera Workers Paid.
+
+  Fechas: siempre UTC en BD como integer (epoch ms); se presentan en Europe/Madrid.
+
+rules:
+  proposal:
+    - "Explica el problema y el valor para el usuario antes que la solución."
+    - "Incluye una sección 'Fuera de alcance' explícita; el alcance debe caber en un solo PR revisable (orientativo: menos de ~600 líneas de código de producto)."
+    - "Si el cambio es grande, propón dividirlo en varios cambios con ids independientes en lugar de uno enorme."
+    - "Indica qué fase de docs/ROADMAP.md cubre y si añade dependencias, bindings o secretos nuevos."
+    - "Señala el impacto en los límites del plan gratuito, aunque sea 'ninguno'."
+  specs:
+    - "Describe comportamiento observable (API, UI, avisos), nunca detalles de implementación."
+    - "Cada requisito usa SHALL/MUST y tiene al menos un escenario WHEN/THEN; incluye escenarios de error y de bordes (vacío, valores límite, no autorizado)."
+    - "Para endpoints: método, ruta, entrada validada, respuesta de éxito y respuestas de error con la forma { error: { code, message } }."
+    - "Para todo lo relacionado con tiempo: especifica la zona horaria (almacenado en UTC, mostrado en Europe/Madrid) y el comportamiento si el momento ya pasó."
+    - "Reutiliza o modifica capacidades existentes en openspec/specs/ antes de crear una nueva."
+  design:
+    - "Incluye los cambios de esquema Drizzle (tablas, columnas, índices) y si la migración es destructiva."
+    - "Justifica cada dependencia nueva (alternativas consideradas y por qué no basta lo que ya hay)."
+    - "Estima el coste en el plan gratuito: queries por petición, filas leídas/escritas, subpeticiones por invocación del cron."
+    - "Respeta la separación routes (HTTP) / services (negocio) / db (esquema) de AGENTS.md."
+    - "Documenta los riesgos y cómo se revierte el cambio."
+    - "Si la decisión es arquitectónica, propón la entrada ADR correspondiente para docs/ARCHITECTURE.md."
+  tasks:
+    - "Tareas pequeñas y verificables (orientativo: 30-90 minutos), ordenadas por dependencia: esquema → servicios → rutas → frontend → tests → docs."
+    - "Cada tarea indica los ficheros que toca."
+    - "Los tests van junto a la funcionalidad que cubren, no todos al final."
+    - "Última tarea obligatoria: comprobar la definición de hecho de AGENTS.md (typecheck, lint, test, build, migración local, openspec validate)."

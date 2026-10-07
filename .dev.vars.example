@@ -1,0 +1,10 @@
+# Copy this file to .dev.vars and fill in the values. .dev.vars is git-ignored.
+# Production values are set with: pnpm wrangler secret put <NAME>
+# Keep the real values in your password manager so every machine can restore them.
+
+# Cloudflare Access — "AUD tag" of the Access application protecting the Worker
+ACCESS_AUD=
+
+# Telegram bot (from @BotFather) and your chat id (from getUpdates)
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
