@@ -56,8 +56,13 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
 | `worker/app.ts` | Middlewares globales (errores, cabeceras de seguridad, access), monta rutas y exporta `AppType` |
 | `middleware/access.ts` | Valida el JWT de Access: firma (claves del equipo), `aud`, `iss`, `exp`. Cachea las claves públicas |
 | `routes/*` | Capa HTTP: valida con Zod, llama al servicio, serializa la respuesta |
+| `routes/tasks.ts` | `GET`/`POST /api/tasks` y `PATCH`/`DELETE /api/tasks/:id`. Valida json, query y param con los esquemas de `shared/tasks.ts` y responde `400`/`404`/`405` con la forma `{ error: { code, message } }`. Un `PATCH` con `status` pasa por `updateTaskStatus` |
 | `services/*` | Lógica de negocio. Recibe `db` y datos ya validados. Testeable sin HTTP |
+| `services/tasks.ts` | `listTasks`, `createTask`, `updateTask`, `updateTaskStatus` y `deleteTask`: una consulta por lectura y una escritura por mutación. `updateTaskStatus` es el **único** que escribe `completed_at` |
 | `db/schema.ts` | Esquema Drizzle: fuente única del modelo de datos |
+| `db/client.ts` | `createDb(env)`: la instancia de Drizzle sobre el binding `DB` |
+| `shared/tasks.ts` | Esquemas Zod de la tarea, compartidos por el Worker (validación) y la SPA (formulario de detalle) |
+| `shared/dates.ts` | `dueDateToEpochMs`, `zonedDayStart` y `zonedDayNumber`: la única regla de "qué día es" en `Europe/Madrid`, usada por el filtro `overdue` y por las secciones de la lista |
 | `jobs/reminders.ts` | Selecciona recordatorios vencidos, los envía y registra el resultado |
 | `integrations/telegram.ts` | Cliente mínimo de `sendMessage` de la Bot API |
 
@@ -67,12 +72,14 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
 |---|---|
 | `src/app/router.tsx` | Ruta de layout con las cuatro secciones (`/`, `/tasks`, `/notes`, `/more`) y `*`, cada una con `lazy()` |
 | `src/app/navigation.ts` | `NAV_ITEMS`: la lista única que recorren la tab bar y la barra lateral |
-| `src/app/layout/` | El shell: `h-dvh`, cabecera, `<Outlet/>` con scroll interno, barra de captura y navegación |
+| `src/app/layout/` | El shell: `h-dvh`, cabecera, `<Outlet/>` con scroll interno, barra de captura y navegación. El shell monta `useCreateTask` y se lo pasa a sus dos barras de captura: capturar crea una tarea desde cualquier sección |
 | `src/app/providers.tsx` | `QueryClientProvider` y `ThemeProvider` |
 | `src/lib/api.ts` | Cliente `hc<AppType>('/')`: llamadas tipadas de extremo a extremo sin generar código |
 | `src/lib/theme.ts` | `resolveTheme` (puro) y `applyTheme`, llamado por `main.tsx` antes del primer pintado |
 | `src/lib/use-media-query.ts` | `useSyncExternalStore` sobre `matchMedia`, para el breakpoint de 1024 px |
 | `src/features/*` | Una carpeta por feature con sus componentes, hooks de TanStack Query y tipos |
+| `src/features/tasks/` | `api.ts` (una función por endpoint, tipos derivados del cliente RPC), `use-tasks.ts` (queries y mutaciones optimistas con rollback), `group.ts` (Vencidas / Hoy / Próximas / Sin fecha, sin reordenar), `task-row.tsx`, `task-detail-sheet.tsx` y `tasks-page.tsx` |
+| `src/lib/datetime.ts` | `APP_TIMEZONE`: la zona con la que la SPA presenta y agrupa las fechas |
 | `src/components/ui/` | Componentes de shadcn/ui |
 | `src/components/responsive-dialog.tsx` | **El único overlay**: `Drawer` por debajo de 1024 px, `Dialog` a partir de 1024 px |
 | `src/components/toast-host.tsx` | **El único host de avisos**, montado una vez en el shell |
@@ -181,15 +188,19 @@ duplicado es mejor que un aviso perdido.
 | Columna | Tipo | Notas |
 |---|---|---|
 | `id` | text PK | `crypto.randomUUID()` |
-| `title` | text NOT NULL | 1–200 caracteres |
-| `notes` | text | opcional, Markdown simple |
+| `title` | text NOT NULL | 1–200 caracteres, sin espacios en los extremos |
+| `notes` | text | opcional, texto plano |
 | `status` | text NOT NULL | `todo` \| `done` (default `todo`) |
 | `priority` | text NOT NULL | `low` \| `medium` \| `high` (default `medium`) |
-| `due_at` | integer | epoch ms UTC, opcional |
-| `completed_at` | integer | epoch ms UTC, se rellena al pasar a `done` |
+| `due_at` | integer | epoch ms UTC de las 00:00 del día elegido en `Europe/Madrid`, opcional. La API recibe `due_date` (`YYYY-MM-DD`) y lo convierte |
+| `completed_at` | integer | epoch ms UTC. Lo escribe **solo** `updateTaskStatus`: se fija la primera vez que pasa a `done` y vuelve a `NULL` al pasar a `todo` |
 | `created_at` / `updated_at` | integer NOT NULL | epoch ms UTC |
 
-Índices: `(status, due_at)`.
+Índices: `(status, due_at)` para la lista de pendientes y el filtro `overdue`, y `(status, completed_at)`
+para la lista de hechas, que se ordena por fecha de completado.
+
+"Vencida" significa un día **anterior** al de hoy en `Europe/Madrid`, no una hora pasada: una tarea que
+vence hoy no está vencida en todo el día.
 
 ### `reminders`
 

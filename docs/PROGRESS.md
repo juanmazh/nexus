@@ -11,11 +11,11 @@
 
 | Campo | Valor |
 |---|---|
-| **Fase** | 0 — Cimientos (última de la fase 0) |
-| **Paso / cambio** | Cambio 0.3 `add-app-shell` **implementado y verificado**, pendiente de revisión, merge y archivo |
-| **Rama** | `change/add-app-shell` (sin PR todavía) |
-| **Siguiente acción exacta** | Revisar el código del cambio → `pnpm test:e2e` en verde y `pnpm exec playwright install chromium` si es un equipo nuevo → validar la dirección visual "olivar" en un **móvil real** y anotar el resultado en `docs/DESIGN.md §5` → `pnpm deploy` (sin pasos manuales previos: este cambio no añade secretos, migraciones ni cron) → comprobar en el despliegue real que la SPA carga sin violaciones de CSP, que las fuentes se sirven desde el propio origen y que el tema no destella de forma molesta → abrir el PR, mergear a `main` y archivar con `/opsx-archive add-app-shell` |
-| **Bloqueos** | Ninguno. Queda una comprobación manual (8.1: DevTools y **móvil real**) que el agente no puede hacer |
+| **Fase** | 1 — MVP: tareas y recordatorios |
+| **Paso / cambio** | Cambio 1.1 `add-tasks` **implementado y verificado** (34/35 tareas), pendiente de revisión, PR, deploy y archivo |
+| **Rama** | `change/add-tasks` (sin PR todavía) |
+| **Siguiente acción exacta** | Revisar el código → `git push` y abrir el PR con la CI en verde → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → en el despliegue real, comprobar que `/tasks` carga, que crear desde la barra de captura funciona y que `GET /api/health` sigue en `200` → verificación manual 8.3 en un **móvil real** → `/opsx-archive add-tasks` **antes** de mergear → merge a `main` |
+| **Bloqueos** | Ninguno. Queda la 8.3 (DevTools y **móvil real**), que el agente no puede hacer |
 | **Última actualización** | 2026-10-07 · casa |
 
 ---
@@ -77,9 +77,9 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | # | change-id | Estado | Rama / PR | Pasos manuales asociados |
 |---|---|---|---|---|
 | 0.1 | `bootstrap-project` | ✅ | PR #3 y #4 | — |
-| 0.2 | `add-access-auth` | 👀 | `change/add-access-auth` (sin PR) | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` **antes** del primer deploy con el middleware montado → `pnpm deploy` → comprobar las tres rutas a mano |
-| 0.3 | `add-app-shell` | 🟡 | `change/add-app-shell` (sin PR) | `pnpm exec playwright install chromium` en cada equipo nuevo → validar en un **móvil real** la dirección visual "olivar" (`docs/DESIGN.md §5`) → `pnpm deploy` y comprobar en el despliegue real que no hay violaciones de CSP, que las fuentes van al propio origen y que el tema no destella |
-| 1.1 | `add-tasks` | ⬜ | | `pnpm db:migrate:remote` antes del deploy |
+| 0.2 | `add-access-auth` | ✅ | PR #6 | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` **antes** del primer deploy con el middleware montado → `pnpm deploy` → comprobar las tres rutas a mano |
+| 0.3 | `add-app-shell` | ✅ | PR #7 | `pnpm exec playwright install chromium` en cada equipo nuevo → validar en un **móvil real** la dirección visual "olivar" (`docs/DESIGN.md §5`) → `pnpm deploy` y comprobar en el despliegue real que no hay violaciones de CSP, que las fuentes van al propio origen y que el tema no destella |
+| 1.1 | `add-tasks` | 🟡 | `change/add-tasks` (sin PR) | `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → comprobar `/tasks` y la captura en el despliegue real y en un **móvil real** |
 | 1.2 | `add-reminders` | ⬜ | | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; migración remota; deploy; esperar un aviso real |
 | 1.3 | `add-pwa` | ⬜ | | Instalar la app en tu móvil (Android: Chrome › Instalar; iOS: Safari › Añadir a pantalla de inicio) |
 | — | **Hito v0.1.0** | ⬜ | | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
@@ -128,6 +128,22 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 
+### Estado de la definición de hecho (`AGENTS.md §9`) para `add-tasks`
+
+| Punto | Estado |
+|---|---|
+| Todas las tareas de `tasks.md` marcadas | ⚠️ **34/35**: solo queda 8.3, que es manual |
+| `pnpm typecheck`, `pnpm lint` y `pnpm test` en `0` | ✅ `0`, `0`, **278 tests** (worker contra D1 real + web) |
+| `pnpm build` | ✅ build de producción sin errores |
+| Migración | ✅ `migrations/0000_mixed_madrox.sql` (tabla `tasks` y sus dos índices), aplicada en local; la remota es un paso manual **antes** del deploy |
+| Cada requisito nuevo con al menos un test | ✅ Vitest + Playwright (**62 en dos viewports**, 10 nuevos del flujo de tareas) |
+| UI nueva con carga, vacío y error | ✅ `Skeleton`, `EmptyState` "Sin tareas" y error con "Reintentar" |
+| Responsive verificado (`docs/DESIGN.md §6`) | ⚠️ **automático en verde** (sin scroll horizontal, objetivos de 44 px, hoja en móvil y diálogo en escritorio); falta la 8.3 manual |
+| `docs/ARCHITECTURE.md` actualizado | ✅ `§2.1`, `§2.2` y `§4` (segundo índice, regla de "vencida", único escritor de `completed_at`) |
+| `openspec validate add-tasks --strict` | ✅ sin errores |
+| Presupuesto de la carga inicial | ✅ **148,6 kB de JS comprimido** (antes 135,6; presupuesto: 200 kB). El chunk perezoso de `/tasks` pesa 47,9 kB |
+| Auditoría de secretos | ✅ ningún token, secreto, email real ni `chat.id`; los datos de `e2e/fixtures.ts` son ficticios |
+
 ### Estado de la definición de hecho (`AGENTS.md §9`) para `add-app-shell`
 
 | Punto | Estado |
@@ -143,6 +159,8 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | `openspec validate add-app-shell --strict` | ✅ sin errores |
 | Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
 | Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
+
+- **2026-10-07 · casa** — `/opsx-apply add-tasks`: **34/35 tareas**. OpenCode hizo los grupos 0–3 con errores de tipos y de formato (corregidos) y se quedó sin cuota gratuita; Claude cerró 3–9. Worker: `routes/tasks.ts` con validadores propios que devuelven `{ error: { code, message } }`, `405` con `Allow`, `PATCH` que separa `status` (va a `updateTaskStatus`, único escritor de `completed_at`) del resto de campos. SPA: `features/tasks/` con tipos derivados del cliente RPC, mutaciones optimistas con rollback, secciones Vencidas / Hoy / Próximas / Sin fecha, `Hechas (N)`, detalle en `ResponsiveDialog` con borrado confirmado, y la barra de captura conectada desde el shell. **Desviaciones del `design.md`, deliberadas y ya reflejadas en él:** (1) la barra devuelve el texto cuando la promesa de `onSubmit` se rechaza, sin modo controlado `value`/`onValueChange`; (2) una fila optimista no se puede completar ni abrir hasta que llega su id real, porque su id provisional daría un `400`; (3) el botón "Borrar tarea" va con borde rojo en vez de relleno, porque blanco sobre el rojo del modo oscuro no llega a AA; (4) la comprobación de scroll horizontal de la suite e2e ignora los nodos recortados a nada (`sr-only`, *focus guards* de Base UI), que daban falsos positivos. La 9.2 pedía marcar el cambio en `docs/ROADMAP.md`, pero ese documento no lleva estado: el estado vive aquí. → Siguiente: revisar, PR, `pnpm db:migrate:remote`, `pnpm deploy`, 8.3 en un móvil real y `/opsx-archive add-tasks` antes del merge.
 
 - **2026-10-07 · casa** — `/opsx-apply add-app-shell`: **30/33 tareas** (1–6 hechas y commiteadas; 7 en curso). Shell completo (`src/app/layout/`): ruta de layout con `h-dvh` y scroll interno, `TabBar`/`Sidebar` montados **uno u otro** según viewport, barra de captura con atajo `N` que cede ante escritura, overlays y con Ctrl/Cmd/Alt, `EmptyState`, `Skeleton` y el `ToastHost` único. Tema "olivar" en tokens, con `--accent-strong` (`#A8841A`) para el marcador de "ahora" y `src/lib/contrast.test.ts` leyendo `src/index.css` y fallando si un par baja de AA (comprobado: tinta al 55 % da 3,59:1 y 3,07:1). Fuentes propias self-hosted (fuera Geist). `ResponsiveDialog` con `Drawer`/`Dialog` de shadcn y `useSyncExternalStore` para el breakpoint. `HealthPage` → `HealthPanel` en **Más**, que además muestra `GET /api/me` (solo ahí, para no gastar invocaciones del Worker). Playwright con proyectos móvil 360 × 780 y escritorio 1280 × 800, levantando `pnpm build` + `vite preview` e interceptando `/api/*`: **48 tests en verde en los dos proyectos**, y job `e2e` en la CI en paralelo a `verify`. **Tres desviaciones del `design.md`, deliberadas:** (1) `contrast.test.ts` lee el CSS con `node:fs` en vez de `import "index.css?raw"`, porque en este montaje de Vite un `?raw` de un hoja de estilos resuelve a cadena vacía y haría pasar todas las aserciones sin comprobar nada; (2) `TabBar` y `Sidebar` los elige `AppShell`, no un `AppNavigation` aparte, porque la tab bar va **abajo** en móvil y la barra lateral **a la izquierda** en escritorio, y un solo componente no puede ocupar las dos posiciones; (3) la comprobación de scroll horizontal de la suite hace más que comparar `scrollWidth` con `innerWidth`: la raíz del shell es `overflow-hidden` a propósito, así que un elemento demasiado ancho se **recorta** en vez de hacer scroll y `scrollWidth` no se entera; la suite busca además cualquier caja que sobresalga del viewport (comprobado: rompe al forzar un ancho de 1400 px). **8.1 (verificación manual en DevTools y en un móvil real) y 8.2 quedan para la persona propietaria**; el resto de 8 se cierra al final. → Siguiente: cerrar 7 y 8, revisar, `pnpm deploy`, comprobar en el despliegue real, PR, merge y `/opsx-archive`.
 

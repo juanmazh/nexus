@@ -11,10 +11,10 @@ siguientes se construyan sobre una base verde.
 ### Requirement: Comandos de desarrollo documentados
 
 El proyecto SHALL ofrecer, a través del gestor de paquetes, los comandos `dev`, `build`,
-`typecheck`, `lint`, `format`, `test`, `db:generate`, `db:migrate:local`, `db:migrate:remote`,
-`cf-typegen` y `deploy`, con el comportamiento descrito en `AGENTS.md §4`. El comando `dev` SHALL
-levantar a la vez el servidor de Vite y el Worker con la base de datos D1 local, de forma que la SPA
-y la API estén disponibles en el mismo origen sin pasos adicionales.
+`typecheck`, `lint`, `format`, `test`, `test:e2e`, `db:generate`, `db:migrate:local`,
+`db:migrate:remote`, `cf-typegen` y `deploy`, con el comportamiento descrito en `AGENTS.md §4`. El
+comando `dev` SHALL levantar a la vez el servidor de Vite y el Worker con la base de datos D1 local,
+de forma que la SPA y la API estén disponibles en el mismo origen sin pasos adicionales.
 
 #### Scenario: Levantar el proyecto en local
 
@@ -31,18 +31,24 @@ y la API estén disponibles en el mismo origen sin pasos adicionales.
 ### Requirement: CI que verifica cada PR
 
 El proyecto SHALL incluir un workflow de GitHub Actions que, en cada pull request y en `main`,
-instale las dependencias y ejecute lint, typecheck, test y build. Los jobs SHALL fallar si cualquiera
-de esos pasos falla.
+instale las dependencias y ejecute lint, typecheck, test, las pruebas de navegador y build. Los jobs
+SHALL fallar si cualquiera de esos pasos falla.
 
 #### Scenario: PR con todo en verde
 
-- **WHEN** se abre un pull request y lint, typecheck, test y build terminan correctamente
+- **WHEN** se abre un pull request y lint, typecheck, test, pruebas de navegador y build terminan
+  correctamente
 - **THEN** el job aparece como correcto y el pull request queda listo para revisión
 
 #### Scenario: PR con un test roto
 
 - **WHEN** un pull request introduce un fallo que `pnpm test` detecta
 - **THEN** el job termina en fallo y señala el paso responsable
+
+#### Scenario: PR con un fallo responsive
+
+- **WHEN** un pull request introduce una vista que incumple las comprobaciones responsive
+- **THEN** el job de pruebas de navegador termina en fallo y señala la ruta y el viewport
 
 #### Scenario: La CI no despliega
 
@@ -51,23 +57,29 @@ de esos pasos falla.
 
 ### Requirement: Página inicial mínima que consulta la API
 
-La SPA SHALL servir una página inicial que consulta `GET /api/health` y refleja su resultado en tres
-estados visibles: **cargando**, **éxito** y **error**. La acción visible SHALL ser la consulta a la
-API, SHALL tener un área táctil de al menos 44 × 44 px y SHALL funcionar a 360 px de ancho sin scroll
-horizontal. La página no SHALL depender de `hover`. El `meta viewport` SHALL ser
-`width=device-width, initial-scale=1, viewport-fit=cover` y no SHALL impedir el zoom.
+La raíz de la SPA SHALL servir la sección **Hoy** del shell, y la consulta a `GET /api/health` con sus
+tres estados visibles —**cargando**, **éxito** y **error**— SHALL vivir en la sección **Más** de esa
+misma aplicación. La acción de reintentar SHALL tener un área táctil de al menos 44 × 44 px, la
+aplicación no SHALL depender de `hover` para funcionar, y el `meta viewport` SHALL ser
+`width=device-width, initial-scale=1, viewport-fit=cover` sin impedir el zoom.
+
+#### Scenario: La raíz es la sección Hoy
+
+- **WHEN** se abre la raíz de la aplicación
+- **THEN** se muestra la sección **Hoy** del shell con su barra de navegación
+- **AND** la comprobación de la API ya no ocupa la pantalla inicial
 
 #### Scenario: Carga con la API disponible
 
-- **WHEN** se abre la aplicación con la API disponible
+- **WHEN** se abre la sección **Más** con la API disponible
 - **THEN** se muestra un estado de carga mientras dura la petición
-- **AND** al responder `200`, la página indica que la API responde con estado `ok`
+- **AND** al responder `200`, la vista indica que la API responde con estado `ok`
 - **AND** a 360 px de ancho no hay scroll horizontal y la acción es alcanzable con el pulgar
 
 #### Scenario: Carga con la API no disponible
 
 - **WHEN** la consulta a `GET /api/health` falla o la respuesta no es correcta
-- **THEN** la página muestra un estado de error que dice qué ha fallado
+- **THEN** la vista **Más** muestra un estado de error que dice qué ha fallado
 - **AND** ofrece una forma de reintentar la consulta
 - **AND** no muestra un estado de éxito
 
@@ -104,14 +116,19 @@ pero **no SHALL** contener ninguna tabla ni migración aplicada en este cambio.
 ### Requirement: Estructura de carpetas lista para crecer
 
 El proyecto SHALL separar el código en `worker/` (API, servicios, esquema y trabajos programados),
-`shared/` (código compartido entre front y Worker), `src/` (SPA) y `e2e/` (vacío, reservado para
-Playwright), sin ninguna lógica de negocio en el proyecto inicial.
+`shared/` (código compartido entre front y Worker), `src/` (SPA) y `e2e/` (pruebas de navegador),
+sin ninguna lógica de negocio en la capa de pruebas.
 
 #### Scenario: El endpoint de salud vive en la capa HTTP
 
 - **WHEN** se busca el manejador de `GET /api/health`
 - **THEN** está en la capa de rutas del Worker y no contiene lógica de negocio ni acceso a la base
   de datos
+
+#### Scenario: Las pruebas de navegador viven fuera de la SPA
+
+- **WHEN** se busca la configuración de las pruebas de navegador
+- **THEN** está en la raíz del proyecto y sus pruebas viven en `e2e/`
 
 #### Scenario: El cliente de la API es tipado
 

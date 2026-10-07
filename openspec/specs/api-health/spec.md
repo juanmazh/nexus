@@ -29,8 +29,9 @@ valor es la cadena `ok`.
 
 #### Scenario: Comprobación desde la SPA
 
-- **WHEN** la SPA carga su página inicial y consulta `GET /api/health`
-- **THEN** la respuesta llega al navegador y la página puede mostrar que la API responde
+- **WHEN** se abre la sección **Más** de la SPA, que es donde vive la comprobación de diagnóstico
+- **THEN** la consulta a `GET /api/health` llega al navegador y la vista puede mostrar que la API
+  responde
 
 #### Scenario: Acceso sin sesión de Access
 
