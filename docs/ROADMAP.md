@@ -20,7 +20,7 @@
 | 0.3 | `add-app-shell` | **Shell mobile-first** de `docs/DESIGN.md`: tab bar inferior / barra lateral, barra de captura (sin lógica aún), `ResponsiveDialog`, tema "olivar" claro y oscuro, fuentes, safe areas y Playwright con viewports móvil y escritorio en la CI |
 
 <details>
-<summary>Prompt para <code>/opsx:propose bootstrap-project</code></summary>
+<summary>Prompt para <code>/opsx-propose bootstrap-project</code></summary>
 
 ```text
 Crea el andamiaje inicial de Nexus siguiendo AGENTS.md y docs/ARCHITECTURE.md:
@@ -38,7 +38,7 @@ despliegue automático.
 </details>
 
 <details>
-<summary>Prompt para <code>/opsx:propose add-access-auth</code></summary>
+<summary>Prompt para <code>/opsx-propose add-access-auth</code></summary>
 
 ```text
 Añade la capa de autenticación descrita en ADR-002: un middleware en worker/middleware/access.ts
@@ -53,7 +53,7 @@ Fuera de alcance: roles, varios usuarios, login propio.
 </details>
 
 <details>
-<summary>Prompt para <code>/opsx:propose add-app-shell</code></summary>
+<summary>Prompt para <code>/opsx-propose add-app-shell</code></summary>
 
 ```text
 Construye el shell de la aplicación siguiendo docs/DESIGN.md (§3 estructura, §4 reglas móviles,
@@ -87,7 +87,7 @@ Fuera de alcance: lógica de tareas, PWA, animaciones más allá de abrir y cerr
 | 1.3 | `add-pwa` | **Instalable en el móvil:** manifest, iconos, `display: standalone`, `theme-color` por tema y service worker que cachea solo la shell |
 
 <details>
-<summary>Prompt para <code>/opsx:propose add-tasks</code></summary>
+<summary>Prompt para <code>/opsx-propose add-tasks</code></summary>
 
 ```text
 Implementa la gestión de tareas según el modelo de datos de docs/ARCHITECTURE.md §4 (tabla tasks).
@@ -106,7 +106,7 @@ Fuera de alcance: recordatorios, etiquetas, subtareas, repetición.
 </details>
 
 <details>
-<summary>Prompt para <code>/opsx:propose add-reminders</code></summary>
+<summary>Prompt para <code>/opsx-propose add-reminders</code></summary>
 
 ```text
 Implementa los recordatorios según docs/ARCHITECTURE.md §3.2 y §4 (tabla reminders).
@@ -125,7 +125,7 @@ Fuera de alcance: email, recordatorios recurrentes, recordatorios sin tarea.
 </details>
 
 <details>
-<summary>Prompt para <code>/opsx:propose add-pwa</code></summary>
+<summary>Prompt para <code>/opsx-propose add-pwa</code></summary>
 
 ```text
 Haz Nexus instalable como PWA para usarlo desde la pantalla de inicio del móvil: web app manifest

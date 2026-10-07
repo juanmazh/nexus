@@ -11,7 +11,7 @@
 |---|---|---|
 | **Tech lead / Product owner** | Juanma | Decide qué se construye y en qué orden, aprueba propuestas, revisa y mergea PRs, despliega, gestiona secretos |
 | **Arquitecto / revisor** | Claude (claude.ai) | Directrices, revisión de propuestas y diseños grandes, segunda opinión en PRs delicados (auth, migraciones) |
-| **Implementador** | OpenCode + modelos vía OpenRouter | Genera artefactos de OpenSpec y código siguiendo `AGENTS.md` |
+| **Implementador** | OpenCode + modelos gratuitos (modo anónimo) | Genera artefactos de OpenSpec y código siguiendo `AGENTS.md` |
 
 **Principio:** el agente propone e implementa; **tú decides y validas**. Nada llega a `main` sin tu revisión.
 
@@ -58,7 +58,6 @@ git push
 | Cosa | Cómo se replica |
 |---|---|
 | `.dev.vars` (secretos locales) | Guárdalo en tu gestor de contraseñas y cópialo a mano. Plantilla: `.dev.vars.example` |
-| API key de OpenRouter | `opencode auth login` en cada equipo |
 | Sesión de Cloudflare | `pnpm wrangler login` en cada equipo |
 | Datos de la D1 local | No se replican: `pnpm db:migrate:local` + datos de ejemplo. Los datos reales están en producción |
 
@@ -69,16 +68,16 @@ git push
 ```text
  1. Elegir el siguiente cambio de ROADMAP.md
  2. git switch main && git pull && git switch -c change/<change-id>
- 3. (opcional) /opsx:explore  → pensar el enfoque
- 4. /opsx:propose <change-id>  (pega el prompt del ROADMAP)
+ 3. (opcional) /opsx-explore  → pensar el enfoque
+ 4. /opsx-propose <change-id>  (pega el prompt del ROADMAP)
  5. ✋ REVISIÓN de proposal.md, specs/, design.md y tasks.md  (checklist §4.1)
       └─ si algo no te convence, pide cambios y repite; NO pases a apply
  6. commit "docs(openspec): propose <change-id>" + push
- 7. Contexto limpio en OpenCode (sesión nueva) → /opsx:apply
+ 7. Contexto limpio en OpenCode (sesión nueva) → /opsx-apply
  8. Durante apply: commits pequeños y push al final de cada sesión
  9. Abrir PR hacia main (descripción en español, enlazando el cambio)
 10. ✋ REVISIÓN del PR  (checklist §4.2) + CI en verde
-11. Revisión OK → /opsx:archive EN LA MISMA RAMA → commit "docs(openspec): archive <change-id>" + push
+11. Revisión OK → /opsx-archive EN LA MISMA RAMA → commit "docs(openspec): archive <change-id>" + push
 12. Squash merge → main  (código + specs actualizadas llegan juntos en un solo commit)
 13. Desplegar (§6) y actualizar PROGRESS.md
 ```
@@ -122,23 +121,33 @@ historial de la conversación, que suele arrastrar ideas que ya se descartaron.
 
 ---
 
-## 5. Modelos con OpenRouter (estrategia de coste)
+## 5. Modelos (estrategia 100 % gratuita)
 
-OpenRouter **se paga por token**. Los modelos gratuitos tienen límites de uso y algunos proveedores
-registran los prompts. La calidad del resultado depende sobre todo de las specs, no de quemar tokens.
+Decisión del proyecto: **coste cero también en IA.** OpenCode se usa en **modo anónimo** con sus
+modelos gratuitos, sin cuenta ni API key. Esto tiene consecuencias que conviene asumir:
 
-| Fase del ciclo | Tipo de modelo | Por qué |
+| Condición | Qué implica |
+|---|---|
+| Los prompts pueden usarse para entrenar el modelo | El repo es público, así que el código no es problema. **Los secretos sí**: nunca deben entrar en el contexto (`.dev.vars`, tokens, IDs de chat) |
+| Los límites no están publicados | Si un día va muy lento o te corta, cambia de modelo o usa el plan B |
+| La lista de modelos gratuitos cambia | El modelo se fija en `opencode.json`; si desaparece, se cambia ahí y en `PROGRESS.md` |
+
+La calidad la ponen las specs y la revisión, no el modelo:
+
+| Fase del ciclo | Quién | Por qué |
 |---|---|---|
-| `explore`, `propose`, revisión de diseño | **Fuerte** (razonamiento alto) | Aquí se toman las decisiones; un error cuesta caro después |
-| `apply` de tareas bien especificadas | **Bueno en código y económico** | Ejecuta un plan cerrado; no necesita el modelo más caro |
-| Depurar un fallo que el económico no resuelve en 2 intentos | **Fuerte** | Escalar es más barato que 10 iteraciones fallidas |
+| `/opsx-explore`, `/opsx-propose` | Modelo gratuito de OpenCode | Genera los artefactos |
+| **Revisión de la propuesta** | **Claude (claude.ai)** | Es donde más importa la calidad: se pegan `proposal.md`, `design.md` y `tasks.md` antes de `/opsx-apply` |
+| `/opsx-apply` | Modelo gratuito de OpenCode | Ejecuta tareas pequeñas y bien especificadas, que es donde un modelo gratuito rinde mejor |
+| Revisión del PR | Tú, y Claude si toca auth, secretos o migraciones | Segunda opinión donde un fallo cuesta caro |
+| Plan B | OpenRouter `:free` (`qwen/qwen3-coder:free`, `openai/gpt-oss-120b:free`) | Límite de 50 peticiones al día: solo para consultas puntuales |
 
 Reglas prácticas:
 
-- Fija los modelos en un **`opencode.json` en la raíz del repo** (versionado). Así oficina y casa usan exactamente los mismos. La API key **no** va ahí: se configura con `opencode auth login` en cada equipo.
-- Apunta en `PROGRESS.md › Modelos en uso` qué modelo usas para cada rol y revísalo cada pocas semanas; los modelos y sus precios cambian rápido.
-- Pon un **límite de crédito** en tu cuenta de OpenRouter para evitar sorpresas.
-- Nunca pegues el contenido de `.dev.vars` ni tokens en un prompt.
+- El modelo se fija en **`opencode.json` en la raíz del repo** (versionado), para que oficina y casa usen el mismo.
+- Apunta en `PROGRESS.md › Modelos en uso` qué modelo usas y desde cuándo. Reevalúalo tras cada fase.
+- Si el modelo gratuito se atasca dos veces seguidas en la misma tarea, **no insistas**: trae el problema a Claude con el error y el fichero, o divide la tarea en otras más pequeñas actualizando `tasks.md` con `/opsx-update`.
+- **Contexto limpio** al empezar `/opsx-apply`: una sesión nueva de OpenCode por cambio, o por bloque de tareas si el cambio es largo.
 
 ---
 
