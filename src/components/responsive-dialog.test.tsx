@@ -146,6 +146,26 @@ describe("ResponsiveDialog", () => {
 		});
 	});
 
+	it("closes with a visible button that is at least 44 px in both shapes", async () => {
+		stubMatchMedia();
+		const user = userEvent.setup();
+		const onOpenChange = vi.fn();
+
+		render(<Harness onOpenChange={onOpenChange} />);
+		await user.click(screen.getByRole("button", { name: "Abrir" }));
+		await screen.findByText("Detalles");
+
+		const close = screen.getByRole("button", { name: "Cerrar" });
+		expect(close.className).toContain("size-11");
+
+		await user.click(close);
+
+		await waitFor(() => {
+			expect(screen.queryByText("Detalles")).not.toBeInTheDocument();
+		});
+		expect(onOpenChange).toHaveBeenLastCalledWith(false);
+	});
+
 	it("keeps the same title, description, content and actions in both shapes", async () => {
 		stubMatchMedia();
 		const user = userEvent.setup();

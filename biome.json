@@ -9,6 +9,8 @@
 			"!**/migrations/meta",
 			"!**/pnpm-lock.yaml",
 			"!**/worker-configuration.d.ts",
+			"!test-results",
+			"!playwright-report",
 			"!opencode.json"
 		]
 	},

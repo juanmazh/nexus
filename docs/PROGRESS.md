@@ -15,7 +15,7 @@
 | **Paso / cambio** | Cambio 0.3 `add-app-shell` **implementado y verificado**, pendiente de revisión, merge y archivo |
 | **Rama** | `change/add-app-shell` (sin PR todavía) |
 | **Siguiente acción exacta** | Revisar el código del cambio → `pnpm test:e2e` en verde y `pnpm exec playwright install chromium` si es un equipo nuevo → validar la dirección visual "olivar" en un **móvil real** y anotar el resultado en `docs/DESIGN.md §5` → `pnpm deploy` (sin pasos manuales previos: este cambio no añade secretos, migraciones ni cron) → comprobar en el despliegue real que la SPA carga sin violaciones de CSP, que las fuentes se sirven desde el propio origen y que el tema no destella de forma molesta → abrir el PR, mergear a `main` y archivar con `/opsx-archive add-app-shell` |
-| **Bloqueos** | Ninguno. Queda una comprobación manual (móvil real) que el agente no puede hacer |
+| **Bloqueos** | Ninguno. Queda una comprobación manual (8.1: DevTools y **móvil real**) que el agente no puede hacer |
 | **Última actualización** | 2026-10-07 · casa |
 
 ---
@@ -127,6 +127,22 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 ## 📓 Bitácora (lo más reciente arriba)
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
+
+### Estado de la definición de hecho (`AGENTS.md §9`) para `add-app-shell`
+
+| Punto | Estado |
+|---|---|
+| Todas las tareas de `tasks.md` marcadas | ⚠️ **32/33**: solo queda 8.1, que es manual |
+| `pnpm typecheck`, `pnpm lint` y `pnpm test` en `0` | ✅ `0`, `0`, **160 tests** en 20 ficheros |
+| `pnpm build` | ✅ build de producción sin errores |
+| Sin cambio de esquema | ✅ `pnpm db:generate` → "No schema changes", `migrations/` sigue solo con `.gitkeep` |
+| Cada requisito nuevo con al menos un test | ✅ Vitest (160) + Playwright (52 en dos viewports) |
+| UI nueva con carga, vacío y error | ✅ `Skeleton`, `EmptyState` y los paneles con reintento |
+| Responsive verificado (`docs/DESIGN.md §6`) | ⚠️ **automático en verde** (`pnpm test:e2e`, móvil y escritorio); falta la comprobación manual de 8.1 |
+| `docs/ARCHITECTURE.md` actualizado | ✅ `§2.2` y ADR-010 nuevo, ADR-008 enmienda |
+| `openspec validate add-app-shell --strict` | ✅ sin errores |
+| Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
+| Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
 
 - **2026-10-07 · casa** — `/opsx-apply add-app-shell`: **30/33 tareas** (1–6 hechas y commiteadas; 7 en curso). Shell completo (`src/app/layout/`): ruta de layout con `h-dvh` y scroll interno, `TabBar`/`Sidebar` montados **uno u otro** según viewport, barra de captura con atajo `N` que cede ante escritura, overlays y con Ctrl/Cmd/Alt, `EmptyState`, `Skeleton` y el `ToastHost` único. Tema "olivar" en tokens, con `--accent-strong` (`#A8841A`) para el marcador de "ahora" y `src/lib/contrast.test.ts` leyendo `src/index.css` y fallando si un par baja de AA (comprobado: tinta al 55 % da 3,59:1 y 3,07:1). Fuentes propias self-hosted (fuera Geist). `ResponsiveDialog` con `Drawer`/`Dialog` de shadcn y `useSyncExternalStore` para el breakpoint. `HealthPage` → `HealthPanel` en **Más**, que además muestra `GET /api/me` (solo ahí, para no gastar invocaciones del Worker). Playwright con proyectos móvil 360 × 780 y escritorio 1280 × 800, levantando `pnpm build` + `vite preview` e interceptando `/api/*`: **48 tests en verde en los dos proyectos**, y job `e2e` en la CI en paralelo a `verify`. **Tres desviaciones del `design.md`, deliberadas:** (1) `contrast.test.ts` lee el CSS con `node:fs` en vez de `import "index.css?raw"`, porque en este montaje de Vite un `?raw` de un hoja de estilos resuelve a cadena vacía y haría pasar todas las aserciones sin comprobar nada; (2) `TabBar` y `Sidebar` los elige `AppShell`, no un `AppNavigation` aparte, porque la tab bar va **abajo** en móvil y la barra lateral **a la izquierda** en escritorio, y un solo componente no puede ocupar las dos posiciones; (3) la comprobación de scroll horizontal de la suite hace más que comparar `scrollWidth` con `innerWidth`: la raíz del shell es `overflow-hidden` a propósito, así que un elemento demasiado ancho se **recorta** en vez de hacer scroll y `scrollWidth` no se entera; la suite busca además cualquier caja que sobresalga del viewport (comprobado: rompe al forzar un ancho de 1400 px). **8.1 (verificación manual en DevTools y en un móvil real) y 8.2 quedan para la persona propietaria**; el resto de 8 se cierra al final. → Siguiente: cerrar 7 y 8, revisar, `pnpm deploy`, comprobar en el despliegue real, PR, merge y `/opsx-archive`.
 

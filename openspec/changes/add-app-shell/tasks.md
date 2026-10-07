@@ -175,10 +175,10 @@
 - [ ] 8.1 Verificación manual de `docs/DESIGN.md §6` en DevTools a 360, 390, 768 y 1280 px, más 320 px
   sin roturas, teclado virtual abierto en la barra de captura, modo claro y oscuro, conmutador del
   tema y tamaño de letra del sistema al máximo; anotar en `docs/PROGRESS.md` el resultado.
-- [ ] 8.2 Medir el JS comprimido de la carga inicial de la build de producción (por ejemplo, con
+- [x] 8.2 Medir el JS comprimido de la carga inicial de la build de producción (por ejemplo, con
   `pnpm build` y el tamaño que informa Vite) y confirmar que no pasa de **200 KB**; si lo pasa,
   ajustar por `lazy()` en las rutas y repetir la medición.
-- [ ] 8.3 Comprobar la definición de hecho de `AGENTS.md §9` punto por punto: `pnpm typecheck`,
+- [x] 8.3 Comprobar la definición de hecho de `AGENTS.md §9` punto por punto: `pnpm typecheck`,
   `pnpm lint`, `pnpm test`, `pnpm test:e2e` y `pnpm build` en verde; `pnpm db:generate` sin generar
   ningún `.sql` (este cambio no toca el esquema, así que no hay migración que aplicar);
   `openspec validate add-app-shell --strict` sin errores; y `git grep -iE "(token|secret|password)\s*[:=]\s*['\"][^'\"]{8}"`

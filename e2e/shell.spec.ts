@@ -136,6 +136,37 @@ test.describe("capture bar", () => {
 	});
 });
 
+test.describe("the document itself", () => {
+	test("does not block the browser zoom", async ({ page }) => {
+		await gotoRoute(page, "/");
+
+		const viewport = await page.locator('meta[name="viewport"]').getAttribute("content");
+
+		expect(viewport).toBe("width=device-width, initial-scale=1, viewport-fit=cover");
+		expect(viewport).not.toContain("maximum-scale");
+		expect(viewport).not.toContain("user-scalable");
+	});
+
+	test("serves the fonts from our own origin", async ({ page }) => {
+		const requested: string[] = [];
+		page.on("request", (request) => requested.push(request.url()));
+
+		await gotoRoute(page, "/");
+		// `font-display: swap` means the faces load after the first paint; without
+		// waiting, the request may not have happened yet.
+		await page.evaluate(() => document.fonts.ready);
+
+		const origin = new URL(page.url()).origin;
+		const external = requested.filter((url) => new URL(url).origin !== origin);
+
+		expect(external, `peticiones fuera del propio origen: ${external.join(", ")}`).toEqual([]);
+		expect(
+			requested.some((url) => url.includes(".woff2")),
+			"no se pidió ninguna fuente",
+		).toBe(true);
+	});
+});
+
 test.describe("more", () => {
 	test("shows the session of the stubbed API", async ({ page }) => {
 		await gotoRoute(page, "/more");
