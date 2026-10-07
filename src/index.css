@@ -1,85 +1,127 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+/* Self-hosted, `font-display: swap`, served from our own origin (docs/DESIGN.md §5). */
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/atkinson-hyperlegible-next";
 /*
  ---break---
  */
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Default shadcn theme, kept as generated. The "olivar" direction and the theme
- * switcher arrive with add-app-shell, which replaces these tokens.
- * No raw colors here: everything goes through the theme tokens (AGENTS.md §5).
+ * The "olivar" direction (docs/DESIGN.md §5): cal, tinta, olivo, aceite, piedra
+ * and granada. Values are copied verbatim from that document, so no conversion
+ * error can creep in; `src/lib/contrast.test.ts` reads this file and fails the
+ * build if a pair drops below AA.
+ *
+ * No raw colors in components (AGENTS.md §5): this file is where the color lives.
+ *
+ * Tokens the document does not fix, and where they come from:
+ * - `--muted-foreground`: tinta at 70 % over cal. At 55 % it would give 3,6:1 in
+ *   light mode and 3,1:1 over piedra, below AA.
+ * - `--border` / `--input`: piedra one step darker than `--muted`, so a hairline
+ *   is visible against a piedra surface.
+ * - `--ring`: olivo, the only color that already clears 3:1 against both
+ *   backgrounds without introducing a hue of its own.
+ * - `--accent-strong`: `#C9A227` on cal is 2,25:1, fine as a fill under ink text
+ *   but below the 3:1 that WCAG 1.4.11 asks of a graphic that carries meaning.
+ *   So the "now" marker uses this darker oil, and plain `--accent` stays for
+ *   fills.
+ * - `--chart-*`: unused until the finance phase; taken from the same palette so
+ *   a chart cannot introduce a color that is not in the direction.
+ * - `--sidebar-*`: the app has no collapsible sidebar yet, but they are mapped to
+ *   the same surfaces as the shell so a future component is already in palette.
  */
 
 :root {
+	/* Radius hierarchy (docs/DESIGN.md §5): inputs and buttons, then sheets. */
 	--radius: 0.625rem;
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
-	--primary-foreground: oklch(0.985 0 0);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
-	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
-	--chart-1: oklch(0.87 0 0);
-	--chart-2: oklch(0.556 0 0);
-	--chart-3: oklch(0.439 0 0);
-	--chart-4: oklch(0.371 0 0);
-	--chart-5: oklch(0.269 0 0);
-	--sidebar: oklch(0.985 0 0);
-	--sidebar-foreground: oklch(0.145 0 0);
-	--sidebar-primary: oklch(0.205 0 0);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.97 0 0);
-	--sidebar-accent-foreground: oklch(0.205 0 0);
-	--sidebar-border: oklch(0.922 0 0);
-	--sidebar-ring: oklch(0.708 0 0);
+	--radius-sheet: 1.25rem;
+
+	color-scheme: light dark;
+
+	/* Direction visual: cal, tinta, olivo, aceite, piedra, granada. */
+	--background: #f6f7f2;
+	--foreground: #1e2419;
+	--card: #fcfcf9;
+	--card-foreground: #1e2419;
+	--popover: #fcfcf9;
+	--popover-foreground: #1e2419;
+	--primary: #3e5a2b;
+	--primary-foreground: #f6f7f2;
+	--secondary: #e4e6dd;
+	--secondary-foreground: #1e2419;
+	--muted: #e4e6dd;
+	--muted-foreground: #5f635a;
+	--accent: #c9a227;
+	--accent-foreground: #1e2419;
+	--accent-strong: #a8841a;
+	--destructive: #b42318;
+	--border: #d8dbce;
+	--input: #d8dbce;
+	--ring: #3e5a2b;
+	--chart-1: #3e5a2b;
+	--chart-2: #a8841a;
+	--chart-3: #b42318;
+	--chart-4: #5f635a;
+	--chart-5: #e4e6dd;
+	--sidebar: #f6f7f2;
+	--sidebar-foreground: #1e2419;
+	--sidebar-primary: #3e5a2b;
+	--sidebar-primary-foreground: #f6f7f2;
+	--sidebar-accent: #e4e6dd;
+	--sidebar-accent-foreground: #1e2419;
+	--sidebar-border: #d8dbce;
+	--sidebar-ring: #3e5a2b;
 }
 
 .dark {
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.922 0 0);
-	--primary-foreground: oklch(0.205 0 0);
-	--secondary: oklch(0.269 0 0);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(0.269 0 0);
-	--accent-foreground: oklch(0.985 0 0);
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
-	--chart-1: oklch(0.87 0 0);
-	--chart-2: oklch(0.556 0 0);
-	--chart-3: oklch(0.439 0 0);
-	--chart-4: oklch(0.371 0 0);
-	--chart-5: oklch(0.269 0 0);
-	--sidebar: oklch(0.205 0 0);
-	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: oklch(0.488 0.243 264.376);
-	--sidebar-primary-foreground: oklch(0.985 0 0);
-	--sidebar-accent: oklch(0.269 0 0);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: oklch(0.556 0 0);
+	--background: #14170f;
+	--foreground: #e8ebe0;
+	--card: #1c2016;
+	--card-foreground: #e8ebe0;
+	--popover: #232819;
+	--popover-foreground: #e8ebe0;
+	--primary: #9dba6a;
+	--primary-foreground: #14170f;
+	--secondary: #232819;
+	--secondary-foreground: #e8ebe0;
+	--muted: #232819;
+	--muted-foreground: #a8aba1;
+	--accent: #d9b83f;
+	--accent-foreground: #1e2419;
+	--accent-strong: #d9b83f;
+	--destructive: #f0705f;
+	--border: #333827;
+	--input: #333827;
+	--ring: #9dba6a;
+	--chart-1: #9dba6a;
+	--chart-2: #d9b83f;
+	--chart-3: #f0705f;
+	--chart-4: #a8aba1;
+	--chart-5: #232819;
+	--sidebar: #14170f;
+	--sidebar-foreground: #e8ebe0;
+	--sidebar-primary: #9dba6a;
+	--sidebar-primary-foreground: #14170f;
+	--sidebar-accent: #232819;
+	--sidebar-accent-foreground: #e8ebe0;
+	--sidebar-border: #333827;
+	--sidebar-ring: #9dba6a;
+}
+
+/*
+ * `main.tsx` sets the class before the first paint, but until it runs the
+ * browser canvas already follows the system through `color-scheme: light dark`.
+ * These two rules keep the canvas in step with a manual choice made afterwards.
+ */
+.light {
+	color-scheme: light;
+}
+
+.dark {
+	color-scheme: dark;
 }
 
 @theme inline {
@@ -97,6 +139,7 @@
 	--color-muted-foreground: var(--muted-foreground);
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
+	--color-accent-strong: var(--accent-strong);
 	--color-destructive: var(--destructive);
 	--color-border: var(--border);
 	--color-input: var(--input);
@@ -105,8 +148,9 @@
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
 	--radius-xl: calc(var(--radius) + 4px);
-	--font-heading: var(--font-sans);
-	--font-sans: "Geist Variable", sans-serif;
+	--radius-sheet: var(--radius-sheet);
+	--font-heading: "Bricolage Grotesque Variable", sans-serif;
+	--font-sans: "Atkinson Hyperlegible Next Variable", sans-serif;
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -138,5 +182,49 @@
 		@apply bg-background text-foreground;
 		/* Inputs must be at least 16px or iOS Safari zooms in when they are focused. */
 		font-size: 16px;
+		/* 1.5 in the body text (docs/DESIGN.md §5), so it stays legible outdoors. */
+		line-height: 1.5;
+	}
+}
+
+/*
+ * Temporary notices have one home in the whole app. Above on mobile, so they
+ * never cover the tab bar or the capture bar; bottom-right from 1024 px up. In
+ * the stylesheet rather than inline, so `ToastHost` stays declarative
+ * (design.md D4).
+ */
+[data-slot="toast-viewport"] {
+	top: calc(0.75rem + env(safe-area-inset-top));
+	bottom: auto;
+}
+
+@media (min-width: 1024px) {
+	[data-slot="toast-viewport"] {
+		top: auto;
+		right: 1rem;
+		bottom: 1rem;
+		left: auto;
+	}
+}
+
+/*
+ * Movement is only ever a response to an action, and only for as long as the
+ * person has not asked the system to stop it (docs/DESIGN.md §1.6). The
+ * `data-starting-style` utilities of Drawer and Dialog enter animations are
+ * neutralised here rather than one by one in each component.
+ */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		/* biome-ignore lint/complexity/noImportantStyles: a universal selector cannot
+		   outrank the utility classes of the components without !important */
+		animation-duration: 0.01ms !important;
+		/* biome-ignore lint/complexity/noImportantStyles: see above */
+		animation-iteration-count: 1 !important;
+		/* biome-ignore lint/complexity/noImportantStyles: see above */
+		transition-duration: 0.01ms !important;
+		/* biome-ignore lint/complexity/noImportantStyles: see above */
+		scroll-behavior: auto !important;
 	}
 }

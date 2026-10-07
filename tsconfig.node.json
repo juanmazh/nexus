@@ -23,6 +23,7 @@
 		"vitest.config.ts",
 		"vitest.worker.config.ts",
 		"vitest.web.config.ts",
-		"drizzle.config.ts"
+		"drizzle.config.ts",
+		"playwright.config.ts"
 	]
 }

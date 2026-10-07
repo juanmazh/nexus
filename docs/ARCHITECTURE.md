@@ -65,10 +65,25 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
 
 | Pieza | Responsabilidad |
 |---|---|
-| `src/app/` | Router, `QueryClientProvider`, layout (navegación móvil y escritorio) |
+| `src/app/router.tsx` | Ruta de layout con las cuatro secciones (`/`, `/tasks`, `/notes`, `/more`) y `*`, cada una con `lazy()` |
+| `src/app/navigation.ts` | `NAV_ITEMS`: la lista única que recorren la tab bar y la barra lateral |
+| `src/app/layout/` | El shell: `h-dvh`, cabecera, `<Outlet/>` con scroll interno, barra de captura y navegación |
+| `src/app/providers.tsx` | `QueryClientProvider` y `ThemeProvider` |
 | `src/lib/api.ts` | Cliente `hc<AppType>('/')`: llamadas tipadas de extremo a extremo sin generar código |
+| `src/lib/theme.ts` | `resolveTheme` (puro) y `applyTheme`, llamado por `main.tsx` antes del primer pintado |
+| `src/lib/use-media-query.ts` | `useSyncExternalStore` sobre `matchMedia`, para el breakpoint de 1024 px |
 | `src/features/*` | Una carpeta por feature con sus componentes, hooks de TanStack Query y tipos |
 | `src/components/ui/` | Componentes de shadcn/ui |
+| `src/components/responsive-dialog.tsx` | **El único overlay**: `Drawer` por debajo de 1024 px, `Dialog` a partir de 1024 px |
+| `src/components/toast-host.tsx` | **El único host de avisos**, montado una vez en el shell |
+| `src/components/empty-state.tsx`, `src/components/skeleton.tsx` | Estados vacío y de carga reutilizables |
+
+**Regla del único overlay.** Ninguna vista importa `Dialog` ni `Drawer` directamente: el único
+fichero de `src/` que lo hace es `src/components/responsive-dialog.tsx`. El componente decide en
+JavaScript cuál de los dos monta, en vez de ocultar uno con una clase, porque son dos primitivos de
+Base UI con su propia gestión del foco y ocultar uno dejaría **dos** trampas de foco en el DOM, y la
+de la pieza oculta seguiría reclamando el foco. Lo mismo aplica a la navegación: `TabBar` y `Sidebar`
+son componentes distintos y el shell monta **uno u otro**, nunca los dos.
 
 ### 2.3 Configuración del Worker (`wrangler.jsonc`)
 
@@ -261,9 +276,15 @@ Formato corto: **contexto → decisión → consecuencias**. Las decisiones nuev
 ### ADR-008 · Mobile-first verificado automáticamente
 - **Contexto:** el móvil es el dispositivo principal de Nexus; "ya lo miraré en el móvil" acaba en layouts rotos que nadie detecta.
 - **Decisión:** reglas de diseño obligatorias en `docs/DESIGN.md`, un shell propio (`add-app-shell`) antes de la primera funcionalidad, PWA en la fase 1 y Playwright en la CI con proyectos móvil (360 px) y escritorio.
-- **Consecuencias:** una dependencia de desarrollo más (Playwright, solo Chromium en CI) y CI algo más lenta, a cambio de que una regresión responsive rompa la CI en lugar de llegar a producción.
+- **Enmienda (`add-app-shell`):** la suite se ejecuta **sin credenciales**. `playwright.config.ts` levanta `pnpm build` y `pnpm exec vite preview`, y las peticiones a `/api/*` se interceptan con `page.route` y se responden con fixtures (`e2e/fixtures.ts`). Así ni la CI ni un equipo nuevo necesitan `ACCESS_AUD` ni el atajo local, y no hay ningún valor escrito en el fichero de variables locales. Servir el build y no `pnpm dev` es deliberado: `preview` usa el gestor de assets real, que es donde viven las cabeceras de `public/_headers`, así que una regresión de CSP solo aparece ahí.
+- **Consecuencias:** una dependencia de desarrollo más (Playwright, solo Chromium en CI) y un job de CI en paralelo a `verify`, a cambio de que una regresión responsive rompa la CI en lugar de llegar a producción. El atajo local de ADR-009 sigue existiendo para `pnpm dev`, pero la suite de navegador ya no depende de él.
 
 ### ADR-009 · Atajo de autenticación solo en local, con doble condición
 - **Contexto:** con Access delante, `pnpm dev` no puede llamar a `/api/*` sin montar una aplicación de Access real, y probar las rutas autenticadas solo así vuelve el ciclo de desarrollo muy lento.
 - **Decisión:** `ACCESS_DEV_BYPASS=1` permite saltarse la verificación, **solo** si además la petición viene de `localhost`, `127.0.0.1` o `[::1]`. La variable solo existe en `.dev.vars` y no se declara en `wrangler.jsonc`; si se cuela en un despliegue, la comprobación del hostname sigue denegando y escribe un `console.warn`.
 - **Consecuencias:** se relaja conscientemente la garantía de *fail closed* **en local**, a cambio de poder desarrollar sin Access. Abrir la puerta requiere un error humano **y** un entorno no local. Cada uso del atajo escribe un aviso y la respuesta lleva `X-Nexus-Session: development`. Deuda a revisar con `add-app-shell`: si para entonces se puede desarrollar cómodamente contra una preview protegida por Access, el atajo es lo primero que debería retirarse.
+
+### ADR-010 · El tema se resuelve en JavaScript, y sin script en línea, por la CSP
+- **Contexto:** para que la aplicación no parpadee al abrir, el tema tiene que estar decidido antes del primer pintado. La forma habitual es un `<script>` en línea en `index.html` que escriba la clase en `<html>`, pero la CSP de `public/_headers` (`docs/ARCHITECTURE.md §3.2`) no admite `'unsafe-inline'` en `script-src` (`AGENTS.md §6.6`). La alternativa sería calcular un `'sha256-…'` y añadirlo a la CSP, lo que ata `index.html` y `public/_headers` byte a byte: un espacio en blanco cambia el hash y rompe la aplicación **en producción** sin que ninguna otra comprobación se entere.
+- **Decisión:** nada en línea. `src/lib/theme.ts` tiene una función pura `resolveTheme(stored, prefersDark)` y un `applyTheme(doc)`; `main.tsx` llama a `applyTheme(document)` **antes** de `createRoot(...).render()`, y `ThemeProvider` mantiene la elección después. Los tokens claros viven en `:root` y los oscuros en `.dark`, que es el sistema que ya esperaba `@custom-variant dark`, en vez de `light-dark()`, que resolvería los tokens sin JavaScript pero **no** activaría los `dark:` de los componentes de shadcn, que sí existen. El acceso a `localStorage` va envuelto en `try/catch` porque puede lanzar en modo privado, y ese fallo degrada a "seguir al sistema", nunca a una pantalla rota.
+- **Consecuencias:** `color-scheme: light dark` en `:root` hace que el lienzo del navegador siga al sistema antes de que corra JavaScript, y `.light`/`.dark` lo sincronizan después. Se acepta un posible destello mínimo acotado a unos milisegundos, y si resulta visible en un móvil real la alternativa es el script en línea con su `'sha256-'` en la CSP **y** un test que recalcule el hash, que es lo que evita que se rompa en silencio.
