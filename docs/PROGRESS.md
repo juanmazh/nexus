@@ -12,9 +12,9 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 0 — Cimientos |
-| **Paso / cambio** | S6 — `opencode.json` (modelo + permisos) y PR de documentación |
-| **Rama** | `main` |
-| **Siguiente acción exacta** | Rama `chore/docs-free-models` → aplicar el patch y este PROGRESS.md → poner el ID del modelo en `opencode.json` → PR y merge → cambio 0.1 `bootstrap-project` con `/opsx-propose` |
+| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — propuesta generada y revisada |
+| **Rama** | `change/bootstrap-project` (propuesta sin commitear hasta que `main` tenga los PR #1 y #2) |
+| **Siguiente acción exacta** | Mergear PR #1 (`chore/openspec-init`) y PR #2 (`chore/docs-free-models`) → poner al día `change/bootstrap-project` → repetir la prueba de `.dev.vars` → commit de la propuesta → `/opsx-apply` en una sesión nueva de OpenCode |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-07 · oficina |
 
@@ -61,8 +61,8 @@ Márcalos con `[x]` al completarlos y haz commit.
 Decisión: modelos **gratuitos de OpenCode en modo anónimo**; sin OpenRouter y sin cuenta de pago (ver "Modelos en uso").
 
 - [x] OpenCode funcionando en modo anónimo con un modelo gratuito.
-- [ ] Mirar el ID exacto del modelo con `/models` y anotarlo en "Modelos en uso".
-- [ ] `opencode.json` en la raíz (llega en el PR `chore/docs-free-models`): sustituir `REPLACE-WITH-MODEL-ID` por el ID real. Además del modelo, **bloquea al agente** la lectura de `.dev.vars`/`.env`, los comandos de despliegue (`pnpm deploy`, migraciones remotas, `wrangler secret`) y `push --force`, y pide confirmación para cualquier comando no habitual.
+- [x] Decidido **no fijar el modelo** en `opencode.json`: OpenCode usa el gratuito que tengas seleccionado (`/models`). Así no se rompe cuando OpenCode rota sus modelos gratuitos.
+- [x] `opencode.json` en la raíz (PR `chore/docs-free-models`): **bloquea al agente** la lectura de `.dev.vars`/`.env`, los comandos de despliegue (`pnpm deploy`, migraciones remotas, `wrangler secret`) y `push --force`, y pide confirmación para cualquier comando no habitual.
 
 ### S7 · Proteger `main` (después del cambio 0.1, cuando exista la CI)
 
@@ -116,9 +116,9 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 | Rol | Modelo (ID) | Desde | Notas |
 |---|---|---|---|
-| Planificación (`explore` / `propose`) | `opencode/__________` | 2026-10-07 | Gratis, anónimo. Puede usar los prompts para entrenar: **nunca secretos en el contexto** |
+| Planificación (`explore` / `propose`) | El gratuito seleccionado en OpenCode (sin fijar) | 2026-10-07 | Gratis, anónimo. Puede usar los prompts para entrenar: **nunca secretos en el contexto** |
 | Revisión de propuestas | Claude (claude.ai) | 2026-10-07 | Pegar `proposal.md`, `design.md` y `tasks.md` antes de `/opsx-apply` |
-| Implementación (`apply`) | `opencode/__________` | 2026-10-07 | El mismo de momento; se reevalúa tras el primer cambio |
+| Implementación (`apply`) | El gratuito seleccionado en OpenCode (sin fijar) | 2026-10-07 | El mismo de momento; se reevalúa tras el primer cambio |
 | Plan B | OpenRouter `:free` (`qwen/qwen3-coder:free`, `openai/gpt-oss-120b:free`) | — | Solo si OpenCode falla. Límite de 50 peticiones al día |
 
 ---
@@ -127,6 +127,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 
+- **2026-10-07 · oficina** — Parche de modelos gratuitos aplicado de verdad (`opencode.json` en la raíz, sin fijar modelo). Propuesta de `bootstrap-project` generada con `/opsx-propose` y revisada con Claude; correcciones aplicadas (404/405 con la forma de error, tsconfig, alias sin dependencias extra). → Siguiente: mergear PR #1 y #2 y `/opsx-apply`.
 - **2026-10-07 · oficina** — Configuración inicial S1–S5 completada: repo `juanmazh/nexus` (con la identidad de git personal separada de la del trabajo), Cloudflare (`nexus.juanmazh-dev.workers.dev`, Zero Trust `juanmazh`), bot de Telegram y OpenSpec inicializado por PR. Decidido usar modelos gratuitos de OpenCode en modo anónimo en lugar de OpenRouter de pago. Access en el Worker se activará tras el primer deploy. → Siguiente: S6 (`opencode.json`), PR de documentación y cambio 0.1.
 - **2026-10-07 · oficina** — Mobile-first como pilar: nuevo `docs/DESIGN.md`, cambio `add-app-shell` (0.3), PWA adelantada a la fase 1 (1.3) y Playwright con viewports móvil/escritorio en CI (ADR-008).
 - **2026-10-07 · oficina** — Definidas las directrices (AGENTS.md, ARCHITECTURE, ROADMAP, WORKFLOW, config de OpenSpec). Decisiones: nombre Nexus, idioma mixto, React + TS, avisos por Telegram, dominio aplazado a la fase 3. → Siguiente: paso 0.1.
