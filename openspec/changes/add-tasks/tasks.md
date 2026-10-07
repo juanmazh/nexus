@@ -2,27 +2,27 @@
 
 ## 0. Antes de tocar código
 
-- [ ] 0.1 Confirmar que `add-app-shell` está mergeado y archivado, y que `openspec/specs/app-shell/spec.md` existe. Si no lo está, **parar aquí** y avisar: es la dependencia de `design.md D1`.
+- [x] 0.1 Confirmar que `add-app-shell` está mergeado y archivado, y que `openspec/specs/app-shell/spec.md` existe. Si no lo está, **parar aquí** y avisar: es la dependencia de `design.md D1`.
 - [x] 0.2 Delta de `app-shell` resuelto en la revisión: como un MODIFIED no puede eliminar el escenario "La barra de captura todavía no guarda nada", el requisito *Barra de captura* se retira (REMOVED) y se sustituye por *Barra de captura que crea tareas* (ADDED). Validado con `openspec validate add-tasks --strict` y con un archivado de prueba tras archivar `add-access-auth` y `add-app-shell`.
-- [ ] 0.3 `git switch -c change/add-tasks` desde `main` actualizado. Verificar con `git branch --show-current`.
+- [x] 0.3 `git switch -c change/add-tasks` desde `main` actualizado. Verificar con `git branch --show-current`.
 
 ## 1. Dependencias y esquema
 
-- [ ] 1.1 `pnpm add zod @hono/zod-validator date-fns @date-fns/tz`. Verificar que las cuatro aparecen en `package.json` y que `pnpm typecheck` sigue en verde.
-- [ ] 1.2 Declarar `tasks` en `worker/db/schema.ts` con los nueve campos y los dos índices de `design.md D2`. Verificar con `pnpm db:generate`, revisando que el SQL es solo `CREATE TABLE` más dos `CREATE INDEX`.
-- [ ] 1.3 `pnpm db:migrate:local` y después `pnpm db:generate` otra vez, para confirmar que el esquema está limpio y no genera una segunda migración. Verificar que `migrations/` ya no está vacío.
+- [x] 1.1 `pnpm add zod @hono/zod-validator date-fns @date-fns/tz`. Verificar que las cuatro aparecen en `package.json` y que `pnpm typecheck` sigue en verde.
+- [x] 1.2 Declarar `tasks` en `worker/db/schema.ts` con los nueve campos y los dos índices de `design.md D2`. Verificar con `pnpm db:generate`, revisando que el SQL es solo `CREATE TABLE` más dos `CREATE INDEX`.
+- [x] 1.3 `pnpm db:migrate:local` y después `pnpm db:generate` otra vez, para confirmar que el esquema está limpio y no genera una segunda migración. Verificar que `migrations/` ya no está vacío.
 
 ## 2. Capa compartida
 
-- [ ] 2.1 `shared/tasks.ts`: `createTaskSchema`, `updateTaskSchema`, `listTasksQuerySchema` (estricto, `status` y `overdue` con valores cerrados) y `taskIdParamSchema`, con los mensajes en español y los enums `TASK_STATUSES` / `TASK_PRIORITIES`. Verificar con los tests de 2.3.
-- [ ] 2.2 `shared/dates.ts`: `zonedDayStart`, `zonedDayNumber`, `dueDateToEpochMs`, `epochMsToDueDate` de `design.md D8`, puras y sin DOM.
-- [ ] 2.3 `shared/tasks.test.ts` y `shared/dates.test.ts`: título vacío y de 201 caracteres, propiedad desconocida, `status` y `overdue` inválidos, campo opcional ausente; y el día del cambio de hora de verano (29 de marzo de 2026), la ida y la vuelta de `dueDateToEpochMs`, y una tarea de hoy a las 18:00 que sigue siendo de hoy. Verificar con `pnpm test` en verde.
+- [x] 2.1 `shared/tasks.ts`: `createTaskSchema`, `updateTaskSchema`, `listTasksQuerySchema` (estricto, `status` y `overdue` con valores cerrados) y `taskIdParamSchema`, con los mensajes en español y los enums `TASK_STATUSES` / `TASK_PRIORITIES`. Verificar con los tests de 2.3.
+- [x] 2.2 `shared/dates.ts`: `zonedDayStart`, `zonedDayNumber`, `dueDateToEpochMs`, `epochMsToDueDate` de `design.md D8`, puras y sin DOM.
+- [x] 2.3 `shared/tasks.test.ts` y `shared/dates.test.ts`: título vacío y de 201 caracteres, propiedad desconocida, `status` y `overdue` inválidos, campo opcional ausente; y el día del cambio de hora de verano (29 de marzo de 2026), la ida y la vuelta de `dueDateToEpochMs`, y una tarea de hoy a las 18:00 que sigue siendo de hoy. Verificar con `pnpm test` en verde.
 
 ## 3. Servicio de tareas
 
-- [ ] 3.1 `worker/services/tasks.ts`: `listTasks` con **una** consulta y el `is null` explícito del orden de `design.md D7`, respetando los tres filtros.
-- [ ] 3.2 `worker/services/tasks.ts`: `createTask`, `updateTask` y `deleteTask`; `updateTaskStatus` como única escritura de `completed_at`, con el `CASE` y el `COALESCE` de `D11`.
-- [ ] 3.3 `worker/services/tasks.test.ts` contra el D1 real del pool de Cloudflare (el `env` de `cloudflare:test`, no `testEnv()`): orden con nulos al final, los tres filtros, completar dos veces no cambia el instante, deshacer limpia `completed_at`, `updateTask` no toca `completed_at` ni los campos ausentes, que `overdue` no incluye una tarea que vence hoy, que un `updateTask` con los mismos valores devuelve la fila (no "no existe"), y que `deleteTask` indica "no existía" si no hay fila (la ruta lo traduce a `404`). Verificar con `pnpm test` en verde y con la tabla vacía entre tests.
+- [x] 3.1 `worker/services/tasks.ts`: `listTasks` con **una** consulta y el `is null` explícito del orden de `design.md D7`, respetando los tres filtros.
+- [x] 3.2 `worker/services/tasks.ts`: `createTask`, `updateTask` y `deleteTask`; `updateTaskStatus` como única escritura de `completed_at`, con el `CASE` y el `COALESCE` de `D11`.
+- [x] 3.3 `worker/services/tasks.test.ts` contra el D1 real del pool de Cloudflare (el `env` de `cloudflare:test`, no `testEnv()`): orden con nulos al final, los tres filtros, completar dos veces no cambia el instante, deshacer limpia `completed_at`, `updateTask` no toca `completed_at` ni los campos ausentes, que `overdue` no incluye una tarea que vence hoy, que un `updateTask` con los mismos valores devuelve la fila (no "no existe"), y que `deleteTask` indica "no existía" si no hay fila (la ruta lo traduce a `404`). Verificar con `pnpm test` en verde y con la tabla vacía entre tests.
 
 ## 4. Rutas de la API
 

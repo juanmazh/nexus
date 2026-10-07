@@ -18,5 +18,5 @@
 			"@shared/*": ["./shared/*"]
 		}
 	},
-	"include": ["worker", "shared"]
+	"include": ["worker", "shared", "vitest.setup.worker.ts"]
 }
