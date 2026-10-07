@@ -6,7 +6,7 @@
 #
 # IMPORTANTE: ejecuta primero `openspec init` y después fusiona este fichero con el que
 # genere. Conserva cualquier clave que añada `init` (por ejemplo, la de idioma) y
-# sustituye solo `schema`, `context` y `rules`. (Ver docs/PROGRESS.md, paso 0.5.)
+# sustituye solo `schema`, `context` y `rules`. (Ver docs/PROGRESS.md, S5.)
 
 schema: spec-driven
 

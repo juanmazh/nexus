@@ -179,7 +179,7 @@ Estos scripts se crean en la fase 0. Si un script no existe, **no inventes un su
 
 ## 6. Seguridad (no negociable)
 
-1. **Secretos fuera del repo.** Los secretos de producción se crean con `wrangler secret put`; en local viven en `.dev.vars` (ignorado por git). **Nunca** leas, muestres, copies ni commitees `.dev.vars` ni ningún token. Si un secreto es necesario, añade el nombre a `.dev.vars.example` sin valor.
+1. **Secretos fuera del repo y fuera del contexto.** Los modelos que se usan pueden entrenar con los prompts, así que un secreto que se lee es un secreto filtrado. Los secretos de producción se crean con `wrangler secret put`; en local viven en `.dev.vars` (ignorado por git). **Nunca** leas, muestres, copies ni commitees `.dev.vars` ni ningún token. Si un secreto es necesario, añade el nombre a `.dev.vars.example` sin valor. Además, `opencode.json` bloquea a nivel de herramienta la lectura de esos ficheros y los comandos de despliegue y de secretos: **no intentes sortear esos bloqueos**; si necesitas algo de ahí, pídeselo al humano.
 2. **Auth en dos capas.** Cloudflare Access protege el Worker, y además el middleware `worker/middleware/access.ts` valida el JWT de la cabecera `Cf-Access-Jwt-Assertion` (firma con las claves públicas del equipo de Access, `aud`, `iss` y expiración). Si falta o no es válido → `401`. **Fail closed**: ante cualquier duda, se deniega.
 3. Toda ruta bajo `/api/*` pasa por ese middleware. No existen endpoints privados "temporalmente abiertos".
 4. Nada de `dangerouslySetInnerHTML`, salvo el renderizado del blog (fase 3), y siempre con HTML saneado.
@@ -194,7 +194,7 @@ Estos scripts se crean en la fase 0. Si un script no existe, **no inventes un su
 **Ninguna línea de código de producto se escribe sin un cambio de OpenSpec aprobado por el humano.**
 
 ```text
-/opsx:explore (opcional) → /opsx:propose <id> → REVISIÓN HUMANA → /opsx:apply → PR → REVISIÓN HUMANA → merge → /opsx:archive
+/opsx-explore (opcional) → /opsx-propose <id> → REVISIÓN HUMANA → /opsx-apply → PR → REVISIÓN HUMANA → merge → /opsx-archive
 ```
 
 Reglas para el agente:
