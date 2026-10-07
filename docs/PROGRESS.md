@@ -27,8 +27,8 @@ Márcalos con `[x]` al completarlos y haz commit.
 
 > Hazlo **primero**, aunque estés en la oficina: así los documentos estarán disponibles en casa.
 
-- [ ] Crear en GitHub un repo **público** llamado `nexus`, **sin** README, sin .gitignore y sin licencia (ya los tenemos).
-- [ ] En local, dentro de la carpeta `nexus/` con estos ficheros:
+- [x] Crear en GitHub un repo **público** llamado `nexus`, **sin** README, sin .gitignore y sin licencia (ya los tenemos).
+- [x] En local, dentro de la carpeta `nexus/` con estos ficheros:
 
 ```bash
 git init -b main
@@ -38,18 +38,18 @@ git remote add origin https://github.com/<tu-usuario>/nexus.git
 git push -u origin main
 ```
 
-- [ ] Comprobar en GitHub que están `AGENTS.md`, `docs/`, `openspec/config.yaml`, `.gitignore`, `.gitattributes` y `.dev.vars.example`.
+- [x] Comprobar en GitHub que están `AGENTS.md`, `docs/`, `openspec/config.yaml`, `.gitignore`, `.gitattributes` y `.dev.vars.example`.
 
 ### 0.2 · Herramientas (en **cada** equipo — ver "Preparar un equipo nuevo")
 
-- [ ] Equipo de la oficina preparado
+- [x] Equipo de la oficina preparado
 - [ ] Equipo de casa preparado
 
 ### 0.3 · Cuenta de Cloudflare
 
-- [ ] Cuenta creada (o la existente) y sesión iniciada en el dashboard.
-- [ ] Elegido el subdominio `workers.dev` (Workers & Pages → tu subdominio). La URL final será `nexus.<subdominio>.workers.dev`.
-- [ ] Zero Trust activado con el **plan Free** (te pedirá un nombre de equipo: `<equipo>.cloudflareaccess.com`). Apuntar ese nombre aquí: `__________`
+- [x] Cuenta creada (o la existente) y sesión iniciada en el dashboard.
+- [x] Elegido el subdominio `workers.dev` (Workers & Pages → tu subdominio). La URL final será `nexus.<subdominio>.workers.dev`.
+- [x] Zero Trust activado con el **plan Free** (te pedirá un nombre de equipo: `<equipo>.cloudflareaccess.com`). Apuntar ese nombre aquí: `juanmazh.cloudflareaccess.com`
 
 ### 0.4 · Bot de Telegram
 
@@ -85,9 +85,11 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 |---|---|---|---|---|
 | 0.1 | `bootstrap-project` | ⬜ | | Crear la D1: `pnpm wrangler d1 create nexus-db` y pegar el `database_id` en `wrangler.jsonc`. Primer `pnpm deploy` |
 | 0.2 | `add-access-auth` | ⬜ | | Activar Cloudflare Access en el Worker `nexus` (Workers & Pages; protege producción **y** previews), permitir solo tu email, copiar el **AUD tag** de la aplicación creada (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` |
+| 0.3 | `add-app-shell` | ⬜ | | Validar en un móvil real la dirección visual "olivar" (`docs/DESIGN.md §5`) |
 | 1.1 | `add-tasks` | ⬜ | | `pnpm db:migrate:remote` antes del deploy |
 | 1.2 | `add-reminders` | ⬜ | | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; migración remota; deploy; esperar un aviso real |
-| — | **Hito v0.1.0** | ⬜ | | Tag `v0.1.0` + una semana de uso real |
+| 1.3 | `add-pwa` | ⬜ | | Instalar la app en tu móvil (Android: Chrome › Instalar; iOS: Safari › Añadir a pantalla de inicio) |
+| — | **Hito v0.1.0** | ⬜ | | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
 | 2.1 | `add-notes` | ⬜ | | |
 | 2.2 | `add-quick-links` | ⬜ | | |
 | 2.3 | `add-home-dashboard` | ⬜ | | Configurar el deploy automático (GitHub Actions + `CLOUDFLARE_API_TOKEN`) |
@@ -98,7 +100,6 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | 4.1 | `add-finance-transactions` | ⬜ | | |
 | 4.2 | `add-finance-charts` | ⬜ | | |
 | 5.1 | `add-calendar-view` | ⬜ | | |
-| 5.2 | `add-pwa` | ⬜ | | |
 
 ---
 
@@ -131,6 +132,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 
+- **2026-10-07 · oficina** — Mobile-first como pilar: nuevo `docs/DESIGN.md`, cambio `add-app-shell` (0.3), PWA adelantada a la fase 1 (1.3) y Playwright con viewports móvil/escritorio en CI (ADR-008).
 - **2026-10-07 · oficina** — Definidas las directrices (AGENTS.md, ARCHITECTURE, ROADMAP, WORKFLOW, config de OpenSpec). Decisiones: nombre Nexus, idioma mixto, React + TS, avisos por Telegram, dominio aplazado a la fase 3. → Siguiente: paso 0.1.
 
 ---

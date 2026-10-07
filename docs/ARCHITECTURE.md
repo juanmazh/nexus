@@ -216,3 +216,8 @@ Formato corto: **contexto → decisión → consecuencias**. Las decisiones nuev
 - **Contexto:** duplicar tipos entre front y back provoca desincronización.
 - **Decisión:** `hc<AppType>` en el front; los schemas Zod viven en `shared/`.
 - **Consecuencias:** un cambio en la API rompe el `typecheck` del front al momento, que es justo lo que se busca.
+
+### ADR-008 · Mobile-first verificado automáticamente
+- **Contexto:** el móvil es el dispositivo principal de Nexus; "ya lo miraré en el móvil" acaba en layouts rotos que nadie detecta.
+- **Decisión:** reglas de diseño obligatorias en `docs/DESIGN.md`, un shell propio (`add-app-shell`) antes de la primera funcionalidad, PWA en la fase 1 y Playwright en la CI con proyectos móvil (360 px) y escritorio.
+- **Consecuencias:** una dependencia de desarrollo más (Playwright, solo Chromium en CI) y CI algo más lenta, a cambio de que una regresión responsive rompa la CI en lugar de llegar a producción.

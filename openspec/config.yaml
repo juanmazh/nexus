@@ -40,6 +40,11 @@ context: |
 
   Fechas: siempre UTC en BD como integer (epoch ms); se presentan en Europe/Madrid.
 
+  MOBILE-FIRST (pilar del producto): el móvil es el dispositivo principal. Toda UI se diseña
+  a 360 px y después se amplía a escritorio, siguiendo docs/DESIGN.md (shell con tab bar
+  inferior y barra de captura, áreas táctiles de 44 px o más, bottom sheets en móvil, safe
+  areas, sin scroll horizontal). La verificación incluye Playwright con viewports móvil y escritorio.
+
 rules:
   proposal:
     - "Explica el problema y el valor para el usuario antes que la solución."
@@ -53,6 +58,7 @@ rules:
     - "Para endpoints: método, ruta, entrada validada, respuesta de éxito y respuestas de error con la forma { error: { code, message } }."
     - "Para todo lo relacionado con tiempo: especifica la zona horaria (almacenado en UTC, mostrado en Europe/Madrid) y el comportamiento si el momento ya pasó."
     - "Reutiliza o modifica capacidades existentes en openspec/specs/ antes de crear una nueva."
+    - "Todo requisito de UI incluye al menos un escenario en viewport móvil (360 px): dónde está la acción principal, cómo se abre el detalle (bottom sheet) y que no hay scroll horizontal."
   design:
     - "Incluye los cambios de esquema Drizzle (tablas, columnas, índices) y si la migración es destructiva."
     - "Justifica cada dependencia nueva (alternativas consideradas y por qué no basta lo que ya hay)."
@@ -60,8 +66,10 @@ rules:
     - "Respeta la separación routes (HTTP) / services (negocio) / db (esquema) de AGENTS.md."
     - "Documenta los riesgos y cómo se revierte el cambio."
     - "Si la decisión es arquitectónica, propón la entrada ADR correspondiente para docs/ARCHITECTURE.md."
+    - "Si hay UI: describe primero el layout móvil (360 px, con wireframe ASCII) y después cómo se amplía en md y lg, citando las reglas de docs/DESIGN.md que aplican."
   tasks:
     - "Tareas pequeñas y verificables (orientativo: 30-90 minutos), ordenadas por dependencia: esquema → servicios → rutas → frontend → tests → docs."
     - "Cada tarea indica los ficheros que toca."
     - "Los tests van junto a la funcionalidad que cubren, no todos al final."
+    - "Si hay UI: incluye tareas para los tests de Playwright de la vista (móvil y escritorio) y una tarea de verificación manual a 360 px y en un móvil real."
     - "Última tarea obligatoria: comprobar la definición de hecho de AGENTS.md (typecheck, lint, test, build, migración local, openspec validate)."

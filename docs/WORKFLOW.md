@@ -48,6 +48,11 @@ git push
 > Los commits `wip` están permitidos **solo en ramas de cambio**. Al mergear se hace *squash*, así
 > que `main` queda limpio con un commit convencional por cambio.
 
+### Probar en el móvil real
+
+- **Misma wifi:** `pnpm dev --host` y abre en el móvil la URL de red que muestra Vite (`http://192.168.x.x:5173`). Si la wifi de la oficina aísla los dispositivos, usa la siguiente opción.
+- **Desde cualquier sitio:** sube una versión de preview (`pnpm wrangler versions upload`) y abre su URL de preview en el móvil; Access la protege igual que producción.
+
 ### Lo que NO viaja por git (y debe existir en cada equipo)
 
 | Cosa | Cómo se replica |
@@ -95,6 +100,7 @@ historial de la conversación, que suele arrastrar ideas que ya se descartaron.
 - [ ] ¿La sección "Fuera de alcance" existe y es concreta?
 - [ ] ¿Cabe en un PR que pueda revisar en una sentada?
 - [ ] ¿Cada requisito tiene escenarios de error y de bordes, no solo el camino feliz?
+- [ ] Si hay UI: ¿el diseño describe **primero el layout móvil** (360 px) y tiene escenarios móviles en las specs?
 - [ ] ¿Las fechas especifican UTC en BD y Europe/Madrid en la UI?
 - [ ] ¿Añade dependencias? ¿Están justificadas en `design.md`?
 - [ ] ¿La migración es destructiva? ¿Hay plan de vuelta atrás?
@@ -109,7 +115,9 @@ historial de la conversación, que suele arrastrar ideas que ya se descartaron.
 - [ ] Rutas nuevas bajo `/api/*` → pasan por el middleware de Access (hay un test que lo demuestra).
 - [ ] Entradas validadas con Zod; nada de SQL concatenado.
 - [ ] No hay N+1 ni queries sin índice sobre tablas que crecen.
-- [ ] Probado a mano en `pnpm dev`, también en vista móvil (DevTools a ~375 px).
+- [ ] `pnpm test:e2e` en verde (proyectos móvil y escritorio).
+- [ ] Checklist manual de `docs/DESIGN.md §6` hecha: 360 px, 320 px, **móvil real**, teclado virtual, modo oscuro.
+- [ ] Capturas de móvil y escritorio adjuntas en la descripción del PR (también sirven de escaparate en GitHub).
 - [ ] Si toca auth, secretos o migraciones destructivas → pide una segunda revisión a Claude con el diff.
 
 ---

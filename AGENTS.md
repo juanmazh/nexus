@@ -14,6 +14,7 @@ Nexus es la **suite personal de Juanma**: un único sitio web para gestionar su 
 - **Usuario:** una sola persona (el dueño). No es multiusuario ni multi-tenant. No diseñes para "otros usuarios".
 - **Coste objetivo:** 0 €/mes. Todo debe caber en el **plan gratuito de Cloudflare**.
 - **Repositorio público:** el código se enseña en GitHub. Debe ser limpio, legible y digno de portfolio.
+- **Mobile-first:** el móvil es el dispositivo principal, no una adaptación. Toda UI se diseña a 360 px y luego se amplía (ver `docs/DESIGN.md`).
 - **Desarrollo guiado por specs:** todo cambio pasa por OpenSpec (ver §7).
 
 Documentos de referencia (léelos antes de proponer cambios grandes):
@@ -22,6 +23,7 @@ Documentos de referencia (léelos antes de proponer cambios grandes):
 |---|---|
 | `docs/ARCHITECTURE.md` | Arquitectura, modelo de datos y decisiones (ADRs) |
 | `docs/ROADMAP.md` | Fases del proyecto y alcance de cada una |
+| `docs/DESIGN.md` | **Diseño mobile-first**: shell, reglas táctiles, dirección visual y verificación (obligatorio para cualquier UI) |
 | `docs/WORKFLOW.md` | Proceso humano: roles, git, revisión de PRs |
 | `docs/PROGRESS.md` | Estado actual: en qué cambio estamos y cuál es el siguiente paso |
 | `openspec/specs/` | Comportamiento **actual** del sistema (fuente de verdad) |
@@ -52,6 +54,7 @@ No añadas, sustituyas ni elimines piezas del stack sin un `design.md` aprobado 
 | Auth | Cloudflare Access (delante del Worker) + validación del JWT en el Worker |
 | Avisos | Bot de Telegram (Bot API vía `fetch`) disparado por un Cron Trigger |
 | Tests | Vitest (+ `@cloudflare/vitest-pool-workers` para el Worker) |
+| Tests e2e / responsive | Playwright (viewports móvil y escritorio, en CI) |
 | Lint / formato | Biome |
 | Gestor de paquetes | pnpm |
 
@@ -72,6 +75,7 @@ nexus/
 ├── openspec/                 # Specs y cambios (OpenSpec)
 ├── migrations/               # SQL generado por drizzle-kit (NO editar a mano salvo indicación)
 ├── shared/                   # Código compartido front ↔ worker (schemas Zod, tipos, constantes)
+├── e2e/                      # Tests de Playwright (responsive móvil/escritorio)
 ├── worker/
 │   ├── index.ts              # Entrada: exporta fetch (Hono) y scheduled (cron)
 │   ├── app.ts                # Instancia Hono, middlewares globales, monta rutas, exporta AppType
@@ -111,6 +115,7 @@ Estos scripts se crean en la fase 0. Si un script no existe, **no inventes un su
 | `pnpm typecheck` | `tsc` en modo estricto, sin emitir |
 | `pnpm lint` / `pnpm format` | Biome (check / write) |
 | `pnpm test` | Vitest |
+| `pnpm test:e2e` | Playwright (proyectos móvil 360 px y escritorio 1280 px) |
 | `pnpm db:generate` | drizzle-kit genera la migración SQL desde `worker/db/schema.ts` |
 | `pnpm db:migrate:local` | Aplica migraciones en la D1 local |
 | `pnpm db:migrate:remote` | Aplica migraciones en producción (**solo lo ejecuta el humano**) |
@@ -154,14 +159,21 @@ Estos scripts se crean en la fase 0. Si un script no existe, **no inventes un su
 - Datos del servidor **solo** vía TanStack Query (queries y mutations con invalidación). No dupliques datos del servidor en `useState`.
 - Llamadas a la API **solo** a través del cliente RPC de Hono (`src/lib/api.ts`), nunca `fetch` suelto.
 - Formularios validados con los mismos schemas Zod de `shared/`.
-- Mobile-first: todo debe funcionar en ~375 px de ancho.
+- **Mobile-first**: estilos base para móvil y ampliación con `md:`/`lg:`; prohibido maquetar con `max-width` *media queries*.
+- Overlays siempre con `ResponsiveDialog` (bottom sheet en móvil, diálogo o panel en escritorio).
 
-### Diseño visual
+### Diseño visual y responsive
 
-- Usa los componentes y tokens de shadcn/ui. No hardcodees colores (`#hex`); usa las variables CSS del tema.
-- Un solo color de acento, modo claro y oscuro, espaciado consistente (escala de Tailwind), tipografía sin florituras.
-- Estados obligatorios en cada vista con datos: **cargando**, **vacío**, **error**.
-- Accesibilidad básica: labels en inputs, foco visible, contraste suficiente, botones con texto o `aria-label`.
+`docs/DESIGN.md` es **obligatorio** para cualquier cambio con UI. Lo mínimo que nunca se puede saltar:
+
+- Se diseña a **360 px** primero; a 320 px no se rompe nada y **nunca** hay scroll horizontal de página.
+- Áreas táctiles de **≥ 44 × 44 px**; acciones frecuentes en el tercio inferior (tab bar + barra de captura).
+- Safe areas (`env(safe-area-inset-*)`), alturas con `dvh`/`svh` (nunca `100vh`) y sin bloquear el zoom.
+- Inputs con letra **≥ 16 px**, `type`/`inputmode`/`enterkeyhint` correctos e inputs nativos de fecha y hora.
+- Nada depende del hover: los estilos de hover van en `@media (hover: hover)`.
+- Colores solo mediante los tokens del tema (nada de `#hex` en componentes); modo claro y oscuro.
+- Estados obligatorios en cada vista con datos: **cargando** (skeleton), **vacío** (invita a actuar) y **error** (qué pasó y cómo arreglarlo).
+- Accesibilidad: labels en inputs, foco visible, contraste AA, botones con texto o `aria-label`, `prefers-reduced-motion`.
 
 ---
 
@@ -231,7 +243,8 @@ Un cambio solo está terminado cuando **todo** esto se cumple:
 - [ ] `pnpm build` funciona.
 - [ ] Si cambió el esquema: migración generada con `pnpm db:generate`, revisada y aplicada en local.
 - [ ] Cada requisito nuevo de la spec tiene al menos un test que cubre sus escenarios principales (lógica de `services/` y `jobs/` obligatoriamente).
-- [ ] La UI nueva tiene estados de carga, vacío y error, y funciona en móvil.
+- [ ] La UI nueva tiene estados de carga, vacío y error.
+- [ ] **Responsive verificado** según `docs/DESIGN.md §6`: `pnpm test:e2e` en verde (móvil y escritorio) y prueba manual a 360 px y en un móvil real.
 - [ ] Si cambió la arquitectura o una decisión: `docs/ARCHITECTURE.md` actualizado.
 - [ ] `openspec validate <change-id>` sin errores.
 

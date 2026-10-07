@@ -1,7 +1,8 @@
 # Nexus
 
-**Mi suite personal en el edge:** tareas, recordatorios, notas y, pronto, un blog. Todo en un único
-Cloudflare Worker, protegido con Zero Trust y con un coste de **0 €/mes**.
+**Mi suite personal en el edge:** tareas, recordatorios, notas y, pronto, un blog. Pensada para
+usarse **desde el móvil primero** (instalable como app), en un único Cloudflare Worker protegido
+con Zero Trust y con un coste de **0 €/mes**.
 
 > 🚧 En construcción. El progreso real está en [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
@@ -22,7 +23,7 @@ y usarlo de excusa para practicar arquitectura serverless y **desarrollo guiado 
 | Frontend | React 19 · TypeScript · TanStack Query · Tailwind · shadcn/ui |
 | Auth | Cloudflare Access (Zero Trust) + validación del JWT en el Worker |
 | Avisos | Cron Triggers → bot de Telegram |
-| Calidad | Vitest · Biome · GitHub Actions |
+| Calidad | Vitest · Playwright (móvil y escritorio) · Biome · GitHub Actions |
 
 ## Arquitectura
 
@@ -37,14 +38,14 @@ Detalles, modelo de datos y decisiones (ADRs) en [`docs/ARCHITECTURE.md`](docs/A
 
 ## Funcionalidades
 
-- [ ] Fase 0 — Cimientos: Worker, CI, autenticación con Access
-- [ ] Fase 1 — Tareas y recordatorios por Telegram
+- [ ] Fase 0 — Cimientos: Worker, CI, autenticación con Access y shell mobile-first
+- [ ] Fase 1 — Tareas, recordatorios por Telegram e instalación como app (PWA)
 - [ ] Fase 2 — Notas, enlaces rápidos y página de inicio
 - [ ] Fase 3 — Dominio propio y blog público
 - [ ] Fase 4 — Finanzas y gráficas
-- [ ] Fase 5 — Calendario y PWA
+- [ ] Fase 5 — Calendario
 
-Detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md). Principios de diseño en [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Cómo se construye
 
