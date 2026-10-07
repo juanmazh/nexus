@@ -152,6 +152,14 @@ interfaz: `open`, `onOpenChange`, `title`, `description`, `children`, `actions`.
 - El `Drawer` y el `Dialog` se añaden con `pnpm exec shadcn add drawer dialog`; `dialog` ya viene como
   dependencia de registro del propio `drawer`. Ninguna vista los usa directamente: eso lo convierte en
   una regla, y la regla se puede comprobar buscando imports en el pull request.
+  **Comprobado al aplicar (tarea 3.4):** el único fichero de `src/` que importa
+  `@/components/ui/dialog` o `@/components/ui/drawer` es `src/components/responsive-dialog.tsx`.
+  **Candidata a test unitario:** la comprobación es puramente textual y encaja en `pnpm test` como un
+  test que recorra `src/` y falle si aparece un import de cualquiera de los dos fuera de
+  `responsive-dialog.tsx` y de `src/components/ui/`. No se ha hecho aquí para no añadir un test que
+  lee el disco en el proyecto `web` sin una dependencia ya presente que lo justifique; si algún día se
+  acepta leer ficheros en los tests (como hace `src/lib/contrast.test.ts`), esa comprobación Should
+  subir a `pnpm test` y dejar de depender de que alguien recuerde mirarla en la revisión.
 
 ### D4 · Los avisos usan el primitivo `toast` de Base UI, no `sonner`
 

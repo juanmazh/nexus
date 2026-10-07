@@ -60,22 +60,22 @@
 
 ## 3. Overlays responsivos y avisos
 
-- [ ] 3.1 Crear `src/lib/use-media-query.ts` sobre `useSyncExternalStore`, devolviendo `boolean` y
+- [x] 3.1 Crear `src/lib/use-media-query.ts` sobre `useSyncExternalStore`, devolviendo `boolean` y
   manejando el caso de que `matchMedia` no exista en el entorno; escribir `src/lib/use-media-query.test.ts` que
   simule `matchMedia` y compruebe el valor inicial y que un cambio de la media query re-renderiza;
   verificar con `pnpm test`.
-- [ ] 3.2 Crear `src/components/responsive-dialog.tsx` con una única interfaz
+- [x] 3.2 Crear `src/components/responsive-dialog.tsx` con una única interfaz
   (`open`, `onOpenChange`, `title`, `description`, `actions`, `children`) que monta el `Drawer` de
   shadcn por debajo de 1024 px y el `Dialog` a partir de 1024 px, con el `max-h` en unidades de
   viewport dinámicas y el contenido desplazable; escribir `src/components/responsive-dialog.test.tsx`
   que compruebe qué componente se monta a 360 px y a 1280 px, que `Escape` cierra y que el foco vuelve
   al elemento que lo abrió; verificar con `pnpm test`.
-- [ ] 3.3 Añadir el `ToastHost` y su `ToastProvider` **una sola vez** en el layout del shell, con la
+- [x] 3.3 Añadir el `ToastHost` y su `ToastProvider` **una sola vez** en el layout del shell, con la
   posición arriba en móvil y abajo a la derecha en escritorio mediante las clases de posición del
   componente (sin estilos en línea); escribir `src/components/toast-host.test.tsx` que emite un aviso
   desde un consumidor de prueba y comprueba que se anuncia y que desaparece solo; verificar con
   `pnpm test`.
-- [ ] 3.4 Comprobar la regla de "ninguna vista usa `Dialog` ni `Drawer` directamente" con una búsqueda
+- [x] 3.4 Comprobar la regla de "ninguna vista usa `Dialog` ni `Drawer` directamente" con una búsqueda
   en `src/` que solo encuentre imports en `src/components/responsive-dialog.tsx` y en los componentes
   generados; dejar anotado en `design.md` que esta comprobación es candidata a convertirse en test
   unitario de `docs/DESIGN.md`.

@@ -186,6 +186,26 @@
 }
 
 /*
+ * Temporary notices have one home in the whole app. Above on mobile, so they
+ * never cover the tab bar or the capture bar; bottom-right from 1024 px up. In
+ * the stylesheet rather than inline, so `ToastHost` stays declarative
+ * (design.md D4).
+ */
+[data-slot="toast-viewport"] {
+	top: calc(0.75rem + env(safe-area-inset-top));
+	bottom: auto;
+}
+
+@media (min-width: 1024px) {
+	[data-slot="toast-viewport"] {
+		top: auto;
+		right: 1rem;
+		bottom: 1rem;
+		left: auto;
+	}
+}
+
+/*
  * Movement is only ever a response to an action, and only for as long as the
  * person has not asked the system to stop it (docs/DESIGN.md §1.6). The
  * `data-starting-style` utilities of Drawer and Dialog enter animations are
