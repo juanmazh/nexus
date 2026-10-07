@@ -99,7 +99,7 @@
   `push` a `main`: `pnpm/action-setup`, `actions/setup-node` con Node 22 y `cache: pnpm`,
   `pnpm install --frozen-lockfile` y cuatro pasos separados (`lint`, `typecheck`, `test`, `build`);
   verificar que el YAML es válido y que **no** hay paso de despliegue ni secretos.
-- [ ] 7.2 Abrir un push de prueba o dejar la rama lista para que la CI se dispare al abrir el PR;
+- [x] 7.2 Abrir un push de prueba o dejar la rama lista para que la CI se dispare al abrir el PR;
   verificar que los cuatro pasos aparecen en verde en GitHub Actions.
 
 ## 8. Documentación
@@ -121,11 +121,11 @@
 
 - [x] 9.1 Ejecutar `pnpm typecheck && pnpm lint && pnpm test && pnpm build` y dejar constancia del
   resultado en el PR.
-- [ ] 9.2 Ejecutar `pnpm dev`, abrir la SPA en el navegador y comprobar a mano que el estado de éxito
+- [x] 9.2 Ejecutar `pnpm dev`, abrir la SPA en el navegador y comprobar a mano que el estado de éxito
   aparece, que a 360 px no hay scroll horizontal, que el zoom del navegador funciona y que pulsar
   «Comprobar de nuevo» vuelve a consultar la API.
 - [x] 9.3 Verificar que no se crea ningún fichero `.sql` en `migrations/` (el
   `migrations/meta/_journal.json` vacío sí se versiona).
 - [x] 9.4 Ejecutar `openspec validate bootstrap-project --strict` y confirmar que pasa sin errores.
-- [ ] 9.5 Comprobar la definición de hecho de `AGENTS.md §9`, salvo el punto de `test:e2e`, que no
+- [x] 9.5 Comprobar la definición de hecho de `AGENTS.md §9`, salvo el punto de `test:e2e`, que no
   aplica en este cambio por decisión de alcance, y dejar constancia de esa excepción en el PR.
