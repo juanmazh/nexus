@@ -1,4 +1,6 @@
-import { app } from "./app";
+import { createApp } from "./app";
+
+const { app } = createApp();
 
 export default {
 	// `scheduled` arrives with add-reminders: without jobs there is nothing for a

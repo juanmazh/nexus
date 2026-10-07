@@ -26,7 +26,11 @@
 	// "triggers" llega con add-reminders: sin jobs, un cron ocuparía uno de los
 	// 5 Cron Triggers de la cuenta sin hacer nada.
 	"vars": {
-		"APP_TIMEZONE": "Europe/Madrid"
+		"APP_TIMEZONE": "Europe/Madrid",
+		// Dominio del equipo de Zero Trust, SIN esquema: el código construye
+		// `https://${ACCESS_TEAM_DOMAIN}` una sola vez y lo usa como emisor.
+		// No es un secreto. ACCESS_AUD sí lo es (wrangler secret put).
+		"ACCESS_TEAM_DOMAIN": "juanmazh.cloudflareaccess.com"
 	},
 	"observability": {
 		"enabled": true

@@ -12,9 +12,9 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 0 — Cimientos |
-| **Paso / cambio** | Cambio 0.1 `bootstrap-project` mergeado y archivado (PR #3 y #4). D1 `nexus-db` creada |
-| **Rama** | `chore/d1-database-id` (id de la D1 y `deploy` con build previo) |
-| **Siguiente acción exacta** | Mergear `chore/d1-database-id` → `pnpm deploy` desde `main` → comprobar `/api/health` → **activar Cloudflare Access** en el Worker (solo tu email) → guardar el AUD tag → `/opsx-propose add-access-auth` (0.2) |
+| **Paso / cambio** | Cambio 0.2 `add-access-auth` **implementado y verificado**, pendiente de revisión y merge |
+| **Rama** | `change/add-access-auth` (sin PR todavía) |
+| **Siguiente acción exacta** | Revisar el código del cambio → `pnpm wrangler secret put ACCESS_AUD` (AUD tag de la app de Access) → `pnpm deploy` → comprobar `/api/health` en `200` sin sesión, `/api/me` en `401` sin sesión y `200` con la del navegador, y que la SPA carga sin violaciones de CSP → abrir el PR y mergear a `main` → `/opsx-archive add-access-auth` |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-07 · casa |
 
@@ -76,8 +76,8 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 | # | change-id | Estado | Rama / PR | Pasos manuales asociados |
 |---|---|---|---|---|
-| 0.1 | `bootstrap-project` | 🟡 | `change/bootstrap-project` (sin PR) | Crear la D1: `pnpm wrangler d1 create nexus-db` y pegar el `database_id` en `wrangler.jsonc`. Primer `pnpm deploy`. **Justo después:** activar Cloudflare Access en el Worker `nexus` (producción y previews) permitiendo solo tu email |
-| 0.2 | `add-access-auth` | ⬜ | | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` |
+| 0.1 | `bootstrap-project` | ✅ | PR #3 y #4 | — |
+| 0.2 | `add-access-auth` | 👀 | `change/add-access-auth` (sin PR) | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` **antes** del primer deploy con el middleware montado → `pnpm deploy` → comprobar las tres rutas a mano |
 | 0.3 | `add-app-shell` | ⬜ | | Validar en un móvil real la dirección visual "olivar" (`docs/DESIGN.md §5`) |
 | 1.1 | `add-tasks` | ⬜ | | `pnpm db:migrate:remote` antes del deploy |
 | 1.2 | `add-reminders` | ⬜ | | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; migración remota; deploy; esperar un aviso real |
@@ -107,8 +107,8 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
       `git clone https://juanmazh@github.com/juanmazh/nexus.git`
 - [ ] `pnpm install` (desde el cambio 0.1; `package.json` ya existe).
 - [ ] `pnpm wrangler login` (solo hace falta para desplegar o para la D1 remota; `pnpm dev` no lo pide).
-- [ ] Copiar `.dev.vars` desde el gestor de contraseñas y comprobar con `git status` que no aparece (aún no es necesario: hasta `add-access-auth` el Worker no lee secretos).
-- [ ] `pnpm dev` → la app arranca en `http://localhost:5173`. (`pnpm db:migrate:local` todavía no hace falta: no hay migraciones.)
+- [ ] Copiar `.dev.vars` desde el gestor de contraseñas (`ACCESS_AUD`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`) y comprobar con `git status` que no aparece. Desde `add-access-auth` ya hace falta: sin `ACCESS_AUD`, `/api/*` deniega.
+- [ ] `pnpm dev` → la app arranca en `http://localhost:5173`. Para llamar a `/api/*` en local, activa `ACCESS_DEV_BYPASS=1` en `.dev.vars` (ADR-009). (`pnpm db:migrate:local` todavía no hace falta: no hay migraciones.)
 
 ---
 
@@ -127,6 +127,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 
+- **2026-10-07 · casa** — `/opsx-apply add-access-auth`: **22/22 tareas**. Dependencia `jose@^6.2.12`, `ACCESS_TEAM_DOMAIN` en `vars`, atajo local `ACCESS_DEV_BYPASS` documentado (doble condición: `.dev.vars` **y** hostname local). Worker: `services/access-token.ts` + `access-jwks.ts` (JWKS remoto memoizado por dominio), `middleware/access.ts` (fail closed, mounted **antes** del enrutado, única excepción `GET /api/health`), `routes/me.ts` (`GET /api/me`), `middleware/security-headers.ts` y `public/_headers`. **49 tests en verde.** Verificado contra el gestor de assets real con `wrangler dev`: `/` y el asset JS llevan la CSP de la SPA y `/api/health` lleva la de la API. Sin cambios de esquema (0 filas D1) y el bundle del cliente no ha crecido. **Dos desviaciones del `design.md`, ambas deliberadas:** (1) el tipo de `Bindings` de Hono se declara en `middleware/access.ts` en vez de usar `Cloudflare.Env`, porque `src/lib/api.ts` arrastra el grafo del Worker al `typecheck` de la SPA, donde los globales de workerd no existen —y porque `wrangler types` estrecha las `vars` a literales y los tests necesitan su propio dominio—; (2) una sola regla en `_headers` en vez de dos, porque `/*` y `/assets/*` coinciden en los mismos assets y Cloudflare mandaba cada cabecera duplicada. Quedan los pasos manuales: `ACCESS_AUD`, `pnpm deploy`, comprobación en el despliegue real, PR y merge. → Siguiente: revisar, `wrangler secret put ACCESS_AUD`, `pnpm deploy`, comprobar, PR, merge y `/opsx-archive`.
 - **2026-10-07 · oficina** — `/opsx-apply bootstrap-project`: **33/36 tareas**, documentación cerrada (8.1–8.4). `AGENTS.md` corregido (`@cloudflare/vitest-plugin`, `test:e2e` inexistente hasta `add-app-shell`, excepción de `/api/health` en §6.3), `docs/ARCHITECTURE.md §2.3` con la configuración real (placeholder del `database_id`, sin `triggers`) y `README.md` con la puesta en marcha y el paso manual de crear la D1. 9.1 re-ejecutada de verdad: typecheck, lint, test (9/9) y build en verde; `openspec validate --strict` en verde. Auditoría 8.4: ningún secreto, email ni `chat.id` versionado (`.dev.vars` ignorado, solo se versiona `.dev.vars.example` con valores vacíos). Quedan **7.2, 9.2 y 9.5**, las tres humanas (CI, navegador y PR). **Desviación pendiente de decidir:** `design.md §3` sigue describiendo el 405 como un `.all()` en la ruta cuando acabó siendo un middleware, y los alias como objeto cuando son regex. → Siguiente: commit, `git push -u origin change/bootstrap-project`, abrir el PR y verificar la CI.
 - **2026-10-07 · oficina** — `/opsx-apply bootstrap-project`: 28/36 tareas hechas y commiteadas. Base del proyecto (package.json, pnpm, 4 tsconfig, Biome), Worker con `GET /api/health` (+ 405/404 con la forma de error), SPA mínima con los tres estados, Vitest con dos proyectos (**9 tests en verde**), CI sin despliegue. pnpm, Node y `@cloudflare/vitest-plugin` ya estaban disponibles: **no hizo falta `corepack enable`**. Dos desviaciones del `design.md`: el 405 va en un middleware en vez de un `.all()` (`.get()`+`.all()` en la misma ruta colapsa el tipo de `$get` a `never` en el cliente RPC) y los alias se declaran en forma de regex (la forma objeto no resolvía dentro de Vitest 4). Pendiente: documentación (8.1–8.4), comprobación manual de `pnpm dev` (9.2) y push/PR. → Siguiente: retomar con `/opsx-apply bootstrap-project`.
 - **2026-10-07 · oficina** — Parche de modelos gratuitos aplicado de verdad (`opencode.json` en la raíz, sin fijar modelo). Propuesta de `bootstrap-project` generada con `/opsx-propose` y revisada con Claude; correcciones aplicadas (404/405 con la forma de error, tsconfig, alias sin dependencias extra). → Siguiente: mergear PR #1 y #2 y `/opsx-apply`.
