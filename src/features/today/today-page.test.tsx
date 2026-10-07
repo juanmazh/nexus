@@ -40,7 +40,7 @@ describe("TodayPage", () => {
 		renderToday();
 
 		expect(screen.getByRole("heading", { name: "Nada pendiente para hoy" })).toBeInTheDocument();
-		expect(screen.getByText(/Añade lo primero con la barra de abajo/)).toBeInTheDocument();
+		expect(screen.getByText(/Añade lo primero con la barra de captura/)).toBeInTheDocument();
 	});
 
 	it("marks 'now' with a marker that does not rely on colour alone", () => {

@@ -22,7 +22,7 @@ export function EmptyState({
 			className={cn(
 				// `min-w-0` so long words wrap instead of forcing horizontal scroll at
 				// 320 px, and text only: no icon needed at this size.
-				"flex min-w-0 flex-col items-start gap-2 px-1 py-8 text-left",
+				"flex min-w-0 flex-col items-start gap-2 px-4 py-8 text-left",
 				className,
 			)}
 		>

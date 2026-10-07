@@ -23,7 +23,7 @@ export function MorePage() {
 				action={<ThemeToggle />}
 			/>
 
-			<div className="flex flex-col gap-4 px-4">
+			<div className="flex flex-col gap-4 px-4 pt-4">
 				<section aria-labelledby="sesion-titulo" className="flex flex-col gap-3">
 					<h2 id="sesion-titulo" className="font-heading text-base font-medium text-foreground">
 						Sesión

@@ -12,7 +12,7 @@ export function TasksPage() {
 			<ViewHeader title="Tareas" subtitle="Lo que tienes que hacer" />
 			<EmptyState
 				title="Sin tareas"
-				description="Aquí se recogerán todas las tareas, agrupadas por día y sin conexión. Añade la primera con la barra de abajo."
+				description="Aquí se recogerán todas tus tareas, agrupadas por día. Añade la primera con la barra de captura."
 			/>
 		</>
 	);

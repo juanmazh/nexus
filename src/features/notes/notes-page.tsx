@@ -10,10 +10,7 @@ export function NotesPage() {
 	return (
 		<>
 			<ViewHeader title="Notas" subtitle="Lo que quieres recordar" />
-			<EmptyState
-				title="Sin notas"
-				description="Aquí se guardarán las notas, con su fecha y su etiqueta. Añade la primera con la barra de abajo."
-			/>
+			<EmptyState title="Sin notas" description="Aquí se guardarán tus notas." />
 		</>
 	);
 }

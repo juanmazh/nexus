@@ -48,7 +48,10 @@ export function AppShell() {
 						data-slot="app-header"
 						className="shrink-0 border-b border-border bg-background pt-[env(safe-area-inset-top)]"
 					>
-						<CaptureBar placeholder="Añade una tarea…" className="border-t-0" />
+						{/* Aligned with the content column, not stretched across the whole window. */}
+						<div className="mx-auto w-full max-w-2xl">
+							<CaptureBar placeholder="Añade una tarea…" className="border-t-0" />
+						</div>
 					</header>
 				) : null}
 

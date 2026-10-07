@@ -27,7 +27,7 @@ export function TodayPage() {
 			</div>
 			<EmptyState
 				title="Nada pendiente para hoy"
-				description="Aquí aparecerán las tareas y los recordatorios de hoy, en orden. Añade lo primero con la barra de abajo."
+				description="Aquí aparecerán las tareas y los recordatorios de hoy, en orden. Añade lo primero con la barra de captura."
 			/>
 		</>
 	);
