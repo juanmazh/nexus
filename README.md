@@ -90,17 +90,14 @@ Cloudflare** y sin `.dev.vars`: hoy el Worker todavía no lee ningún secreto. E
 `pnpm test:e2e` (Playwright, móvil 360 px y escritorio 1280 px) **todavía no existe**: llega con
 `add-app-shell`.
 
-### Antes del primer despliegue
+### Despliegue
 
-La base de datos D1 se crea a mano, una sola vez, y solo la necesita el despliegue (en local usa la D1
-de Miniflare):
+La base de datos D1 de producción (`nexus-db`) ya está creada y su `database_id` está en
+`wrangler.jsonc`. En local se usa siempre la D1 de Miniflare.
 
 ```bash
-pnpm wrangler d1 create nexus-db
+pnpm deploy   # hace el build y despliega; solo la persona propietaria
 ```
-
-El `database_id` que imprime hay que pegarlo en `wrangler.jsonc`, sustituyendo el UUID de ceros que
-actualmente lleva el `TODO(setup)`. Hasta entonces, `pnpm deploy` fallará al enlazar D1.
 
 ## Autor
 

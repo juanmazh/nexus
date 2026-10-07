@@ -12,9 +12,9 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 0 — Cimientos |
-| **Paso / cambio** | Cambio 0.1 `bootstrap-project` — **34/36 tareas**; PR #3 abierto con la CI en verde |
-| **Rama** | `change/bootstrap-project` (pusheada, PR #3) |
-| **Siguiente acción exacta** | Comprobar `pnpm dev` a mano a 360 px (9.2) → marcar 9.2 y 9.5 → descripción del PR con 9.1, 9.2 y la excepción de `test:e2e` → `/opsx-archive bootstrap-project` en la rama → squash merge → proteger `main` (S7) → D1 + primer deploy + Access |
+| **Paso / cambio** | Cambio 0.1 `bootstrap-project` mergeado y archivado (PR #3 y #4). D1 `nexus-db` creada |
+| **Rama** | `chore/d1-database-id` (id de la D1 y `deploy` con build previo) |
+| **Siguiente acción exacta** | Mergear `chore/d1-database-id` → `pnpm deploy` desde `main` → comprobar `/api/health` → **activar Cloudflare Access** en el Worker (solo tu email) → guardar el AUD tag → `/opsx-propose add-access-auth` (0.2) |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-07 · casa |
 
