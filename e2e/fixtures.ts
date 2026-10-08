@@ -49,6 +49,68 @@ export function stubTask(overrides: Partial<StubTask> = {}): StubTask {
 	};
 }
 
+export type StubReminder = {
+	id: string;
+	task_id: string;
+	remind_at: number;
+	channel: "telegram";
+	status: "pending" | "sent" | "failed" | "cancelled";
+	attempts: number;
+	last_error: string | null;
+	sent_at: number | null;
+	created_at: number;
+};
+
+export function stubReminder(
+	taskId: string,
+	remindAt: number,
+	overrides: Partial<StubReminder> = {},
+): StubReminder {
+	return {
+		id: crypto.randomUUID(),
+		task_id: taskId,
+		remind_at: remindAt,
+		channel: "telegram",
+		status: "pending",
+		attempts: 0,
+		last_error: null,
+		sent_at: null,
+		created_at: Date.now(),
+		...overrides,
+	};
+}
+
+/** Milliseconds Madrid is ahead of UTC at `ms` (3.600.000 in winter, 7.200.000 in summer). */
+function madridOffset(ms: number): number {
+	const parts = Object.fromEntries(
+		new Intl.DateTimeFormat("en-US", {
+			timeZone: "Europe/Madrid",
+			hourCycle: "h23",
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+		})
+			.formatToParts(ms)
+			.map((part) => [part.type, part.value]),
+	);
+	const wall = Date.UTC(
+		Number(parts.year),
+		Number(parts.month) - 1,
+		Number(parts.day),
+		Number(parts.hour),
+		Number(parts.minute),
+	);
+	return wall - Math.floor(ms / 60_000) * 60_000;
+}
+
+/** `YYYY-MM-DDTHH:mm` of Madrid → epoch ms, good enough for a stub (no DST edge cases). */
+function madridLocalToMs(value: string): number {
+	const asUtc = new Date(`${value}:00Z`).getTime();
+	return asUtc - madridOffset(asUtc);
+}
+
 /** `YYYY-MM-DD` → 00:00 of that day in Madrid, close enough for a stub. */
 function dueDateToMs(date: string | null | undefined): number | null {
 	return date ? new Date(`${date}T00:00:00+02:00`).getTime() : null;
@@ -60,7 +122,20 @@ function dueDateToMs(date: string | null | undefined): number | null {
  * next one, or the suite would be testing the mock and not the app. The array is
  * returned so a test can seed it or look at it.
  */
-export async function stubApi(page: Page, tasks: StubTask[] = []): Promise<StubTask[]> {
+export type StubState = { tasks: StubTask[]; reminders: StubReminder[] };
+
+export async function stubApi(
+	page: Page,
+	state: StubState = { tasks: [], reminders: [] },
+): Promise<StubState> {
+	const { tasks, reminders } = state;
+	const nextReminderAt = (taskId: string) => {
+		const pending = reminders
+			.filter((reminder) => reminder.task_id === taskId && reminder.status === "pending")
+			.map((reminder) => reminder.remind_at);
+		return pending.length === 0 ? null : Math.min(...pending);
+	};
+
 	await page.route("**/api/**", async (route) => {
 		const request = route.request();
 		const url = new URL(request.url());
@@ -88,8 +163,45 @@ export async function stubApi(page: Page, tasks: StubTask[] = []): Promise<StubT
 			const status = url.searchParams.get("status") ?? "todo";
 			return json(
 				200,
-				tasks.filter((task) => task.status === status),
+				tasks
+					.filter((task) => task.status === status)
+					.map((task) => ({ ...task, next_reminder_at: nextReminderAt(task.id) })),
 			);
+		}
+
+		if (pathname.endsWith("/api/telegram/test")) {
+			return route.fulfill({ status: 204 });
+		}
+
+		const reminderTaskId = pathname.match(/\/api\/tasks\/([^/]+)\/reminders$/)?.[1];
+		if (reminderTaskId !== undefined) {
+			if (!tasks.some((task) => task.id === reminderTaskId)) {
+				return notFound();
+			}
+			if (request.method() === "POST") {
+				const body = request.postDataJSON() as { remind_at: string };
+				const reminder = stubReminder(reminderTaskId, madridLocalToMs(body.remind_at));
+				reminders.push(reminder);
+				return json(201, reminder);
+			}
+			return json(
+				200,
+				reminders
+					.filter(
+						(reminder) => reminder.task_id === reminderTaskId && reminder.status === "pending",
+					)
+					.sort((a, b) => a.remind_at - b.remind_at),
+			);
+		}
+
+		const reminderId = pathname.match(/\/api\/reminders\/([^/]+)$/)?.[1];
+		if (reminderId !== undefined) {
+			const reminder = reminders.find((item) => item.id === reminderId);
+			if (reminder === undefined) {
+				return json(404, { error: { code: "not_found", message: "Este aviso ya no existe." } });
+			}
+			reminder.status = "cancelled";
+			return route.fulfill({ status: 204 });
 		}
 
 		const id = pathname.match(/\/api\/tasks\/([^/]+)$/)?.[1];
@@ -101,6 +213,12 @@ export async function stubApi(page: Page, tasks: StubTask[] = []): Promise<StubT
 			}
 			if (request.method() === "DELETE") {
 				tasks.splice(index, 1);
+				// In place: every branch above holds this same array.
+				for (let at = reminders.length - 1; at >= 0; at--) {
+					if (reminders[at]?.task_id === id) {
+						reminders.splice(at, 1);
+					}
+				}
 				return route.fulfill({ status: 204 });
 			}
 			const patch = request.postDataJSON() as Partial<StubTask> & { due_date?: string | null };
@@ -119,13 +237,20 @@ export async function stubApi(page: Page, tasks: StubTask[] = []): Promise<StubT
 				updated_at: now,
 			};
 			tasks[index] = updated;
+			if (patch.status === "done") {
+				for (const reminder of reminders) {
+					if (reminder.task_id === id && reminder.status === "pending") {
+						reminder.status = "cancelled";
+					}
+				}
+			}
 			return json(200, updated);
 		}
 
 		return json(200, { status: "ok" });
 	});
 
-	return tasks;
+	return state;
 }
 
 /**
@@ -246,15 +371,21 @@ export async function expectTactileTargets(targets: Locator): Promise<void> {
 	}
 }
 
-export const test = base.extend<{ tasks: StubTask[] }>({
-	// Automatic, so every test runs against the stub whether it reads the array
-	// or not. One array per test: seed it before navigating, read it after acting.
-	tasks: [
+export const test = base.extend<{ api: StubState; tasks: StubTask[]; reminders: StubReminder[] }>({
+	// Automatic, so every test runs against the stub whether it reads the state
+	// or not. One state per test: seed it before navigating, read it after acting.
+	api: [
 		async ({ page }, use) => {
 			await use(await stubApi(page));
 		},
 		{ auto: true },
 	],
+	tasks: async ({ api }, use) => {
+		await use(api.tasks);
+	},
+	reminders: async ({ api }, use) => {
+		await use(api.reminders);
+	},
 });
 
 export { expect };

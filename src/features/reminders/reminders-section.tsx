@@ -1,6 +1,6 @@
 import { epochMsToLocalDateTime, zonedDayNumber } from "@shared/dates";
 import { formatShortDate, formatTime } from "@shared/format";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/skeleton";
 import { APP_TIMEZONE } from "@/lib/datetime";
 import type { Task } from "../tasks/api";
@@ -190,10 +190,24 @@ function ReminderItem({
 }) {
 	const [confirming, setConfirming] = useState(false);
 	const cancel = useCancelReminder(taskId);
+	const confirmation = useRef<HTMLLIElement>(null);
+
+	// The question is taller than the row it replaces: on the last reminder of a
+	// long sheet its buttons would land below the fold, so they are brought into
+	// view. `nearest` moves the sheet only as much as needed, and not at all when
+	// they already fit. (jsdom has no `scrollIntoView`, hence the `?.`.)
+	useEffect(() => {
+		if (confirming) {
+			confirmation.current?.scrollIntoView?.({ block: "nearest" });
+		}
+	}, [confirming]);
 
 	if (confirming) {
 		return (
-			<li className="flex flex-col gap-2 border-b border-border py-2 last:border-b-0">
+			<li
+				ref={confirmation}
+				className="flex flex-col gap-2 border-b border-border py-2 last:border-b-0"
+			>
 				<p className="text-base text-foreground">
 					¿Cancelar el aviso {spokenTime(reminder.remind_at, now)}?
 				</p>

@@ -36,8 +36,8 @@
 
 ## 6. End-to-end
 
-- [ ] 6.1 `e2e/fixtures.ts`: avisos en memoria por tarea, `next_reminder_at` en la lista, `DELETE /api/reminders/:id` y `POST /api/telegram/test`.
-- [ ] 6.2 `e2e/reminders.spec.ts` en los dos viewports: añadir con un atajo, ver la campana en la fila, cancelar con confirmación, enviar el aviso de prueba; sin scroll horizontal y con objetivos de 44 px en el detalle.
+- [x] 6.1 `e2e/fixtures.ts`: avisos en memoria por tarea, `next_reminder_at` en la lista, `DELETE /api/reminders/:id` y `POST /api/telegram/test`.
+- [x] 6.2 `e2e/reminders.spec.ts` en los dos viewports: añadir con un atajo, ver la campana en la fila, cancelar con confirmación, enviar el aviso de prueba; sin scroll horizontal y con objetivos de 44 px en el detalle. Más un caso de detalle largo que destapó un bug previo: el diálogo de escritorio recortaba el contenido en vez de hacer scroll (corregido en `responsive-dialog.tsx`), y la confirmación de cancelar se va a la vista si queda por debajo.
 
 ## 7. Documentación y definición de hecho
 
