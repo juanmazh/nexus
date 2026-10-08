@@ -24,7 +24,11 @@ vi.mock("@/lib/api", () => ({
 
 const NOW = Date.UTC(2026, 9, 7, 14, 0);
 
-function reminder(remindAt: number, id: string = crypto.randomUUID()) {
+function reminder(
+	remindAt: number,
+	id: string = crypto.randomUUID(),
+	repeat: { every: number; unit: "hours" | "days" } | null = null,
+) {
 	return {
 		id,
 		task_id: "t",
@@ -35,6 +39,8 @@ function reminder(remindAt: number, id: string = crypto.randomUUID()) {
 		last_error: null,
 		sent_at: null,
 		created_at: NOW,
+		repeat_every: repeat?.every ?? null,
+		repeat_unit: repeat?.unit ?? null,
 	};
 }
 
@@ -204,5 +210,108 @@ describe("RemindersSection", () => {
 		await user.click(await screen.findByRole("button", { name: "Reintentar" }));
 
 		expect(await screen.findByText("Sin avisos.")).toBeInTheDocument();
+	});
+});
+
+describe("RemindersSection, repetitions", () => {
+	it("starts at the next whole hour and adds a repetition every 2 h", async () => {
+		const user = userEvent.setup();
+		const created = reminder(Date.UTC(2026, 9, 7, 15, 0), "rep-1", { every: 2, unit: "hours" });
+		api.create.mockResolvedValue(okJson(created, 201));
+		renderSection();
+		await screen.findByText("Sin avisos.");
+		api.list.mockResolvedValue(okJson([created]));
+
+		const form = screen.getByRole("form", { name: "Repetir" });
+		expect(within(form).getByLabelText("Cada")).toHaveValue(2);
+		expect(within(form).getByLabelText("Primera vez")).toHaveValue("2026-10-07T17:00");
+		await user.click(within(form).getByRole("button", { name: "Añadir repetición" }));
+
+		expect(api.create).toHaveBeenCalledWith({
+			param: { id: expect.any(String) },
+			json: { remind_at: "2026-10-07T17:00", repeat: { every: 2, unit: "hours" } },
+		});
+		const list = await screen.findByRole("list", { name: "Avisos pendientes" });
+		expect(within(list).getByText("Se repite cada 2 h")).toBeInTheDocument();
+		expect(within(list).getByText("Próximo: hoy, 17:00")).toBeInTheDocument();
+		expect(await screen.findByText("Repetición añadida")).toBeInTheDocument();
+	});
+
+	it("adds a daily one from tomorrow at 9:00 and says so in the list", async () => {
+		const user = userEvent.setup();
+		const created = reminder(Date.UTC(2026, 9, 8, 7, 0), "rep-2", { every: 1, unit: "days" });
+		api.create.mockResolvedValue(okJson(created, 201));
+		renderSection();
+		await screen.findByText("Sin avisos.");
+		api.list.mockResolvedValue(okJson([created]));
+
+		const every = screen.getByLabelText("Cada");
+		await user.clear(every);
+		await user.type(every, "1");
+		await user.selectOptions(screen.getByRole("combobox", { name: "Unidad" }), "días");
+		const from = screen.getByLabelText("Primera vez");
+		await user.clear(from);
+		await user.type(from, "2026-10-08T09:00");
+		await user.click(screen.getByRole("button", { name: "Añadir repetición" }));
+
+		expect(api.create).toHaveBeenCalledWith({
+			param: { id: expect.any(String) },
+			json: { remind_at: "2026-10-08T09:00", repeat: { every: 1, unit: "days" } },
+		});
+		expect(await screen.findByText("Se repite cada día")).toBeInTheDocument();
+		expect(screen.getByText("Próximo: jue 8 oct, 9:00")).toBeInTheDocument();
+	});
+
+	it.each([
+		["0", "hours", "El intervalo mínimo es 1."],
+		["", "hours", "Indica cada cuánto se repite."],
+		["31", "days", "Como mucho cada 720 horas o cada 30 días."],
+	])("shows the error of %j %s next to Cada and sends nothing", async (value, unit, message) => {
+		const user = userEvent.setup();
+		renderSection();
+
+		const every = screen.getByLabelText("Cada");
+		await user.clear(every);
+		if (value !== "") {
+			await user.type(every, value);
+		}
+		await user.selectOptions(
+			screen.getByRole("combobox", { name: "Unidad" }),
+			unit === "days" ? "días" : "horas",
+		);
+		await user.click(screen.getByRole("button", { name: "Añadir repetición" }));
+
+		const error = screen.getByText(message);
+		expect(every).toHaveAttribute("aria-invalid", "true");
+		expect(every).toHaveAttribute("aria-describedby", error.id);
+		expect(api.create).not.toHaveBeenCalled();
+	});
+
+	it("shows the API's rejection next to Primera vez", async () => {
+		const user = userEvent.setup();
+		api.create.mockResolvedValue(failJson("Esa hora ya ha pasado.", 400));
+		renderSection();
+
+		await user.click(screen.getByRole("button", { name: "Añadir repetición" }));
+
+		const error = await screen.findByText("Esa hora ya ha pasado.");
+		const from = screen.getByLabelText("Primera vez");
+		expect(from).toHaveAttribute("aria-invalid", "true");
+		expect(from).toHaveAttribute("aria-describedby", error.id);
+		expect(screen.getByLabelText("Cada")).not.toHaveAttribute("aria-invalid");
+	});
+
+	it("names the repetition when asking to cancel it", async () => {
+		const user = userEvent.setup();
+		api.list.mockResolvedValue(
+			okJson([reminder(Date.UTC(2026, 9, 7, 16, 0), "rep-3", { every: 3, unit: "days" })]),
+		);
+		renderSection();
+
+		await user.click(
+			await screen.findByRole("button", { name: "Cancelar la repetición cada 3 días" }),
+		);
+
+		expect(screen.getByText("¿Cancelar la repetición cada 3 días?")).toBeInTheDocument();
 	});
 });

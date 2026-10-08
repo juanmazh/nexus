@@ -1,5 +1,7 @@
 import { epochMsToLocalDateTime, zonedDayNumber } from "@shared/dates";
 import { formatShortDate, formatTime } from "@shared/format";
+import { describeInterval, MAX_REPEAT_EVERY, type RepeatUnit } from "@shared/recurrence";
+import { repeatSchema } from "@shared/reminders";
 import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/skeleton";
 import { APP_TIMEZONE } from "@/lib/datetime";
@@ -27,6 +29,20 @@ function listedTime(ms: number, now: number): string {
 	return zonedDayNumber(ms, APP_TIMEZONE) === zonedDayNumber(now, APP_TIMEZONE)
 		? `Hoy, ${time}`
 		: `${formatShortDate(ms, APP_TIMEZONE)}, ${time}`;
+}
+
+const HOUR_MS = 3_600_000;
+
+/** The repetition of a reminder, or `null` for a one-off one. */
+function repeatOf(reminder: Reminder): { every: number; unit: RepeatUnit } | null {
+	return reminder.repeat_every !== null && reminder.repeat_unit !== null
+		? { every: reminder.repeat_every, unit: reminder.repeat_unit }
+		: null;
+}
+
+/** "Hoy, 18:00" → "hoy, 18:00", after "Próximo:". */
+function lowerFirst(text: string): string {
+	return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
 /**
@@ -72,10 +88,13 @@ function PendingTaskReminders({ task }: { task: Task }) {
 	function add(remindAt: string, from: "shortcut" | "field") {
 		setError(null);
 		setShortcutError(null);
-		create.mutate(remindAt, {
-			onSuccess: () => setCustom(""),
-			onError: (failure) => (from === "field" ? setError : setShortcutError)(failure.message),
-		});
+		create.mutate(
+			{ remind_at: remindAt },
+			{
+				onSuccess: () => setCustom(""),
+				onError: (failure) => (from === "field" ? setError : setShortcutError)(failure.message),
+			},
+		);
 	}
 
 	return (
@@ -150,6 +169,8 @@ function PendingTaskReminders({ task }: { task: Task }) {
 				) : null}
 			</form>
 
+			<RepeatForm taskId={task.id} now={now} />
+
 			{reminders.isPending ? (
 				<div role="status" aria-live="polite" className="flex flex-col gap-2">
 					<span className="sr-only">Cargando los avisos…</span>
@@ -188,6 +209,126 @@ function PendingTaskReminders({ task }: { task: Task }) {
 }
 
 /**
+ * "Repetir": every N hours or days from a first time (add-recurring-reminders
+ * design.md D6). It starts at the next whole hour, which is what "remind me
+ * every two hours" usually means, and is one tap away from any other time.
+ *
+ * The interval is checked here with the shared schema, so its error lands next
+ * to "Cada"; what only the Worker can judge (a time that has passed or does not
+ * exist, the limit of pending reminders) lands next to "Primera vez".
+ */
+function RepeatForm({ taskId, now }: { taskId: string; now: number }) {
+	const create = useCreateReminder(taskId);
+	const [every, setEvery] = useState("2");
+	const [unit, setUnit] = useState<RepeatUnit>("hours");
+	const [from, setFrom] = useState(() =>
+		epochMsToLocalDateTime(Math.ceil((now + 1) / HOUR_MS) * HOUR_MS, APP_TIMEZONE),
+	);
+	const [everyError, setEveryError] = useState<string | null>(null);
+	const [fromError, setFromError] = useState<string | null>(null);
+
+	return (
+		<form
+			noValidate
+			aria-labelledby="repetir-titulo"
+			className="flex flex-col gap-3 rounded-lg border border-border p-3"
+			onSubmit={(event) => {
+				event.preventDefault();
+				setEveryError(null);
+				setFromError(null);
+				const repeat = repeatSchema.safeParse({
+					every: every === "" ? undefined : Number(every),
+					unit,
+				});
+				if (!repeat.success) {
+					setEveryError(repeat.error.issues[0]?.message ?? "Revisa el intervalo.");
+					return;
+				}
+				if (from === "") {
+					setFromError("Elige cuándo es la primera vez.");
+					return;
+				}
+				create.mutate(
+					{ remind_at: from, repeat: repeat.data },
+					{ onError: (failure) => setFromError(failure.message) },
+				);
+			}}
+		>
+			<h4 id="repetir-titulo" className="text-sm font-medium text-foreground">
+				Repetir
+			</h4>
+			<p className="text-sm text-muted-foreground">
+				Te lo recuerda hasta que completes la tarea, salvo en el silencio nocturno.
+			</p>
+
+			<div className="flex flex-col gap-1.5">
+				<label htmlFor="repetir-cada" className="text-sm font-medium text-foreground">
+					Cada
+				</label>
+				<div className="flex gap-2">
+					<input
+						id="repetir-cada"
+						type="number"
+						inputMode="numeric"
+						min={1}
+						max={MAX_REPEAT_EVERY[unit]}
+						step={1}
+						value={every}
+						onChange={(event) => setEvery(event.target.value)}
+						aria-invalid={everyError ? true : undefined}
+						aria-describedby={everyError ? "repetir-cada-error" : undefined}
+						className={`${fieldClass} w-24 flex-none`}
+					/>
+					<select
+						aria-label="Unidad"
+						value={unit}
+						onChange={(event) => setUnit(event.target.value as RepeatUnit)}
+						className={`${fieldClass} flex-1`}
+					>
+						<option value="hours">horas</option>
+						<option value="days">días</option>
+					</select>
+				</div>
+				{everyError ? (
+					<p id="repetir-cada-error" className="text-sm text-destructive">
+						{everyError}
+					</p>
+				) : null}
+			</div>
+
+			<div className="flex flex-col gap-1.5">
+				<label htmlFor="repetir-desde" className="text-sm font-medium text-foreground">
+					Primera vez
+				</label>
+				<input
+					id="repetir-desde"
+					type="datetime-local"
+					value={from}
+					min={epochMsToLocalDateTime(now, APP_TIMEZONE)}
+					onChange={(event) => setFrom(event.target.value)}
+					aria-invalid={fromError ? true : undefined}
+					aria-describedby={fromError ? "repetir-desde-error" : undefined}
+					className={fieldClass}
+				/>
+				{fromError ? (
+					<p id="repetir-desde-error" className="text-sm text-destructive">
+						{fromError}
+					</p>
+				) : null}
+			</div>
+
+			<button
+				type="submit"
+				disabled={create.isPending}
+				className={`${buttonClass} border border-border text-foreground sm:self-start`}
+			>
+				Añadir repetición
+			</button>
+		</form>
+	);
+}
+
+/**
  * Cancelling asks first, in place: the row turns into the question, the same
  * pattern as deleting a task, with no second overlay on top of the sheet.
  */
@@ -203,6 +344,12 @@ function ReminderItem({
 	const [confirming, setConfirming] = useState(false);
 	const cancel = useCancelReminder(taskId);
 	const confirmation = useRef<HTMLLIElement>(null);
+	const repeat = repeatOf(reminder);
+	const interval = repeat ? describeInterval(repeat.every, repeat.unit) : null;
+	/** What the confirmation and the button call it. */
+	const subject = interval
+		? `la repetición ${interval}`
+		: `el aviso ${spokenTime(reminder.remind_at, now)}`;
 
 	// The question is taller than the row it replaces: on the last reminder of a
 	// long sheet its buttons would land below the fold, so they are brought into
@@ -220,9 +367,7 @@ function ReminderItem({
 				ref={confirmation}
 				className="flex flex-col gap-2 border-b border-border py-2 last:border-b-0"
 			>
-				<p className="text-base text-foreground">
-					¿Cancelar el aviso {spokenTime(reminder.remind_at, now)}?
-				</p>
+				<p className="text-base text-foreground">¿Cancelar {subject}?</p>
 				<div className="flex flex-col gap-2 sm:flex-row-reverse">
 					<button
 						type="button"
@@ -246,12 +391,23 @@ function ReminderItem({
 
 	return (
 		<li className="flex items-center justify-between gap-2 border-b border-border py-1 last:border-b-0">
-			<span className="min-w-0 truncate text-base text-foreground tabular-nums">
-				{listedTime(reminder.remind_at, now)}
-			</span>
+			{interval ? (
+				<span className="flex min-w-0 flex-col py-1">
+					<span className="text-base text-foreground">
+						<span aria-hidden="true">🔁 </span>Se repite {interval}
+					</span>
+					<span className="text-sm text-muted-foreground tabular-nums">
+						Próximo: {lowerFirst(listedTime(reminder.remind_at, now))}
+					</span>
+				</span>
+			) : (
+				<span className="min-w-0 truncate text-base text-foreground tabular-nums">
+					{listedTime(reminder.remind_at, now)}
+				</span>
+			)}
 			<button
 				type="button"
-				aria-label={`Cancelar el aviso ${spokenTime(reminder.remind_at, now)}`}
+				aria-label={`Cancelar ${subject}`}
 				className={`${buttonClass} shrink-0 text-destructive`}
 				onClick={() => setConfirming(true)}
 			>

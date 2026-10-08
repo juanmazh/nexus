@@ -1,6 +1,14 @@
+import type { CreateReminderInput, QuietHoursInput } from "@shared/reminders";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/toast-host";
-import { cancelReminder, createReminder, fetchReminders, sendTestMessage } from "./api";
+import {
+	cancelReminder,
+	createReminder,
+	fetchQuietHours,
+	fetchReminders,
+	saveQuietHours,
+	sendTestMessage,
+} from "./api";
 
 export const remindersQueryKey = (taskId: string) => ["reminders", taskId] as const;
 
@@ -34,9 +42,9 @@ function useRefresh(taskId: string) {
 export function useCreateReminder(taskId: string) {
 	const refresh = useRefresh(taskId);
 	return useMutation({
-		mutationFn: (remindAt: string) => createReminder(taskId, remindAt),
-		onSuccess() {
-			toast.add({ title: "Aviso añadido" });
+		mutationFn: (input: CreateReminderInput) => createReminder(taskId, input),
+		onSuccess(_reminder, input) {
+			toast.add({ title: input.repeat ? "Repetición añadida" : "Aviso añadido" });
 			return refresh();
 		},
 	});
@@ -69,6 +77,30 @@ export function useSendTestMessage() {
 			toast.add({
 				title: "No se ha podido enviar el aviso de prueba",
 				description: error instanceof Error ? error.message : undefined,
+			});
+		},
+	});
+}
+
+export const quietHoursQueryKey = ["settings", "quiet-hours"] as const;
+
+export function useQuietHours() {
+	return useQuery({ queryKey: quietHoursQueryKey, queryFn: fetchQuietHours });
+}
+
+/**
+ * Not optimistic either: the API may reject the window, and the switch must not
+ * claim a state the server does not have. The error is shown next to the
+ * fields by the panel, so only the success is a toast.
+ */
+export function useSaveQuietHours() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (quiet: QuietHoursInput) => saveQuietHours(quiet),
+		onSuccess(saved) {
+			queryClient.setQueryData(quietHoursQueryKey, saved);
+			toast.add({
+				title: saved ? "Silencio nocturno guardado" : "Silencio nocturno desactivado",
 			});
 		},
 	});

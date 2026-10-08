@@ -15,8 +15,8 @@
 
 ## 3. Front
 
-- [ ] 3.1 Bloque "Repetir" en el detalle y etiqueta "🔁 cada …" en la lista (`D6`). Tests.
-- [ ] 3.2 "Silencio nocturno" en **Más**. Tests.
+- [x] 3.1 Bloque "Repetir" en el detalle y etiqueta "🔁 cada …" en la lista (`D6`). Tests.
+- [x] 3.2 "Silencio nocturno" en **Más**. Tests.
 
 ## 4. End-to-end y cierre
 

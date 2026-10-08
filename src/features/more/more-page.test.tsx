@@ -17,7 +17,17 @@ import { MorePage } from "./more-page";
 const { meGet, healthGet } = vi.hoisted(() => ({ meGet: vi.fn(), healthGet: vi.fn() }));
 
 vi.mock("@/lib/api", () => ({
-	client: { api: { me: { $get: meGet }, health: { $get: healthGet } } },
+	client: {
+		api: {
+			me: { $get: meGet },
+			health: { $get: healthGet },
+			settings: {
+				"quiet-hours": {
+					$get: async () => ({ ok: true, json: async () => ({ start: "23:00", end: "08:00" }) }),
+				},
+			},
+		},
+	},
 }));
 
 function meResponse() {
