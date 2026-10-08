@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
 	dueDateToEpochMs,
 	epochMsToDueDate,
@@ -184,6 +184,45 @@ describe("localDateTimeToEpochMs", () => {
 			expect(localDateTimeToEpochMs(value, TZ), value).toEqual({ ok: false, reason: "invalid" });
 		}
 	});
+});
+
+describe("localDateTimeToEpochMs, whatever the timezone of the process", () => {
+	// `shared/` compiles without Node's types, because it also runs in the browser
+	// and in the Worker; this test runs in Node and reaches `process` by hand.
+	const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } })
+		.process.env;
+	const original = env.TZ;
+
+	afterEach(() => {
+		env.TZ = original;
+	});
+
+	// Cloudflare's Workers and the CI run in UTC; a developer's machine may not.
+	// The answer must be the same everywhere, which is what broke once: the
+	// repeated hour came out an hour late in UTC only.
+	it.each(["UTC", "Europe/Madrid", "America/New_York", "Asia/Tokyo"])(
+		"gives the same instants with the process in %s",
+		(processZone) => {
+			env.TZ = processZone;
+
+			expect(localDateTimeToEpochMs("2026-10-25T02:30", TZ)).toEqual({
+				ok: true,
+				ms: Date.UTC(2026, 9, 25, 0, 30),
+			});
+			expect(localDateTimeToEpochMs("2026-03-29T02:30", TZ)).toEqual({
+				ok: false,
+				reason: "nonexistent",
+			});
+			expect(localDateTimeToEpochMs("2026-10-07T18:00", TZ)).toEqual({
+				ok: true,
+				ms: ORDINARY_DAY,
+			});
+			expect(localDateTimeToEpochMs("2026-10-25T03:00", TZ)).toEqual({
+				ok: true,
+				ms: Date.UTC(2026, 9, 25, 2, 0),
+			});
+		},
+	);
 });
 
 describe("epochMsToLocalDateTime", () => {
