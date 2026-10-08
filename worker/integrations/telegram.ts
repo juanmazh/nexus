@@ -1,5 +1,6 @@
 import { zonedDayNumber } from "@shared/dates";
 import { formatShortDate } from "@shared/format";
+import { describeInterval, type RepeatUnit } from "@shared/recurrence";
 
 /**
  * The smallest client of the Telegram Bot API that Nexus needs: `sendMessage`,
@@ -94,6 +95,8 @@ export type ReminderSubject = {
 	title: string;
 	due_at: number | null;
 	priority: "low" | "medium" | "high";
+	/** Only on recurring reminders (add-recurring-reminders design.md D5). */
+	repeat?: { every: number; unit: RepeatUnit } | null;
 };
 
 /**
@@ -101,13 +104,16 @@ export type ReminderSubject = {
  * it is today) and the priority only when it is high, one per line.
  */
 export function buildReminderMessage(task: ReminderSubject, now: number, tz: string): string {
-	const lines = [`⏰ ${task.title}`];
+	const lines = [task.repeat ? `🔁 No te olvides: ${task.title}` : `⏰ ${task.title}`];
 	if (task.due_at !== null) {
 		const isToday = zonedDayNumber(task.due_at, tz) === zonedDayNumber(now, tz);
 		lines.push(`Vence: ${isToday ? "hoy" : formatShortDate(task.due_at, tz)}`);
 	}
 	if (task.priority === "high") {
 		lines.push("Prioridad alta");
+	}
+	if (task.repeat) {
+		lines.push(`Se repite ${describeInterval(task.repeat.every, task.repeat.unit)}`);
 	}
 	return lines.join("\n");
 }

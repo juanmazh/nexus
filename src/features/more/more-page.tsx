@@ -2,6 +2,7 @@ import { ViewHeader } from "@/app/layout/view-header";
 import { Skeleton } from "@/components/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { HealthPanel } from "@/features/health/health-panel";
+import { QuietHoursPanel } from "@/features/reminders/quiet-hours-panel";
 import { TestMessagePanel } from "@/features/reminders/test-message-panel";
 import { useSession } from "./use-session";
 
@@ -63,6 +64,9 @@ export function MorePage() {
 				<TestMessagePanel />
 
 				<HealthPanel />
+
+				{/* Last: the health check stays the first thing within reach (shell.spec.ts). */}
+				<QuietHoursPanel />
 			</div>
 		</>
 	);

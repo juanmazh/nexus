@@ -118,6 +118,21 @@ describe("buildReminderMessage", () => {
 		expect(text).toBe("⏰ Llamar al taller\nVence: hoy");
 	});
 
+	it("tells a recurring reminder apart and says how often it repeats", () => {
+		const text = buildReminderMessage(
+			{
+				title: "Renovar el DNI",
+				due_at: Date.UTC(2026, 9, 8, 22, 0),
+				priority: "medium",
+				repeat: { every: 2, unit: "hours" },
+			},
+			NOW,
+			TZ,
+		);
+
+		expect(text).toBe("🔁 No te olvides: Renovar el DNI\nVence: vie 9 oct\nSe repite cada 2 h");
+	});
+
 	it("is just the title when there is nothing else to say", () => {
 		expect(buildReminderMessage({ title: "Algo", due_at: null, priority: "low" }, NOW, TZ)).toBe(
 			"⏰ Algo",

@@ -136,4 +136,54 @@ test.describe("reminders", () => {
 			.click();
 		await expect(overlay.getByRole("button", { name: "Mantener" })).toBeInViewport();
 	});
+
+	test("adds a repetition and shows how often it repeats", async ({
+		page,
+		tasks,
+		reminders,
+		isMobile,
+	}) => {
+		tasks.push(stubTask({ title: "Beber agua" }));
+		await gotoRoute(page, "/tasks");
+		await page.getByRole("button", { name: /^Beber agua/ }).click();
+		const overlay = page.locator(overlaySlot(isMobile));
+		await expect(overlay.getByText("Sin avisos.")).toBeVisible();
+
+		const form = overlay.getByRole("form", { name: "Repetir" });
+		await form.getByLabel("Cada").fill("3");
+		await form.getByRole("combobox", { name: "Unidad" }).selectOption("hours");
+		await expectTactileTargets(form.getByRole("button", { name: "Añadir repetición" }));
+		await expectNoHorizontalScroll(page);
+		await form.getByRole("button", { name: "Añadir repetición" }).click();
+
+		const list = overlay.getByRole("list", { name: "Avisos pendientes" });
+		await expect(list.getByText("Se repite cada 3 h")).toBeVisible();
+		await expect(list.getByText(/^Próximo: /)).toBeVisible();
+		expect(reminders[0]).toMatchObject({ repeat_every: 3, repeat_unit: "hours" });
+		await expectTactileTargets(
+			list.getByRole("button", { name: "Cancelar la repetición cada 3 h" }),
+		);
+	});
+
+	test("turns the quiet hours off and changes them from Más", async ({ page, api }) => {
+		await gotoRoute(page, "/more");
+
+		// Scoped: the capture bar has its own "Guardar".
+		const form = page.getByRole("form", { name: "Silencio nocturno" });
+		const save = form.getByRole("button", { name: "Guardar" });
+		const toggle = form.getByRole("switch", { name: "Activar el silencio nocturno" });
+		await expect(toggle).toBeChecked();
+		await expectNoHorizontalScroll(page);
+		await expectTactileTargets(save);
+
+		await form.getByLabel("Desde").fill("22:30");
+		await save.click();
+		await expect(page.getByText("Silencio nocturno guardado")).toBeVisible();
+		expect(api.settings.quiet).toEqual({ start: "22:30", end: "08:00" });
+
+		await toggle.click();
+		await save.click();
+		await expect(page.getByText("Silencio nocturno desactivado")).toBeVisible();
+		expect(api.settings.quiet).toBeNull();
+	});
 });

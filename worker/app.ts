@@ -7,6 +7,7 @@ import { securityHeaders } from "./middleware/security-headers";
 import { HEALTH_PATH, health } from "./routes/health";
 import { me } from "./routes/me";
 import { reminders } from "./routes/reminders";
+import { settingsRoutes } from "./routes/settings";
 import { tasks } from "./routes/tasks";
 import { telegram } from "./routes/telegram";
 import { getAccessJwks } from "./services/access-jwks";
@@ -45,6 +46,7 @@ export function createApp(deps: AppDeps = {}) {
 		.route("/me", me)
 		.route("/tasks", tasks)
 		.route("/telegram", telegram)
+		.route("/settings", settingsRoutes)
 		.route("/", reminders);
 
 	return { app, routes };

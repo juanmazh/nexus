@@ -1,3 +1,4 @@
+import type { CreateReminderInput, QuietHoursInput } from "@shared/reminders";
 import type { InferResponseType } from "hono/client";
 import { client } from "@/lib/api";
 import { failure } from "@/lib/api-error";
@@ -19,11 +20,17 @@ export async function fetchReminders(taskId: string): Promise<Reminder[]> {
 	return response.json();
 }
 
-/** `remindAt` is a wall-clock time of Madrid, `YYYY-MM-DDTHH:mm`. */
-export async function createReminder(taskId: string, remindAt: string): Promise<Reminder> {
+/**
+ * `remind_at` is a wall-clock time of Madrid, `YYYY-MM-DDTHH:mm`; with `repeat`
+ * it is the first occurrence of a recurring reminder.
+ */
+export async function createReminder(
+	taskId: string,
+	input: CreateReminderInput,
+): Promise<Reminder> {
 	const response = await client.api.tasks[":id"].reminders.$post({
 		param: { id: taskId },
-		json: { remind_at: remindAt },
+		json: input,
 	});
 	if (!response.ok) {
 		throw await failure(response);
@@ -43,4 +50,21 @@ export async function sendTestMessage(): Promise<void> {
 	if (!response.ok) {
 		throw await failure(response);
 	}
+}
+
+/** The quiet hours of recurring reminders; `null` when they are turned off. */
+export async function fetchQuietHours(): Promise<QuietHoursInput> {
+	const response = await client.api.settings["quiet-hours"].$get();
+	if (!response.ok) {
+		throw await failure(response);
+	}
+	return response.json();
+}
+
+export async function saveQuietHours(quiet: QuietHoursInput): Promise<QuietHoursInput> {
+	const response = await client.api.settings["quiet-hours"].$put({ json: quiet });
+	if (!response.ok) {
+		throw await failure(response);
+	}
+	return response.json();
 }
