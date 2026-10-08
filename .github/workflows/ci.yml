@@ -70,3 +70,42 @@ jobs:
 
       - name: Responsive tests
         run: pnpm test:e2e
+
+  # The step that kept being forgotten (PRs #9 and #11 were merged with the
+  # change still unarchived): a PR from `change/<id>` cannot go green while
+  # `openspec/changes/<id>/` exists. Archiving in the same PR keeps
+  # `openspec/specs/` on main describing exactly the code on main
+  # (docs/WORKFLOW.md §3, step 11). It also validates every spec.
+  openspec:
+    name: OpenSpec (validated and archived)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate specs
+        run: npx -y @fission-ai/openspec@1.14.1 validate --all --strict
+
+      # The branch name goes through an env var, never straight into the script:
+      # an expression expanded inside `run` is a classic injection point.
+      - name: The change is archived before the merge
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          case "$BRANCH" in
+            change/*)
+              id="${BRANCH#change/}"
+              if [ -d "openspec/changes/$id" ]; then
+                echo "::error::openspec/changes/$id sigue sin archivar. Ejecuta /opsx-archive $id en esta rama antes de mergear."
+                exit 1
+              fi
+              echo "openspec/changes/$id ya está archivado."
+              ;;
+            *)
+              echo "La rama $BRANCH no es de un cambio de OpenSpec: nada que comprobar."
+              ;;
+          esac

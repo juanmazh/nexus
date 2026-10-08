@@ -85,17 +85,42 @@ export type LocalDateTimeResult =
 	| { ok: true; ms: number }
 	| { ok: false; reason: "invalid" | "nonexistent" };
 
+/** Half a day: wide enough to reach both sides of any clock change around a time. */
+const HALF_DAY_MS = 12 * 60 * 60 * 1000;
+
+/**
+ * How far ahead of UTC the wall clock of `tz` is at the instant `ms`, read from
+ * the clock itself. It only reads an instant in a zone, which does not depend on
+ * the zone the process runs in.
+ */
+function offsetAt(ms: number, tz: string): number {
+	const zoned = new TZDate(ms, tz);
+	const wall = Date.UTC(
+		zoned.getFullYear(),
+		zoned.getMonth(),
+		zoned.getDate(),
+		zoned.getHours(),
+		zoned.getMinutes(),
+		zoned.getSeconds(),
+	);
+	return wall - Math.floor(ms / 1000) * 1000;
+}
+
 /**
  * `YYYY-MM-DDTHH:mm` read as a wall-clock time of `tz` → epoch ms.
  *
  * The two DST edges get an explicit answer (add-reminders design.md D2):
- * - a time that does not exist (the hour skipped in March) is reported as
- *   `nonexistent`. `TZDate` would silently move it an hour later, so the result
- *   is formatted back and compared with what came in: any difference means the
- *   wall clock never showed that time.
+ * - a time that does not exist (the hour skipped in March) is `nonexistent`;
  * - a time that happens twice (the hour repeated in October) resolves to its
- *   **first** occurrence, still in summer time, which is what `TZDate` does and
- *   what anyone asking for "2:30" means.
+ *   **first** occurrence, still in summer time.
+ *
+ * It does **not** build the date with `new TZDate(y, m, d, h, min, tz)`: how
+ * that constructor settles a repeated hour depends on the timezone of the
+ * **process**. In Madrid it took the first 02:30 and in UTC — where the CI and
+ * Cloudflare's Workers run — the second, so the tests passed on one machine
+ * and production stored the reminder an hour late. Instead, the offsets on
+ * both sides of the day give the only possible instants, each is kept if the
+ * wall clock of `tz` really shows that time then, and the earliest wins.
  */
 export function localDateTimeToEpochMs(value: string, tz: string): LocalDateTimeResult {
 	const parts = LOCAL_DATE_TIME_PATTERN.exec(value);
@@ -118,16 +143,26 @@ export function localDateTimeToEpochMs(value: string, tz: string): LocalDateTime
 		return { ok: false, reason: "invalid" };
 	}
 
-	const zoned = new TZDate(year, month - 1, day, hour, minute, 0, 0, tz);
-	// A day that does not exist in the calendar (31 February) rolls over into the
-	// next month: a malformed value, not a DST gap, which never changes the day.
-	if (zoned.getFullYear() !== year || zoned.getMonth() !== month - 1 || zoned.getDate() !== day) {
+	// The wall clock as if it were UTC. `Date.UTC` rolls 31 February over into
+	// March, which is a malformed value, not a DST gap.
+	const wall = Date.UTC(year, month - 1, day, hour, minute);
+	const calendar = new Date(wall);
+	if (
+		calendar.getUTCFullYear() !== year ||
+		calendar.getUTCMonth() !== month - 1 ||
+		calendar.getUTCDate() !== day
+	) {
 		return { ok: false, reason: "invalid" };
 	}
-	if (zoned.getHours() !== hour || zoned.getMinutes() !== minute) {
-		return { ok: false, reason: "nonexistent" };
-	}
-	return { ok: true, ms: zoned.getTime() };
+
+	const offsets = new Set([offsetAt(wall - HALF_DAY_MS, tz), offsetAt(wall + HALF_DAY_MS, tz)]);
+	const instants = [...offsets]
+		.map((offset) => wall - offset)
+		.filter((instant) => offsetAt(instant, tz) === wall - instant)
+		.sort((a, b) => a - b);
+
+	const [first] = instants;
+	return first === undefined ? { ok: false, reason: "nonexistent" } : { ok: true, ms: first };
 }
 
 /** The inverse, for the `min` of the native input and for the shortcuts. */

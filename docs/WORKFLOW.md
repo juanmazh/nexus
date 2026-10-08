@@ -85,6 +85,12 @@ git push
 Archivar **antes** del merge hace que `openspec/specs/` en `main` nunca describa algo distinto de lo
 que hay en el código.
 
+**La CI lo exige.** El job `OpenSpec (validated and archived)` falla en cualquier PR de una rama
+`change/<id>` mientras exista `openspec/changes/<id>/`, y además valida todas las specs. Se añadió
+después de mergear sin archivar tres cambios seguidos (#9, #11 y antes `add-access-auth`): recordarlo
+no bastaba. Para que bloquee de verdad, tiene que estar marcado como *required* en la protección de
+`main` (§S7 de `docs/PROGRESS.md`).
+
 **¿Por qué una sesión nueva de OpenCode para `apply`?** Los propios autores de OpenSpec recomiendan
 empezar la implementación con el contexto limpio: el agente trabaja a partir de los artefactos y no del
 historial de la conversación, que suele arrastrar ideas que ya se descartaron.
