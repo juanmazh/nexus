@@ -20,5 +20,5 @@
 
 ## 4. End-to-end y cierre
 
-- [ ] 4.1 Stub y e2e: añadir una repetición, verla en la lista con su etiqueta, configurar la franja; sin scroll horizontal y con 44 px.
-- [ ] 4.2 `docs/ARCHITECTURE.md` §3.3 y §4, `docs/PROGRESS.md`. Definición de hecho de `AGENTS.md §9`.
+- [x] 4.1 Stub y e2e: añadir una repetición, verla en la lista con su etiqueta, configurar la franja; sin scroll horizontal y con 44 px.
+- [x] 4.2 `docs/ARCHITECTURE.md` §3.3 y §4, `docs/PROGRESS.md`. Definición de hecho de `AGENTS.md §9`.

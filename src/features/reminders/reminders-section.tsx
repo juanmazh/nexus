@@ -266,19 +266,21 @@ function RepeatForm({ taskId, now }: { taskId: string; now: number }) {
 					Cada
 				</label>
 				<div className="flex gap-2">
-					<input
-						id="repetir-cada"
-						type="number"
-						inputMode="numeric"
-						min={1}
-						max={MAX_REPEAT_EVERY[unit]}
-						step={1}
-						value={every}
-						onChange={(event) => setEvery(event.target.value)}
-						aria-invalid={everyError ? true : undefined}
-						aria-describedby={everyError ? "repetir-cada-error" : undefined}
-						className={`${fieldClass} w-24 flex-none`}
-					/>
+					<div className="w-24 flex-none">
+						<input
+							id="repetir-cada"
+							type="number"
+							inputMode="numeric"
+							min={1}
+							max={MAX_REPEAT_EVERY[unit]}
+							step={1}
+							value={every}
+							onChange={(event) => setEvery(event.target.value)}
+							aria-invalid={everyError ? true : undefined}
+							aria-describedby={everyError ? "repetir-cada-error" : undefined}
+							className={fieldClass}
+						/>
+					</div>
 					<select
 						aria-label="Unidad"
 						value={unit}

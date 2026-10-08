@@ -90,6 +90,7 @@ function QuietHoursForm({ saved }: { saved: { start: string; end: string } | nul
 				<input
 					type="checkbox"
 					role="switch"
+					aria-checked={enabled}
 					checked={enabled}
 					onChange={(event) => setEnabled(event.target.checked)}
 					className="size-6 accent-primary"

@@ -63,9 +63,10 @@ export function MorePage() {
 
 				<TestMessagePanel />
 
-				<QuietHoursPanel />
-
 				<HealthPanel />
+
+				{/* Last: the health check stays the first thing within reach (shell.spec.ts). */}
+				<QuietHoursPanel />
 			</div>
 		</>
 	);

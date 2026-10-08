@@ -59,6 +59,8 @@ export type StubReminder = {
 	last_error: string | null;
 	sent_at: number | null;
 	created_at: number;
+	repeat_every: number | null;
+	repeat_unit: "hours" | "days" | null;
 };
 
 export function stubReminder(
@@ -76,6 +78,8 @@ export function stubReminder(
 		last_error: null,
 		sent_at: null,
 		created_at: Date.now(),
+		repeat_every: null,
+		repeat_unit: null,
 		...overrides,
 	};
 }
@@ -122,11 +126,22 @@ function dueDateToMs(date: string | null | undefined): number | null {
  * next one, or the suite would be testing the mock and not the app. The array is
  * returned so a test can seed it or look at it.
  */
-export type StubState = { tasks: StubTask[]; reminders: StubReminder[] };
+export type StubQuietHours = { start: string; end: string } | null;
+
+export type StubState = {
+	tasks: StubTask[];
+	reminders: StubReminder[];
+	/** Boxed so a test can read what the page saved: `api.settings.quiet`. */
+	settings: { quiet: StubQuietHours };
+};
 
 export async function stubApi(
 	page: Page,
-	state: StubState = { tasks: [], reminders: [] },
+	state: StubState = {
+		tasks: [],
+		reminders: [],
+		settings: { quiet: { start: "23:00", end: "08:00" } },
+	},
 ): Promise<StubState> {
 	const { tasks, reminders } = state;
 	const nextReminderAt = (taskId: string) => {
@@ -173,14 +188,27 @@ export async function stubApi(
 			return route.fulfill({ status: 204 });
 		}
 
+		if (pathname.endsWith("/api/settings/quiet-hours")) {
+			if (request.method() === "PUT") {
+				state.settings.quiet = request.postDataJSON() as StubQuietHours;
+			}
+			return json(200, state.settings.quiet);
+		}
+
 		const reminderTaskId = pathname.match(/\/api\/tasks\/([^/]+)\/reminders$/)?.[1];
 		if (reminderTaskId !== undefined) {
 			if (!tasks.some((task) => task.id === reminderTaskId)) {
 				return notFound();
 			}
 			if (request.method() === "POST") {
-				const body = request.postDataJSON() as { remind_at: string };
-				const reminder = stubReminder(reminderTaskId, madridLocalToMs(body.remind_at));
+				const body = request.postDataJSON() as {
+					remind_at: string;
+					repeat?: { every: number; unit: "hours" | "days" };
+				};
+				const reminder = stubReminder(reminderTaskId, madridLocalToMs(body.remind_at), {
+					repeat_every: body.repeat?.every ?? null,
+					repeat_unit: body.repeat?.unit ?? null,
+				});
 				reminders.push(reminder);
 				return json(201, reminder);
 			}
