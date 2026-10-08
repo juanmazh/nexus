@@ -1,67 +1,18 @@
-import { zValidator } from "@hono/zod-validator";
 import {
 	createTaskSchema,
 	listTasksQuerySchema,
 	taskIdParamSchema,
 	updateTaskSchema,
 } from "@shared/tasks";
-import type { AnyD1Database } from "drizzle-orm/d1";
-import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
-import type { z } from "zod";
 import { createDb } from "../db/client";
-import type { AccessEnv } from "../middleware/access";
 import { errorBody } from "../middleware/errors";
+import { type DataEnv, DEFAULT_TIMEZONE, onlyMethods, validated } from "../middleware/validation";
 import * as taskService from "../services/tasks";
-
-/**
- * The bindings this route reads on top of the session ones. Declared
- * structurally, like `AccessBindings`, because the SPA type-checks this module
- * through `AppType` and the workerd globals do not exist there.
- */
-type TasksEnv = {
-	Bindings: AccessEnv["Bindings"] & { DB: AnyD1Database; APP_TIMEZONE?: string };
-	Variables: AccessEnv["Variables"];
-};
-
-/** `wrangler.jsonc` sets it; the fallback only matters if a deployment forgets it. */
-const DEFAULT_TIMEZONE = "Europe/Madrid";
-
-/**
- * `@hono/zod-validator` answers a failed validation with its own body, which is
- * not the project's error shape. The hook turns it into the single shape, with
- * the first message, which every schema in `shared/tasks.ts` writes in Spanish
- * and naming the field (design.md D5).
- */
-function validated<Target extends "json" | "query" | "param", Schema extends z.ZodType>(
-	target: Target,
-	schema: Schema,
-) {
-	return zValidator(target, schema, (result, c) => {
-		if (!result.success) {
-			const message = result.error.issues[0]?.message ?? "La petición no es válida.";
-			return c.json(errorBody("validation_error", message), 400);
-		}
-	});
-}
-
-/** `405` with the `Allow` header, as `health.ts` does, for the methods a path does not take. */
-function onlyMethods(allowed: readonly string[]): MiddlewareHandler {
-	return async (c, next) => {
-		if (!allowed.includes(c.req.method)) {
-			return c.json(
-				errorBody("method_not_allowed", `Este endpoint solo admite ${allowed.join(", ")}.`),
-				405,
-				{ Allow: allowed.join(", ") },
-			);
-		}
-		await next();
-	};
-}
 
 const NOT_FOUND = errorBody("not_found", "Esta tarea ya no existe.");
 
-export const tasks = new Hono<TasksEnv>()
+export const tasks = new Hono<DataEnv>()
 	.use("/", onlyMethods(["GET", "POST"]))
 	.use("/:id", onlyMethods(["PATCH", "DELETE"]))
 	.get("/", validated("query", listTasksQuerySchema), async (c) => {

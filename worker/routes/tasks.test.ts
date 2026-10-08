@@ -4,7 +4,7 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { AppType } from "../app";
 import { createApp } from "../app";
 import { createDb } from "../db/client";
-import { tasks as tasksTable } from "../db/schema";
+import { reminders as remindersTable, tasks as tasksTable } from "../db/schema";
 import { apiRequest, setUpAccessKeys, signAccessToken, testEnv, testGetKey } from "../test-support";
 
 const { app } = createApp({ getKey: testGetKey });
@@ -42,6 +42,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(remindersTable);
 	await db.delete(tasksTable);
 });
 

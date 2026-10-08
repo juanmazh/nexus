@@ -2,22 +2,22 @@
 
 ## 1. Esquema y capa compartida
 
-- [ ] 1.1 Declarar `reminders` en `worker/db/schema.ts` con la FK `ON DELETE CASCADE` y los dos índices de `design.md D1`. `pnpm db:generate`: el SQL es `CREATE TABLE` más dos `CREATE INDEX`. `pnpm db:migrate:local` y otro `db:generate` sin cambios.
-- [ ] 1.2 `shared/dates.ts`: `localDateTimeToEpochMs(value, tz)`, que distingue "formato inválido" de "hora inexistente" y toma la primera aparición de una hora repetida (`D2`), y `epochMsToLocalDateTime` para el `min` del selector. Tests de los dos domingos de 2026.
-- [ ] 1.3 `shared/reminders.ts`: `createReminderSchema` (estricto, `remind_at` con formato) y `reminderIdParamSchema`. Tests.
-- [ ] 1.4 `formatShortDate` pasa a `shared/format.ts` (`D8`), con `formatReminderTime` ("18:00" si es hoy, "vie 10 oct 9:00" si no). Los imports del front se actualizan y sus tests siguen en verde.
+- [x] 1.1 Declarar `reminders` en `worker/db/schema.ts` con la FK `ON DELETE CASCADE` y los dos índices de `design.md D1`. `pnpm db:generate`: el SQL es `CREATE TABLE` más dos `CREATE INDEX`. `pnpm db:migrate:local` y otro `db:generate` sin cambios.
+- [x] 1.2 `shared/dates.ts`: `localDateTimeToEpochMs(value, tz)`, que distingue "formato inválido" de "hora inexistente" y toma la primera aparición de una hora repetida (`D2`), y `epochMsToLocalDateTime` para el `min` del selector. Tests de los dos domingos de 2026.
+- [x] 1.3 `shared/reminders.ts`: `createReminderSchema` (estricto, `remind_at` con formato) y `reminderIdParamSchema`. Tests.
+- [x] 1.4 `formatShortDate` pasa a `shared/format.ts` (`D8`), con `formatReminderTime` ("18:00" si es hoy, "vie 9 oct 9:00" si no). Los imports del front se actualizan y sus tests siguen en verde.
 
 ## 2. Servicios
 
-- [ ] 2.1 `worker/services/reminders.ts`: `listPendingReminders`, `createReminder` (reglas y orden de `D3`, con una consulta más el `INSERT`) y `cancelReminder` (`D4`). Resultados como unión discriminada para que la ruta traduzca a `404`/`409` sin lanzar.
-- [ ] 2.2 `worker/services/tasks.ts`: completar cancela los pendientes y borrar borra los avisos, cada uno en un `db.batch()` (`D5`); `listTasks` añade `next_reminder_at` (`D6`).
-- [ ] 2.3 Tests contra D1: cada regla de alta; cancelar pendiente, cancelado, enviado e inexistente; completar cancela solo los pendientes; deshacer no reactiva; borrar la tarea borra sus avisos; `next_reminder_at` con varios, ninguno y solo enviados.
+- [x] 2.1 `worker/services/reminders.ts`: `listPendingReminders`, `createReminder` (reglas y orden de `D3`, con una consulta más el `INSERT`) y `cancelReminder` (`D4`). Resultados como unión discriminada para que la ruta traduzca a `404`/`409` sin lanzar.
+- [x] 2.2 `worker/services/tasks.ts`: completar cancela los pendientes y borrar borra los avisos, cada uno en un `db.batch()` (`D5`); `listTasks` añade `next_reminder_at` (`D6`).
+- [x] 2.3 Tests contra D1: cada regla de alta; cancelar pendiente, cancelado, enviado e inexistente; completar cancela solo los pendientes; deshacer no reactiva; borrar la tarea borra sus avisos; `next_reminder_at` con varios, ninguno y solo enviados.
 
 ## 3. Rutas
 
-- [ ] 3.1 `validated` y `onlyMethods` a `worker/middleware/validation.ts` (`D13`) sin tocar los tests de tareas.
-- [ ] 3.2 `worker/routes/reminders.ts` (`GET`/`POST /api/tasks/:id/reminders`, `DELETE /api/reminders/:id`) montado en `worker/app.ts`, con `405` y `Allow`.
-- [ ] 3.3 Tests de rutas: `201`, cada `400`, `404`, `409`, `204`, `401` sin sesión y `405`.
+- [x] 3.1 `validated` y `onlyMethods` a `worker/middleware/validation.ts` (`D13`) sin tocar los tests de tareas.
+- [x] 3.2 `worker/routes/reminders.ts` (`GET`/`POST /api/tasks/:id/reminders`, `DELETE /api/reminders/:id`) montado en `worker/app.ts`, con `405` y `Allow`.
+- [x] 3.3 Tests de rutas: `201`, cada `400`, `404`, `409`, `204`, `401` sin sesión y `405`.
 
 ## 4. Telegram y cron
 

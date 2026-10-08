@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { dueDateToEpochMs, epochMsToDueDate, zonedDayNumber, zonedDayStart } from "./dates";
+import {
+	dueDateToEpochMs,
+	epochMsToDueDate,
+	epochMsToLocalDateTime,
+	localDateTimeToEpochMs,
+	zonedDayNumber,
+	zonedDayStart,
+} from "./dates";
 
 /**
  * Fixed cases, never "today": the whole point of this module is that the answer
@@ -135,5 +142,53 @@ describe("a task due today at 09:00 is still today's at 18:00", () => {
 
 	it("and is not before the start of today, which is what makes it not overdue", () => {
 		expect(dueAtNine < zonedDayStart(new Date(eighteenInMadrid), TZ)).toBe(false);
+	});
+});
+
+describe("localDateTimeToEpochMs", () => {
+	it("reads a wall-clock time of Madrid as the matching UTC instant", () => {
+		expect(localDateTimeToEpochMs("2026-10-07T18:00", TZ)).toEqual({ ok: true, ms: ORDINARY_DAY });
+	});
+
+	it("reports the hour skipped in March as nonexistent instead of moving it", () => {
+		expect(localDateTimeToEpochMs("2026-03-29T02:30", TZ)).toEqual({
+			ok: false,
+			reason: "nonexistent",
+		});
+		// The minute before and the first minute after the jump do exist.
+		expect(localDateTimeToEpochMs("2026-03-29T01:59", TZ).ok).toBe(true);
+		expect(localDateTimeToEpochMs("2026-03-29T03:00", TZ)).toEqual({
+			ok: true,
+			ms: Date.UTC(2026, 2, 29, 1, 0),
+		});
+	});
+
+	it("takes the first occurrence of the hour repeated in October", () => {
+		// 02:30 happens at 00:30Z (summer time) and again at 01:30Z (winter time).
+		expect(localDateTimeToEpochMs("2026-10-25T02:30", TZ)).toEqual({
+			ok: true,
+			ms: Date.UTC(2026, 9, 25, 0, 30),
+		});
+	});
+
+	it("rejects anything that is not a real minute of a real day", () => {
+		for (const value of [
+			"2026-10-07",
+			"2026-10-07 18:00",
+			"2026-10-07T18:00:00",
+			"2026-02-31T10:00",
+			"2026-13-01T10:00",
+			"2026-10-07T24:00",
+			"2026-10-07T18:60",
+		]) {
+			expect(localDateTimeToEpochMs(value, TZ), value).toEqual({ ok: false, reason: "invalid" });
+		}
+	});
+});
+
+describe("epochMsToLocalDateTime", () => {
+	it("is the inverse, in the wall clock of Madrid", () => {
+		expect(epochMsToLocalDateTime(ORDINARY_DAY, TZ)).toBe("2026-10-07T18:00");
+		expect(epochMsToLocalDateTime(Date.UTC(2026, 9, 25, 1, 30), TZ)).toBe("2026-10-25T02:30");
 	});
 });

@@ -127,6 +127,15 @@ columna calculada:
 La resuelve el índice `(task_id, status, remind_at)` con una búsqueda por tarea. La lista sigue
 siendo **una** consulta y **una** subpetición. El tipo del cliente se deriva solo, por `AppType`.
 
+Solo la **lista** lleva este campo. Crear y editar una tarea siguen respondiendo con la fila tal cual,
+para no añadir una consulta a cada mutación por una etiqueta. El front conserva en caché el valor que
+ya tenía (`SavedTask` frente a `Task` en `src/features/tasks/api.ts`).
+
+**Trampa encontrada al aplicar.** Drizzle escribe `${tasks.id}` como un `"id"` sin cualificar en un
+`select` de una sola tabla, y dentro de la subconsulta ese `"id"` es el de `reminders`. La consulta
+no falla: devuelve `null` para todas las tareas. Por eso la subconsulta, y el `count` de D3, se
+escriben con los nombres cualificados a mano. El test de `next_reminder_at` es el que lo detectó.
+
 ### D7 · El job: una lectura, envíos en paralelo, una escritura
 
 `worker/jobs/reminders.ts`, `runReminders(env, now)`:
@@ -168,7 +177,7 @@ solo si lo es:
 
 ```
 ⏰ Pagar el alquiler
-Vence: vie 10 oct
+Vence: vie 9 oct
 Prioridad alta
 ```
 
@@ -209,14 +218,14 @@ meterlas en el formulario mezclaría dos ciclos de guardado. Su contenido:
 2. "Otra hora": un `datetime-local` con `min` = ahora, y un botón "Añadir aviso". El error de la API
    aparece junto al campo con `aria-describedby`, como en el resto de formularios.
 3. La lista de pendientes, con la fecha y la hora en `tabular-nums` y un botón "Cancelar" de 44 px.
-   Al pulsarlo, la fila se sustituye por la confirmación "¿Cancelar el aviso del vie 10 oct a las
+   Al pulsarlo, la fila se sustituye por la confirmación "¿Cancelar el aviso del vie 9 oct a las
    18:00?", con "Cancelar aviso" y "Mantener". Es el mismo patrón que el borrado de la tarea, sin un
    segundo overlay.
 4. Una línea de ayuda: "Llegan por Telegram en los 5 minutos siguientes a la hora."
 5. Estados: esqueleto al cargar, error con "Reintentar" y "Sin avisos" si no hay ninguno.
 
 **Campana en la fila:** si `next_reminder_at` no es nulo, la línea de metadatos de `TaskRow` añade
-un icono de campana (`aria-hidden`) y la hora: "18:00" si es hoy y "vie 10 oct 9:00" si no. El texto
+un icono de campana (`aria-hidden`) y la hora: "18:00" si es hoy y "vie 9 oct 9:00" si no. El texto
 para lectores de pantalla es "Aviso: …". Si es hoy, va en el color `accent` "aceite", el que
 `docs/DESIGN.md` reserva para "recordatorio inminente" y "hoy".
 

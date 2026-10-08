@@ -197,8 +197,8 @@ tiene ("Vence: hoy" o la fecha corta) y "Prioridad alta" solo si la prioridad es
 
 #### Scenario: Tarea con fecha y prioridad alta
 
-- **WHEN** se envía el aviso de "Pagar el alquiler", que vence el viernes 10 de octubre con prioridad alta
-- **THEN** el mensaje es "⏰ Pagar el alquiler", "Vence: vie 10 oct" y "Prioridad alta", en tres líneas
+- **WHEN** se envía el aviso de "Pagar el alquiler", que vence el viernes 9 de octubre con prioridad alta
+- **THEN** el mensaje es "⏰ Pagar el alquiler", "Vence: vie 9 oct" y "Prioridad alta", en tres líneas
 
 #### Scenario: Título con símbolos
 
@@ -307,8 +307,8 @@ color reservado para "hoy". Completar la tarea SHALL quitar la campana.
 
 #### Scenario: Aviso de otro día
 
-- **WHEN** el próximo aviso es el viernes 10 de octubre a las 9:00
-- **THEN** su fila muestra la campana y "vie 10 oct 9:00"
+- **WHEN** el próximo aviso es el viernes 9 de octubre a las 9:00
+- **THEN** su fila muestra la campana y "vie 9 oct 9:00"
 
 #### Scenario: Completar quita la campana
 

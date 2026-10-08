@@ -11,7 +11,14 @@ type ListCall = typeof client.api.tasks.$get;
 type CreateCall = typeof client.api.tasks.$post;
 type UpdateCall = (typeof client.api.tasks)[":id"]["$patch"];
 
+/** A task as the list returns it, with the instant of its next pending reminder. */
 export type Task = InferResponseType<ListCall, 200>[number];
+/**
+ * A task as creating or editing returns it: the plain row, without
+ * `next_reminder_at` (add-reminders design.md D6). The hooks keep the value the
+ * cache already had.
+ */
+export type SavedTask = InferResponseType<CreateCall, 201>;
 export type TaskListStatus = NonNullable<InferRequestType<ListCall>["query"]["status"]>;
 export type CreateTaskBody = InferRequestType<CreateCall>["json"];
 export type UpdateTaskBody = InferRequestType<UpdateCall>["json"];
@@ -49,7 +56,7 @@ export async function fetchTasks(status: TaskListStatus): Promise<Task[]> {
 	return response.json();
 }
 
-export async function createTask(body: CreateTaskBody): Promise<Task> {
+export async function createTask(body: CreateTaskBody): Promise<SavedTask> {
 	const response = await client.api.tasks.$post({ json: body });
 	if (!response.ok) {
 		throw await failure(response);
@@ -57,7 +64,7 @@ export async function createTask(body: CreateTaskBody): Promise<Task> {
 	return response.json();
 }
 
-export async function updateTask(id: string, body: UpdateTaskBody): Promise<Task> {
+export async function updateTask(id: string, body: UpdateTaskBody): Promise<SavedTask> {
 	const response = await client.api.tasks[":id"].$patch({ param: { id }, json: body });
 	if (!response.ok) {
 		throw await failure(response);

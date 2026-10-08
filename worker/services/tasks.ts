@@ -1,9 +1,9 @@
 import { dueDateToEpochMs, zonedDayStart } from "@shared/dates";
 import type { CreateTaskInput, TaskStatus, UpdateTaskInput } from "@shared/tasks";
 import type { InferSelectModel } from "drizzle-orm";
-import { and, asc, desc, eq, isNotNull, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, isNotNull, lt, sql } from "drizzle-orm";
 import type { NexusDb } from "../db/client";
-import { tasks } from "../db/schema";
+import { reminders, tasks } from "../db/schema";
 
 /**
  * All the rules of a task, with no HTTP in sight: it receives an already
@@ -15,6 +15,28 @@ import { tasks } from "../db/schema";
  */
 
 export type Task = InferSelectModel<typeof tasks>;
+
+/**
+ * A task as the **list** returns it: the row plus the instant of its next
+ * pending reminder, for the bell of the row (add-reminders design.md D6). Only
+ * the list carries it; creating or editing a task answers with the plain row,
+ * so no mutation pays an extra query for a label.
+ */
+export type ListedTask = Task & { next_reminder_at: number | null };
+
+/**
+ * One index seek per task on `(task_id, status, remind_at)`.
+ *
+ * Written with qualified names on purpose: Drizzle renders `${tasks.id}` as a
+ * bare `"id"` in a single-table select, and inside this subquery a bare `"id"`
+ * resolves to **`reminders.id`**. The query would not fail; it would quietly
+ * answer `null` for every task. The test of `next_reminder_at` is the one that
+ * caught it.
+ */
+const nextReminderAt = sql<number | null>`(SELECT min("r"."remind_at") FROM "reminders" AS "r"
+	WHERE "r"."task_id" = "tasks"."id" AND "r"."status" = 'pending')`.as("next_reminder_at");
+
+const listedColumns = { ...getTableColumns(tasks), next_reminder_at: nextReminderAt };
 
 export type ListTasksFilters = {
 	/** Absent means the pending list, which is what the section shows. */
@@ -35,14 +57,14 @@ export type ListTasksFilters = {
  * would make a task due today look overdue from 00:01 onwards, while the spec
  * says overdue means a day *earlier* than today.
  */
-export async function listTasks(db: NexusDb, filters: ListTasksFilters): Promise<Task[]> {
+export async function listTasks(db: NexusDb, filters: ListTasksFilters): Promise<ListedTask[]> {
 	const status = filters.status ?? "todo";
 	const now = filters.now ?? Date.now();
 
 	if (filters.overdue) {
 		const startOfToday = zonedDayStart(new Date(now), filters.timezone);
 		return db
-			.select()
+			.select(listedColumns)
 			.from(tasks)
 			.where(and(eq(tasks.status, "todo"), isNotNull(tasks.due_at), lt(tasks.due_at, startOfToday)))
 			.orderBy(asc(tasks.due_at), asc(tasks.created_at))
@@ -50,7 +72,7 @@ export async function listTasks(db: NexusDb, filters: ListTasksFilters): Promise
 	}
 
 	return db
-		.select()
+		.select(listedColumns)
 		.from(tasks)
 		.where(eq(tasks.status, status))
 		.orderBy(
@@ -156,12 +178,28 @@ export async function updateTaskStatus(
 		ELSE ${tasks.completed_at}
 	END`;
 
-	const updated = await db
+	const updateTask = db
 		.update(tasks)
 		.set({ status, completed_at: completedAt, updated_at: now })
 		.where(eq(tasks.id, id))
 		.returning();
 
+	if (status !== "done") {
+		// Undoing never brings reminders back (add-reminders design.md D5).
+		const updated = await updateTask;
+		return updated[0] ?? null;
+	}
+
+	// Completing cancels the pending reminders in the same batch, which D1 runs
+	// as one transaction: there is no moment in which the task is done and one
+	// of its reminders can still be sent.
+	const [updated] = await db.batch([
+		updateTask,
+		db
+			.update(reminders)
+			.set({ status: "cancelled" })
+			.where(and(eq(reminders.task_id, id), eq(reminders.status, "pending"))),
+	]);
 	return updated[0] ?? null;
 }
 
@@ -171,7 +209,13 @@ export async function updateTaskStatus(
  * twice.
  */
 export async function deleteTask(db: NexusDb, id: string): Promise<boolean> {
-	const deleted = await db.delete(tasks).where(eq(tasks.id, id)).returning({ id: tasks.id });
+	// The reminders go first and explicitly: the foreign key cascades too, but
+	// only while `PRAGMA foreign_keys` is on, and the spec promises this without
+	// conditions (add-reminders design.md D1).
+	const [, deleted] = await db.batch([
+		db.delete(reminders).where(eq(reminders.task_id, id)),
+		db.delete(tasks).where(eq(tasks.id, id)).returning({ id: tasks.id }),
+	]);
 	return deleted.length > 0;
 }
 

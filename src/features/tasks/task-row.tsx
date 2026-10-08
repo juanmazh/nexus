@@ -1,8 +1,8 @@
+import { formatShortDate } from "@shared/format";
 import { CheckIcon } from "lucide-react";
 import { APP_TIMEZONE } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
 import type { Task } from "./api";
-import { formatShortDate } from "./format";
 import { isUnsaved } from "./use-tasks";
 
 /**

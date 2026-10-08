@@ -77,3 +77,62 @@ export function epochMsToDueDate(ms: number | null, tz: string): string | null {
 	const date = String(day.getDate()).padStart(2, "0");
 	return `${day.getFullYear()}-${month}-${date}`;
 }
+
+/** What `<input type="datetime-local">` gives (minutes precision, no zone). */
+const LOCAL_DATE_TIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
+
+export type LocalDateTimeResult =
+	| { ok: true; ms: number }
+	| { ok: false; reason: "invalid" | "nonexistent" };
+
+/**
+ * `YYYY-MM-DDTHH:mm` read as a wall-clock time of `tz` → epoch ms.
+ *
+ * The two DST edges get an explicit answer (add-reminders design.md D2):
+ * - a time that does not exist (the hour skipped in March) is reported as
+ *   `nonexistent`. `TZDate` would silently move it an hour later, so the result
+ *   is formatted back and compared with what came in: any difference means the
+ *   wall clock never showed that time.
+ * - a time that happens twice (the hour repeated in October) resolves to its
+ *   **first** occurrence, still in summer time, which is what `TZDate` does and
+ *   what anyone asking for "2:30" means.
+ */
+export function localDateTimeToEpochMs(value: string, tz: string): LocalDateTimeResult {
+	const parts = LOCAL_DATE_TIME_PATTERN.exec(value);
+	if (!parts) {
+		return { ok: false, reason: "invalid" };
+	}
+
+	const [, year, month, day, hour, minute] = parts.map(Number);
+	if (
+		year === undefined ||
+		month === undefined ||
+		day === undefined ||
+		hour === undefined ||
+		minute === undefined ||
+		month < 1 ||
+		month > 12 ||
+		hour > 23 ||
+		minute > 59
+	) {
+		return { ok: false, reason: "invalid" };
+	}
+
+	const zoned = new TZDate(year, month - 1, day, hour, minute, 0, 0, tz);
+	// A day that does not exist in the calendar (31 February) rolls over into the
+	// next month: a malformed value, not a DST gap, which never changes the day.
+	if (zoned.getFullYear() !== year || zoned.getMonth() !== month - 1 || zoned.getDate() !== day) {
+		return { ok: false, reason: "invalid" };
+	}
+	if (zoned.getHours() !== hour || zoned.getMinutes() !== minute) {
+		return { ok: false, reason: "nonexistent" };
+	}
+	return { ok: true, ms: zoned.getTime() };
+}
+
+/** The inverse, for the `min` of the native input and for the shortcuts. */
+export function epochMsToLocalDateTime(ms: number, tz: string): string {
+	const zoned = new TZDate(ms, tz);
+	const pad = (value: number) => String(value).padStart(2, "0");
+	return `${zoned.getFullYear()}-${pad(zoned.getMonth() + 1)}-${pad(zoned.getDate())}T${pad(zoned.getHours())}:${pad(zoned.getMinutes())}`;
+}

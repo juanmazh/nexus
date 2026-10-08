@@ -3,7 +3,7 @@ import { createTaskSchema } from "@shared/tasks";
 import { sql } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createDb } from "../db/client";
-import { tasks } from "../db/schema";
+import { reminders, tasks } from "../db/schema";
 import * as taskService from "./tasks";
 
 /**
@@ -31,7 +31,31 @@ const TWO_DAYS_AGO = Date.UTC(2026, 9, 4, 22, 0, 0);
 const IN_THREE_DAYS = Date.UTC(2026, 9, 9, 22, 0, 0);
 
 async function emptyTable(): Promise<void> {
+	await db.delete(reminders);
 	await db.delete(tasks);
+}
+
+async function insertReminder(
+	taskId: string,
+	remindAt: number,
+	status: "pending" | "sent" | "failed" | "cancelled" = "pending",
+) {
+	await db.insert(reminders).values({
+		id: crypto.randomUUID(),
+		task_id: taskId,
+		remind_at: remindAt,
+		status,
+		created_at: NOW,
+	});
+}
+
+async function reminderStatuses(taskId: string): Promise<string[]> {
+	const rows = await db
+		.select({ status: reminders.status })
+		.from(reminders)
+		.where(sql`${reminders.task_id} = ${taskId}`)
+		.orderBy(reminders.remind_at);
+	return rows.map((row) => row.status);
 }
 
 async function insertTask(overrides: Partial<typeof tasks.$inferInsert> = {}) {
@@ -374,5 +398,72 @@ describe("deleteTask", () => {
 		await taskService.deleteTask(db, task.id);
 
 		expect(await titles({})).toEqual(["Se queda"]);
+	});
+});
+
+describe("reminders seen from the tasks (add-reminders)", () => {
+	const NINE = NOW + 15 * 3_600_000;
+	const SIX_PM = NOW + 24 * 3_600_000;
+
+	it("gives each listed task the instant of its next pending reminder, or null", async () => {
+		const withTwo = await insertTask({ title: "Con dos" });
+		const onlySent = await insertTask({ title: "Solo enviado" });
+		await insertTask({ title: "Sin avisos" });
+		await insertReminder(withTwo.id, SIX_PM);
+		await insertReminder(withTwo.id, NINE);
+		await insertReminder(withTwo.id, NOW - 60_000, "cancelled");
+		await insertReminder(onlySent.id, NINE, "sent");
+
+		const list = await taskService.listTasks(db, { timezone: TZ, now: NOW });
+		const next = Object.fromEntries(list.map((task) => [task.title, task.next_reminder_at]));
+
+		expect(next).toEqual({ "Con dos": NINE, "Solo enviado": null, "Sin avisos": null });
+	});
+
+	it("carries the next reminder in the overdue list too", async () => {
+		const task = await insertTask({ due_at: TWO_DAYS_AGO });
+		await insertReminder(task.id, NINE);
+
+		const [overdue] = await taskService.listTasks(db, { timezone: TZ, now: NOW, overdue: true });
+
+		expect(overdue?.next_reminder_at).toBe(NINE);
+	});
+
+	it("cancels only the pending reminders when the task is completed", async () => {
+		const task = await insertTask();
+		await insertReminder(task.id, NOW - 3_600_000, "sent");
+		await insertReminder(task.id, NINE);
+		await insertReminder(task.id, SIX_PM);
+
+		await taskService.updateTaskStatus(db, task.id, "done", NOW);
+
+		expect(await reminderStatuses(task.id)).toEqual(["sent", "cancelled", "cancelled"]);
+	});
+
+	it("does not bring them back when the task is undone", async () => {
+		const task = await insertTask();
+		await insertReminder(task.id, NINE);
+		await taskService.updateTaskStatus(db, task.id, "done", NOW);
+
+		await taskService.updateTaskStatus(db, task.id, "todo", NOW);
+
+		expect(await reminderStatuses(task.id)).toEqual(["cancelled"]);
+	});
+
+	it("still answers null for a task that does not exist when completing", async () => {
+		expect(await taskService.updateTaskStatus(db, crypto.randomUUID(), "done", NOW)).toBeNull();
+	});
+
+	it("deletes the reminders together with the task, and only those", async () => {
+		const task = await insertTask();
+		const other = await insertTask();
+		await insertReminder(task.id, NINE);
+		await insertReminder(task.id, SIX_PM, "sent");
+		await insertReminder(other.id, NINE);
+
+		expect(await taskService.deleteTask(db, task.id)).toBe(true);
+
+		expect(await reminderStatuses(task.id)).toEqual([]);
+		expect(await reminderStatuses(other.id)).toEqual(["pending"]);
 	});
 });
