@@ -17,5 +17,5 @@
 
 ## 4. Documentación y definición de hecho
 
-- [ ] 4.1 ADR-011 en `docs/ARCHITECTURE.md` (sin *service worker*), el texto de 1.3 en `docs/ROADMAP.md` y `docs/PROGRESS.md` con los pasos de instalación.
-- [ ] 4.2 Definición de hecho de `AGENTS.md §9`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, `pnpm test:e2e` y `openspec validate add-pwa --strict` en verde.
+- [x] 4.1 ADR-011 en `docs/ARCHITECTURE.md` (sin *service worker*), el texto de 1.3 en `docs/ROADMAP.md` y `docs/PROGRESS.md` con los pasos de instalación.
+- [x] 4.2 Definición de hecho de `AGENTS.md §9`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, `pnpm test:e2e` y `openspec validate add-pwa --strict` en verde.

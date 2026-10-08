@@ -84,7 +84,7 @@ Fuera de alcance: lógica de tareas, PWA, animaciones más allá de abrir y cerr
 |---|---|---|
 | 1.1 | `add-tasks` | Tabla `tasks`, CRUD `/api/tasks`, filtros (pendientes / hechas / vencidas), vista de lista en la SPA con crear, editar, completar y borrar |
 | 1.2 | `add-reminders` | Tabla `reminders`, crear y cancelar recordatorios de una tarea, cron cada 5 minutos y envío por Telegram con reintentos |
-| 1.3 | `add-pwa` | **Instalable en el móvil:** manifest, iconos, `display: standalone`, `theme-color` por tema y service worker que cachea solo la shell |
+| 1.3 | `add-pwa` | **Instalable en el móvil:** manifest, iconos, `display: standalone` y `theme-color` por tema, **sin service worker** (ADR-011: sin conexión no hay datos, y la caché escondería la sesión de Access y las versiones nuevas) |
 
 <details>
 <summary>Prompt para <code>/opsx-propose add-tasks</code></summary>
@@ -126,6 +126,9 @@ Fuera de alcance: email, recordatorios recurrentes, recordatorios sin tarea.
 
 <details>
 <summary>Prompt para <code>/opsx-propose add-pwa</code></summary>
+
+> Este prompt es el original. Al proponer el cambio se decidió **no** usar *service worker* ni flujo
+> de "Hay una versión nueva" (ADR-011), y solo se verifica Android.
 
 ```text
 Haz Nexus instalable como PWA para usarlo desde la pantalla de inicio del móvil: web app manifest
