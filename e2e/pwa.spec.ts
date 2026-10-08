@@ -67,13 +67,18 @@ test.describe("installable app", () => {
 		await page.waitForLoadState("networkidle");
 
 		// Chromium lists every reason a page cannot be installed. Playwright's
-		// contexts are private ones, which is the only reason allowed here: no
-		// manifest error and, with no service worker, no complaint about it either.
+		// contexts are private, and some Chromium builds object to that
+		// ("in-incognito") while the CI's does not: that one is ignored, and any
+		// other reason fails. No manifest error and, with no service worker, no
+		// complaint about it either.
 		const cdp = await page.context().newCDPSession(page);
 		const { installabilityErrors } = await cdp.send("Page.getInstallabilityErrors");
 		const { errors } = await cdp.send("Page.getAppManifest");
 
-		expect(installabilityErrors.map((error) => error.errorId)).toEqual(["in-incognito"]);
+		const reasons = installabilityErrors
+			.map((error) => error.errorId)
+			.filter((reason) => reason !== "in-incognito");
+		expect(reasons).toEqual([]);
 		expect(errors).toEqual([]);
 	});
 });

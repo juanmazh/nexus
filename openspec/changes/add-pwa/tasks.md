@@ -13,7 +13,7 @@
 
 ## 3. End-to-end
 
-- [x] 3.1 `e2e/pwa.spec.ts` contra `vite preview`: el manifest está enlazado y se sirve; los iconos se sirven; `theme-color` cambia al cambiar de tema en **Más**; no hay *service worker* registrado. Además, Chromium mismo confirma por CDP (`Page.getInstallabilityErrors`) que la app es instalable: solo objeta `in-incognito`, propio de los contextos de Playwright.
+- [x] 3.1 `e2e/pwa.spec.ts` contra `vite preview`: el manifest está enlazado y se sirve; los iconos se sirven; `theme-color` cambia al cambiar de tema en **Más**; no hay *service worker* registrado. Además, Chromium mismo confirma por CDP (`Page.getInstallabilityErrors`) que la app es instalable: como mucho objeta `in-incognito`, propio de los contextos privados de Playwright (el Chromium de la CI ni eso).
 
 ## 4. Documentación y definición de hecho
 
