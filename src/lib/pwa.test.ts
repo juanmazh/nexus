@@ -74,7 +74,10 @@ describe("the manifest", () => {
 
 describe("the document", () => {
 	it("links the manifest, the icons and a theme-color", () => {
-		expect(indexHtml).toContain('<link rel="manifest" href="/manifest.webmanifest" />');
+		// With the session cookie, or Access answers the manifest with its login page.
+		expect(indexHtml).toContain(
+			'<link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />',
+		);
 		expect(indexHtml).toContain('<link rel="icon" href="/favicon.svg"');
 		expect(indexHtml).toContain(
 			'<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />',

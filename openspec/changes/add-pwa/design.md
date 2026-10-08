@@ -61,6 +61,11 @@ falta trabajar sin conexión, sería un cambio propio con su diseño de caché y
 }
 ```
 
+**El manifest se pide con credenciales** (`<link rel="manifest" crossorigin="use-credentials">`).
+Por defecto el navegador lo pide **sin cookies**; detrás de Cloudflare Access eso devuelve la página
+de login en vez del JSON, y Chrome solo ofrece "Añadir a pantalla de inicio" como acceso directo. Se
+descubrió al probarlo en el móvil, y un e2e que simula a Access lo cubre.
+
 `background_color` y `theme_color` son los de `--background` del tema claro: el manifest solo admite
 un valor, y es el que se ve en la pantalla de arranque. Mientras la app corre, `theme-color` lo
 gobierna el `meta` (D4). Un test comprueba que estos colores coinciden con los de `src/index.css`.

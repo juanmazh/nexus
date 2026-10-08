@@ -10,8 +10,11 @@
 		<meta name="theme-color" content="#f6f7f2" />
 		<title>Nexus</title>
 		<!-- Installable from Chrome's menu, with no service worker on purpose
-		     (docs/ARCHITECTURE.md ADR-011). -->
-		<link rel="manifest" href="/manifest.webmanifest" />
+		     (docs/ARCHITECTURE.md ADR-011). `use-credentials` is not optional: the
+		     browser fetches the manifest WITHOUT cookies by default, Cloudflare
+		     Access then answers with its login page instead of the JSON, and
+		     Chrome falls back to a plain shortcut instead of installing. -->
+		<link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 	</head>

@@ -81,4 +81,35 @@ test.describe("installable app", () => {
 		expect(reasons).toEqual([]);
 		expect(errors).toEqual([]);
 	});
+
+	test("sends the session cookie for the manifest, as Cloudflare Access requires", async ({
+		page,
+		context,
+		baseURL,
+	}) => {
+		// Access answers any request without its cookie with the login page. A
+		// manifest fetched without credentials gets HTML instead of JSON, and
+		// Chrome falls back to a plain shortcut: that is what happened on the phone.
+		await context.addCookies([{ name: "CF_Authorization", value: "fake-session", url: baseURL }]);
+		const sentCookie: boolean[] = [];
+		await page.route("**/manifest.webmanifest", async (route) => {
+			const cookie = (await route.request().allHeaders()).cookie ?? "";
+			sentCookie.push(cookie.includes("CF_Authorization"));
+			if (cookie.includes("CF_Authorization")) {
+				return route.fallback();
+			}
+			return route.fulfill({
+				status: 200,
+				contentType: "text/html",
+				body: "<html><body>Cloudflare Access login</body></html>",
+			});
+		});
+
+		await gotoRoute(page, "/");
+		const cdp = await page.context().newCDPSession(page);
+		const { errors } = await cdp.send("Page.getAppManifest");
+
+		expect(sentCookie).toContain(true);
+		expect(errors).toEqual([]);
+	});
 });
