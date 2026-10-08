@@ -83,7 +83,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | 1.2 | `add-reminders` | ✅ | PR #11 + PR #12 (archivo y arreglo de fechas) | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → aviso de prueba desde Más y un aviso real en el móvil |
 | 1.3 | `add-pwa` | ✅ | PR #13 | `pnpm deploy` → en Android, Chrome ⋮ › "Instalar aplicación" → comprobar pantalla completa, barra de estado y safe areas |
 | 1.4 | `open-detail-on-capture` | 🟡 | `change/open-detail-on-capture` (sin PR) | `pnpm deploy` → capturar desde Tareas y desde Hoy en el móvil |
-| 1.5 | `add-recurring-reminders` | 🟡 | `change/add-recurring-reminders` (sin PR, apilada sobre la 1.4) | `pnpm db:migrate:remote` (0002: tabla `settings` y dos columnas en `reminders`) **antes** del deploy → `pnpm deploy` → crear "cada 1 h" en una tarea y ver llegar dos avisos → revisar el silencio nocturno en Más |
+| 1.5 | `add-recurring-reminders` | 👀 | `change/add-recurring-reminders` (sin PR, apilada sobre la 1.4) | `pnpm db:migrate:remote` (0002: tabla `settings` y dos columnas en `reminders`) **antes** del deploy → `pnpm deploy` → crear "cada 1 h" en una tarea y ver llegar dos avisos → revisar el silencio nocturno en Más |
 | — | **Hito v0.1.0** | ✅ | tag `v0.1.0` | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
 | 2.1 | `add-notes` | ⬜ | | |
 | 2.2 | `add-quick-links` | ⬜ | | |
