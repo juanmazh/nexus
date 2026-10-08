@@ -41,7 +41,7 @@
 
 ## 7. Documentación y definición de hecho
 
-- [ ] 7.1 `docs/ARCHITECTURE.md` §2.1 (piezas nuevas), §2.3 (`triggers`), §3.3 (lo implementado) y §4 (segundo índice, regla de completar y borrar); `docs/PROGRESS.md`.
-- [ ] 7.2 Definición de hecho de `AGENTS.md §9`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, `pnpm test:e2e`, `pnpm db:migrate:local` y `openspec validate add-reminders --strict` en verde. Presupuesto de la carga inicial ≤ 200 kB.
-- [ ] 7.3 Auditoría de secretos: ningún token ni `chat_id` real versionado; los de los tests y fixtures son ficticios.
-- [ ] 7.4 Pasos manuales para la persona dueña en `docs/PROGRESS.md`, en el orden de `design.md` (*Migration Plan*).
+- [x] 7.1 `docs/ARCHITECTURE.md` §2.1 (piezas nuevas), §2.3 (`triggers`), §3.3 (lo implementado) y §4 (segundo índice, regla de completar y borrar); `docs/PROGRESS.md`.
+- [x] 7.2 Definición de hecho de `AGENTS.md §9`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, `pnpm test:e2e`, `pnpm db:migrate:local` y `openspec validate add-reminders --strict` en verde. Presupuesto de la carga inicial ≤ 200 kB.
+- [x] 7.3 Auditoría de secretos: ningún token ni `chat_id` real versionado; los de los tests y fixtures son ficticios.
+- [x] 7.4 Pasos manuales para la persona dueña en `docs/PROGRESS.md`, en el orden de `design.md` (*Migration Plan*).

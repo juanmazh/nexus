@@ -52,19 +52,24 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
 
 | Pieza | Responsabilidad |
 |---|---|
-| `worker/index.ts` | Exporta `fetch` (la app Hono) y `scheduled` (despacha jobs del cron) |
+| `worker/index.ts` | Exporta `fetch` (la app Hono) y `scheduled`, que lanza `runReminders` con `ctx.waitUntil` |
 | `worker/app.ts` | Middlewares globales (errores, cabeceras de seguridad, access), monta rutas y exporta `AppType` |
 | `middleware/access.ts` | Valida el JWT de Access: firma (claves del equipo), `aud`, `iss`, `exp`. Cachea las claves públicas |
 | `routes/*` | Capa HTTP: valida con Zod, llama al servicio, serializa la respuesta |
+| `middleware/validation.ts` | `validated` (el `400` con la forma del proyecto), `onlyMethods` (el `405` con `Allow`) y el tipo `DataEnv` de las rutas de datos |
 | `routes/tasks.ts` | `GET`/`POST /api/tasks` y `PATCH`/`DELETE /api/tasks/:id`. Valida json, query y param con los esquemas de `shared/tasks.ts` y responde `400`/`404`/`405` con la forma `{ error: { code, message } }`. Un `PATCH` con `status` pasa por `updateTaskStatus` |
+| `routes/reminders.ts` | `GET`/`POST /api/tasks/:id/reminders` y `DELETE /api/reminders/:id` (cancela, no borra). Cada resultado del servicio se traduce a `400`/`404`/`409` |
+| `routes/telegram.ts` | `POST /api/telegram/test`: aviso de prueba al momento; `204`, `503` sin secretos o `502` con el error saneado |
 | `services/*` | Lógica de negocio. Recibe `db` y datos ya validados. Testeable sin HTTP |
-| `services/tasks.ts` | `listTasks`, `createTask`, `updateTask`, `updateTaskStatus` y `deleteTask`: una consulta por lectura y una escritura por mutación. `updateTaskStatus` es el **único** que escribe `completed_at` |
+| `services/tasks.ts` | `listTasks`, `createTask`, `updateTask`, `updateTaskStatus` y `deleteTask`: una consulta por lectura y una escritura por mutación. `updateTaskStatus` es el **único** que escribe `completed_at`. Completar cancela los avisos pendientes y borrar borra los avisos, cada uno en un `db.batch()`. La lista lleva `next_reminder_at` en la misma consulta |
+| `services/reminders.ts` | `listPendingReminders`, `createReminder` (hora local → UTC, futura, tarea pendiente, máximo 10 pendientes) y `cancelReminder`, con resultados como valores en vez de excepciones |
 | `db/schema.ts` | Esquema Drizzle: fuente única del modelo de datos |
 | `db/client.ts` | `createDb(env)`: la instancia de Drizzle sobre el binding `DB` |
 | `shared/tasks.ts` | Esquemas Zod de la tarea, compartidos por el Worker (validación) y la SPA (formulario de detalle) |
-| `shared/dates.ts` | `dueDateToEpochMs`, `zonedDayStart` y `zonedDayNumber`: la única regla de "qué día es" en `Europe/Madrid`, usada por el filtro `overdue` y por las secciones de la lista |
-| `jobs/reminders.ts` | Selecciona recordatorios vencidos, los envía y registra el resultado |
-| `integrations/telegram.ts` | Cliente mínimo de `sendMessage` de la Bot API |
+| `shared/dates.ts` | `dueDateToEpochMs`, `zonedDayStart`, `zonedDayNumber` y `localDateTimeToEpochMs`: la única regla de "qué día y qué hora es" en `Europe/Madrid`. La hora que no existe en marzo se rechaza; la que se repite en octubre se toma la primera vez |
+| `shared/reminders.ts`, `shared/format.ts` | Esquemas del recordatorio; formato de fecha y hora común al mensaje de Telegram y a la SPA |
+| `jobs/reminders.ts` | `runReminders(env, now)`: una lectura (como mucho 20 vencidos con su tarea), envíos en paralelo y un `db.batch()` con los resultados. Sin secretos no toca nada |
+| `integrations/telegram.ts` | Cliente mínimo de `sendMessage` de la Bot API, en texto plano. Ningún error sale con el token: se sanea y se recorta a 500 caracteres |
 
 ### 2.2 SPA (frontend)
 
@@ -115,8 +120,8 @@ Refleja la configuración real del andamiaje. Los bloques que aún no existen se
       "database_id": "00000000-0000-0000-0000-000000000000"
     }
   ],
-  // TODO(add-reminders): el cron único "*/5 * * * *" se añade con ese cambio.
-  //   Sin jobs, un cron ocuparía uno de los 5 Cron Triggers de la cuenta sin hacer nada.
+  // Un único Cron Trigger (1 de los 5 de la cuenta): el job de recordatorios.
+  "triggers": { "crons": ["*/5 * * * *"] },
   "vars": {
     "APP_TIMEZONE": "Europe/Madrid",
     // Dominio del equipo de Zero Trust, SIN esquema. No es un secreto.
@@ -167,10 +172,10 @@ estilos en línea. Nunca en `script-src`. HSTS se decide en `move-to-custom-doma
 
 ### 3.3 Envío de recordatorios (cron)
 
-1. Cada 5 minutos (UTC) se ejecuta `scheduled()` → `jobs/reminders.run(env)`.
-2. Una sola query trae como máximo **N = 20** recordatorios con `status = 'pending' AND remind_at <= now`, ordenados por `remind_at`.
-3. Por cada uno: llamada a Telegram (`sendMessage`, hora formateada en Europe/Madrid).
-4. Los resultados se guardan en **un único `db.batch()`**: `sent` + `sent_at`, o `attempts + 1` y `last_error`. Tras **3 intentos** fallidos → `failed`.
+1. Cada 5 minutos (UTC) se ejecuta `scheduled()` → `runReminders(env, Date.now())` dentro de `ctx.waitUntil`. Si falta `TELEGRAM_BOT_TOKEN` o `TELEGRAM_CHAT_ID`, registra el nombre de lo que falta y no toca ningún recordatorio.
+2. Una sola query trae como máximo **N = 20** recordatorios con `status = 'pending' AND remind_at <= now`, ordenados por `remind_at` y unidos a su tarea (título, vencimiento y prioridad para el mensaje).
+3. Los envíos van en paralelo (`Promise.allSettled`), en texto plano y sin `parse_mode`. Cualquier respuesta no 2xx, `ok: false` o error de red es un fallo.
+4. Los resultados se guardan en **un único `db.batch()`**: `sent` + `sent_at`, o `attempts + 1` y `last_error` (saneado, sin el token y recortado a 500 caracteres). Tras **3 intentos** fallidos → `failed`. Cada `UPDATE` exige `status = 'pending'`, para no pisar un aviso cancelado mientras se enviaba.
 5. Presupuesto por invocación: 1 query de lectura + ≤ 20 fetch + 1 batch de escritura ≈ 22 subpeticiones (< 50).
 
 Semántica: **al menos una vez**. Si Telegram acepta un mensaje pero falla la escritura en D1, ese
@@ -216,12 +221,16 @@ vence hoy no está vencida en todo el día.
 | `sent_at` | integer | epoch ms UTC |
 | `created_at` | integer NOT NULL | |
 
-Índices: `(status, remind_at)`. Es el índice que usa el cron: la consulta lee pocas filas aunque la tabla crezca.
+Índices: `(status, remind_at)`, el que usa el cron, que lee pocas filas aunque la tabla crezca; y
+`(task_id, status, remind_at)`, para los pendientes de una tarea y para `next_reminder_at` de la lista.
 
-Reglas de negocio iniciales:
-- Completar una tarea **cancela** sus recordatorios pendientes.
-- No se puede crear un recordatorio con `remind_at` en el pasado.
-- Borrar una tarea borra sus recordatorios (cascade).
+`remind_at` llega a la API como hora local de `Europe/Madrid` (`YYYY-MM-DDTHH:mm`, lo que da
+`<input type="datetime-local">`) y se guarda en UTC. Cancelar cambia el estado a `cancelled` y no borra la fila.
+
+Reglas de negocio:
+- Completar una tarea **cancela** sus recordatorios pendientes, en la misma escritura. Deshacerla **no** los reactiva.
+- No se puede crear un recordatorio con `remind_at` en el pasado, sobre una tarea completada, ni más de 10 pendientes por tarea.
+- Borrar una tarea borra sus recordatorios: explícitamente en el mismo `batch`, con el `ON DELETE CASCADE` como segunda red.
 
 ---
 
