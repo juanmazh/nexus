@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+	<title>Nexus</title>
+	<!-- Nexus: a geometric "N" in cal (#f6f7f2) on olivo (#3e5a2b), the light theme's
+	     --primary-foreground on --primary. A polygon, not text, so no font is needed. -->
+	<rect width="512" height="512" rx="112" fill="#3e5a2b"/>
+	<path d="M156 376V136h54l92 148V136h54v240h-54l-92-148v148z" fill="#f6f7f2"/>
+</svg>
