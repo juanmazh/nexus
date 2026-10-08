@@ -21,11 +21,11 @@
 
 ## 4. Telegram y cron
 
-- [ ] 4.1 `worker/integrations/telegram.ts`: `sendTelegramMessage` en texto plano, fallo en no 2xx, en `ok: false` y en error de red, y error saneado sin el token y recortado a 500 (`D8`). `buildReminderMessage` puro.
-- [ ] 4.2 `worker/jobs/reminders.ts`: `runReminders(env, now)` con una lectura, `Promise.allSettled` y un `db.batch()` (`D7`); sin secretos, no toca nada.
-- [ ] 4.3 `worker/index.ts` exporta `scheduled` con `ctx.waitUntil`; `wrangler.jsonc` declara `"triggers": { "crons": ["*/5 * * * *"] }`; tipos de los secretos en `worker/env.d.ts`.
-- [ ] 4.4 `worker/routes/telegram.ts`: `POST /api/telegram/test` con `204`, `503` y `502` (`D12`).
-- [ ] 4.5 Tests con `fetch` simulado: éxito, fallo con reintento, tercer fallo a `failed`, lote de 20 sobre 25, futuros y no pendientes ignorados, secretos ausentes, `last_error` sin el token, texto del mensaje con y sin fecha y prioridad, y las tres respuestas del aviso de prueba.
+- [x] 4.1 `worker/integrations/telegram.ts`: `sendTelegramMessage` en texto plano, fallo en no 2xx, en `ok: false` y en error de red, y error saneado sin el token y recortado a 500 (`D8`). `buildReminderMessage` puro.
+- [x] 4.2 `worker/jobs/reminders.ts`: `runReminders(env, now)` con una lectura, `Promise.allSettled` y un `db.batch()` (`D7`); sin secretos, no toca nada.
+- [x] 4.3 `worker/index.ts` exporta `scheduled` con `ctx.waitUntil`; `wrangler.jsonc` declara `"triggers": { "crons": ["*/5 * * * *"] }`; tipos de los secretos: `wrangler types` ya los genera desde `.dev.vars.example`, y el job y la ruta los declaran opcionales en su propio tipo estructural (pueden faltar en producción). Verificado en local con `wrangler dev --test-scheduled` y `/cdn-cgi/handler/scheduled`.
+- [x] 4.4 `worker/routes/telegram.ts`: `POST /api/telegram/test` con `204`, `503` y `502` (`D12`).
+- [x] 4.5 Tests con `fetch` simulado: éxito, fallo con reintento, tercer fallo a `failed`, lote de 20 sobre 25, futuros y no pendientes ignorados, secretos ausentes, `last_error` sin el token, texto del mensaje con y sin fecha y prioridad, y las tres respuestas del aviso de prueba.
 
 ## 5. Front
 

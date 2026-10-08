@@ -23,8 +23,11 @@
 			"database_id": "9e08bf84-912c-4ccf-ae10-e4df4e1af7b0"
 		}
 	],
-	// "triggers" llega con add-reminders: sin jobs, un cron ocuparía uno de los
-	// 5 Cron Triggers de la cuenta sin hacer nada.
+	// Un único Cron Trigger (1 de los 5 de la cuenta): el job de recordatorios,
+	// cada 5 minutos en UTC (docs/ARCHITECTURE.md §3.3). 288 invocaciones al día.
+	"triggers": {
+		"crons": ["*/5 * * * *"]
+	},
 	"vars": {
 		"APP_TIMEZONE": "Europe/Madrid",
 		// Dominio del equipo de Zero Trust, SIN esquema: el código construye

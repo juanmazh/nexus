@@ -8,6 +8,7 @@ import { HEALTH_PATH, health } from "./routes/health";
 import { me } from "./routes/me";
 import { reminders } from "./routes/reminders";
 import { tasks } from "./routes/tasks";
+import { telegram } from "./routes/telegram";
 import { getAccessJwks } from "./services/access-jwks";
 
 export interface AppDeps {
@@ -43,6 +44,7 @@ export function createApp(deps: AppDeps = {}) {
 		.route("/health", health)
 		.route("/me", me)
 		.route("/tasks", tasks)
+		.route("/telegram", telegram)
 		.route("/", reminders);
 
 	return { app, routes };
