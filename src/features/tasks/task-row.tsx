@@ -1,5 +1,6 @@
-import { formatShortDate } from "@shared/format";
-import { CheckIcon } from "lucide-react";
+import { zonedDayNumber } from "@shared/dates";
+import { formatReminderTime, formatShortDate } from "@shared/format";
+import { BellIcon, CheckIcon } from "lucide-react";
 import { APP_TIMEZONE } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
 import type { Task } from "./api";
@@ -13,6 +14,11 @@ import { isUnsaved } from "./use-tasks";
  *
  * Rows are separated by a thin line, never cards (docs/DESIGN.md §5). Priority
  * "Alta" is written, not coloured, so it does not depend on colour alone.
+ *
+ * A pending task with a reminder shows a bell and when it goes off. A reminder
+ * of today sits on the "aceite" fill, the colour docs/DESIGN.md keeps for "now
+ * and today", with ink text on it: as a text colour on cal it would not reach AA
+ * (add-reminders design.md D11).
  */
 export function TaskRow({
 	task,
@@ -27,6 +33,11 @@ export function TaskRow({
 	const date = done ? task.completed_at : task.due_at;
 	// Shown at once, acted on only once the API has given it its real id.
 	const saving = isUnsaved(task);
+	const now = Date.now();
+	const reminderAt = done ? null : task.next_reminder_at;
+	const reminderToday =
+		reminderAt !== null &&
+		zonedDayNumber(reminderAt, APP_TIMEZONE) === zonedDayNumber(now, APP_TIMEZONE);
 
 	return (
 		<li
@@ -48,8 +59,8 @@ export function TaskRow({
 					{task.title}
 				</span>
 				{saving ? <span className="text-sm text-muted-foreground">Guardando…</span> : null}
-				{!saving && (date !== null || task.priority === "high") ? (
-					<span className="flex items-center gap-2 text-sm text-muted-foreground">
+				{!saving && (date !== null || task.priority === "high" || reminderAt !== null) ? (
+					<span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
 						{date !== null ? (
 							<span className="tabular-nums">
 								{done ? "Hecha el " : ""}
@@ -58,6 +69,18 @@ export function TaskRow({
 						) : null}
 						{task.priority === "high" && !done ? (
 							<span className="font-medium text-foreground">Alta</span>
+						) : null}
+						{reminderAt !== null ? (
+							<span
+								className={cn(
+									"inline-flex items-center gap-1 tabular-nums",
+									reminderToday && "rounded bg-accent px-1.5 text-accent-foreground",
+								)}
+							>
+								<BellIcon aria-hidden="true" className="size-3.5" />
+								<span className="sr-only">Aviso: </span>
+								{formatReminderTime(reminderAt, now, APP_TIMEZONE)}
+							</span>
 						) : null}
 					</span>
 				) : null}

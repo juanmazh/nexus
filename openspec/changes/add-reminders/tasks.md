@@ -29,10 +29,10 @@
 
 ## 5. Front
 
-- [ ] 5.1 `src/features/reminders/`: `api.ts` con tipos derivados del cliente RPC, `use-reminders.ts` (consulta por tarea, crear y cancelar invalidando avisos y listas, toasts) y `shortcuts.ts` con `reminderShortcuts` (`D10`) y sus tests.
-- [ ] 5.2 `reminders-section.tsx` dentro del detalle, fuera del formulario (`D11`): atajos de 44 px que se parten en líneas, selector `datetime-local` con `min`, error junto al campo, lista con confirmación de cancelado, línea de ayuda y los tres estados. Sin sección de crear en tareas completadas. Tests.
-- [ ] 5.3 Campana en `task-row.tsx` con la hora y el color `accent` si es hoy; `useSetTaskStatus` limpia `next_reminder_at` al completar. Tests.
-- [ ] 5.4 Sección "Avisos" en `more-page.tsx` con "Enviar aviso de prueba" y el resultado por `toast`. Tests.
+- [x] 5.1 `src/features/reminders/`: `api.ts` con tipos derivados del cliente RPC, `use-reminders.ts` (consulta por tarea, crear y cancelar invalidando avisos y listas, toasts) y `shortcuts.ts` con `reminderShortcuts` (`D10`) y sus tests.
+- [x] 5.2 `reminders-section.tsx` dentro del detalle, fuera del formulario (`D11`): atajos de 44 px que se parten en líneas, selector `datetime-local` con `min`, error junto al campo, lista con confirmación de cancelado, línea de ayuda y los tres estados. Sin sección de crear en tareas completadas. Tests.
+- [x] 5.3 Campana en `task-row.tsx` con la hora y el color `accent` si es hoy; `useSetTaskStatus` limpia `next_reminder_at` al completar. Tests.
+- [x] 5.4 Sección "Avisos" en `more-page.tsx` con "Enviar aviso de prueba" y el resultado por `toast`. Tests.
 
 ## 6. End-to-end
 

@@ -2,6 +2,7 @@ import { ViewHeader } from "@/app/layout/view-header";
 import { Skeleton } from "@/components/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { HealthPanel } from "@/features/health/health-panel";
+import { TestMessagePanel } from "@/features/reminders/test-message-panel";
 import { useSession } from "./use-session";
 
 /**
@@ -58,6 +59,8 @@ export function MorePage() {
 						</p>
 					) : null}
 				</section>
+
+				<TestMessagePanel />
 
 				<HealthPanel />
 			</div>

@@ -1,5 +1,6 @@
 import type { InferRequestType, InferResponseType } from "hono/client";
 import { client } from "@/lib/api";
+import { failure } from "@/lib/api-error";
 
 /**
  * One function per endpoint over the typed RPC client, never a bare `fetch`
@@ -22,31 +23,6 @@ export type SavedTask = InferResponseType<CreateCall, 201>;
 export type TaskListStatus = NonNullable<InferRequestType<ListCall>["query"]["status"]>;
 export type CreateTaskBody = InferRequestType<CreateCall>["json"];
 export type UpdateTaskBody = InferRequestType<UpdateCall>["json"];
-
-/**
- * The RPC client resolves on 4xx and 5xx too. This turns any non-2xx into an
- * error carrying the message the API wrote for the person, so a hook can show it
- * as it is.
- */
-export class ApiError extends Error {
-	constructor(
-		readonly status: number,
-		message: string,
-	) {
-		super(message);
-		this.name = "ApiError";
-	}
-}
-
-async function failure(response: Response): Promise<ApiError> {
-	const body = (await response.json().catch(() => null)) as {
-		error?: { message?: string };
-	} | null;
-	return new ApiError(
-		response.status,
-		body?.error?.message ?? "No se ha podido completar la acción.",
-	);
-}
 
 export async function fetchTasks(status: TaskListStatus): Promise<Task[]> {
 	const response = await client.api.tasks.$get({ query: { status } });

@@ -9,6 +9,7 @@ const api = vi.hoisted(() => ({
 	$post: vi.fn(),
 	$patch: vi.fn(),
 	$delete: vi.fn(),
+	reminders: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -17,7 +18,11 @@ vi.mock("@/lib/api", () => ({
 			tasks: Object.assign(
 				{ $get: api.$get, $post: api.$post },
 				{
-					":id": { $patch: api.$patch, $delete: api.$delete },
+					":id": {
+						$patch: api.$patch,
+						$delete: api.$delete,
+						reminders: { $get: api.reminders },
+					},
 				},
 			),
 		},
@@ -37,6 +42,7 @@ function renderPage() {
 }
 
 beforeEach(() => {
+	api.reminders.mockResolvedValue(okJson([]));
 	vi.useFakeTimers({ toFake: ["Date"] });
 	vi.setSystemTime(Date.UTC(2026, 9, 7, 16, 0));
 });
