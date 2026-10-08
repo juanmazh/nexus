@@ -5,7 +5,18 @@
 		<!-- docs/DESIGN.md §4: sin maximum-scale ni user-scalable, para no bloquear el zoom. -->
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="color-scheme" content="light dark" />
+		<!-- Status bar of the installed app. src/lib/theme.ts rewrites it to the
+		     painted theme before the first render (add-pwa design.md D4). -->
+		<meta name="theme-color" content="#f6f7f2" />
 		<title>Nexus</title>
+		<!-- Installable from Chrome's menu, with no service worker on purpose
+		     (docs/ARCHITECTURE.md ADR-011). `use-credentials` is not optional: the
+		     browser fetches the manifest WITHOUT cookies by default, Cloudflare
+		     Access then answers with its login page instead of the JSON, and
+		     Chrome falls back to a plain shortcut instead of installing. -->
+		<link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 	</head>
 	<body>
 		<div id="root"></div>

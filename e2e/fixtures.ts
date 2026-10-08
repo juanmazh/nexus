@@ -274,7 +274,21 @@ export async function gotoRoute(page: Page, path: string): Promise<void> {
  * width. Clipped content is exactly the defect this rule exists to catch, so the
  * second half looks for any box that sticks out past the viewport.
  */
+/**
+ * Waits until no CSS animation or transition is running. Geometry measured in
+ * the middle of one is wrong: the dialog opens with a 95 % → 100 % zoom, and a
+ * 44 px button measured during it reads 43 px. That made the touch-target check
+ * flaky in CI, where the runner is slower and the measurement lands mid-way.
+ */
+export async function waitForAnimations(page: Page): Promise<void> {
+	await page.evaluate(() =>
+		Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => null))),
+	);
+}
+
 export async function expectNoHorizontalScroll(page: Page): Promise<void> {
+	await waitForAnimations(page);
+
 	const { scrollWidth, innerWidth, offenders } = await page.evaluate(() => {
 		const offenders: string[] = [];
 
@@ -342,6 +356,7 @@ export async function expectVisibleWithoutScrolling(page: Page, target: Locator)
 /** docs/DESIGN.md §6: main interactive elements are at least 44 × 44 px. */
 export async function expectTactileTargets(targets: Locator): Promise<void> {
 	await targets.first().waitFor();
+	await waitForAnimations(targets.page());
 
 	const count = await targets.count();
 	expect(count, "no hay elementos interactivos que medir").toBeGreaterThan(0);

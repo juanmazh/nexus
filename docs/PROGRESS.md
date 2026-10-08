@@ -11,10 +11,10 @@
 
 | Campo | Valor |
 |---|---|
-| **Fase** | 1 — MVP: tareas y recordatorios |
-| **Paso / cambio** | Cambio 1.2 `add-reminders` **mergeado** (PR #11) y **archivado** en `chore/archive-add-reminders` (spec `reminders` nueva). Siguiente: 1.3 `add-pwa` |
-| **Rama** | `chore/archive-add-reminders` (PR del archivo y del job de CI que exige archivar) |
-| **Siguiente acción exacta** | Mergear el PR del archivo → añadir `OpenSpec (validated and archived)` a los checks obligatorios del ruleset de `main` en cuanto aparezca (S7 hecho el 2026-10-08) → `add-pwa` |
+| **Fase** | 1 — MVP: tareas y recordatorios, **completa** con este merge |
+| **Paso / cambio** | Cambio 1.3 `add-pwa` **verificado en un Android real** (se instala desde Chrome, abre a pantalla completa) y **archivado** en su propia rama. Siguiente: el hito v0.1.0 |
+| **Rama** | `change/add-pwa` (PR #13) |
+| **Siguiente acción exacta** | Mergear el PR #13 con la CI en verde → en `main`: `git tag -a v0.1.0 -m "Nexus v0.1.0: MVP de tareas y avisos"` y `git push origin v0.1.0` → **una semana de uso real desde el móvil**, anotando aquí lo que moleste → después, fase 2 con `add-notes` |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-08 · casa |
 
@@ -80,9 +80,9 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | 0.2 | `add-access-auth` | ✅ | PR #6 | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` **antes** del primer deploy con el middleware montado → `pnpm deploy` → comprobar las tres rutas a mano |
 | 0.3 | `add-app-shell` | ✅ | PR #7 | `pnpm exec playwright install chromium` en cada equipo nuevo → validar en un **móvil real** la dirección visual "olivar" (`docs/DESIGN.md §5`) → `pnpm deploy` y comprobar en el despliegue real que no hay violaciones de CSP, que las fuentes van al propio origen y que el tema no destella |
 | 1.1 | `add-tasks` | ✅ | PR #9 (+ PR del archivo) | `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → comprobar `/tasks` y la captura en el despliegue real y en un **móvil real** |
-| 1.2 | `add-reminders` | ✅ | PR #11 (+ PR del archivo) | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → aviso de prueba desde Más y un aviso real en el móvil |
-| 1.3 | `add-pwa` | ⬜ | | Instalar la app en tu móvil (Android: Chrome › Instalar; iOS: Safari › Añadir a pantalla de inicio) |
-| — | **Hito v0.1.0** | ⬜ | | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
+| 1.2 | `add-reminders` | ✅ | PR #11 + PR #12 (archivo y arreglo de fechas) | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → aviso de prueba desde Más y un aviso real en el móvil |
+| 1.3 | `add-pwa` | ✅ | PR #13 | `pnpm deploy` → en Android, Chrome ⋮ › "Instalar aplicación" → comprobar pantalla completa, barra de estado y safe areas |
+| — | **Hito v0.1.0** | 🟡 | tras el PR #13 | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
 | 2.1 | `add-notes` | ⬜ | | |
 | 2.2 | `add-quick-links` | ⬜ | | |
 | 2.3 | `add-home-dashboard` | ⬜ | | Configurar el deploy automático (GitHub Actions + `CLOUDFLARE_API_TOKEN`) |
@@ -176,6 +176,10 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | `openspec validate add-app-shell --strict` | ✅ sin errores |
 | Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
 | Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
+
+- **2026-10-08 · casa** — `add-pwa` probado en el móvil: al principio Chrome solo ofrecía un acceso directo. El navegador pide el manifest **sin cookies** y Cloudflare Access le respondía con su página de login. Se arregló con `crossorigin="use-credentials"` en el `<link>`, y un e2e que simula a Access cubre el caso. Ya se instala bien en Android. De paso, dos tests de Playwright que fallaban solo en la CI: la objeción `in-incognito` (el Chromium de la CI no la pone) y los 44 px medidos durante la animación del diálogo. Archivado en la rama (spec `installable-app`). Lección de proceso: no pulsar "Update branch" en un PR que se va a reapoyar. → Siguiente: merge, tag `v0.1.0` y una semana de uso real.
+
+- **2026-10-08 · casa** — `add-pwa` propuesto e implementado por Claude. La persona dueña cuestionó el *service worker* y el aviso de "Hay una versión nueva" del ROADMAP ("la app es un navegador que veo en el móvil"), y tenía razón en lo esencial: sin *service worker*, abrir la app instalada es abrir la URL, así que siempre se ve la última versión y Access ve cada navegación. Chrome instala sin él desde el menú desde la versión 108 en móvil. Queda como **ADR-011**. Icono: monograma "N" sobre olivo, SVG fuente y PNG generados con el Chromium de Playwright (`scripts/icons.mjs`). `theme-color` sigue al tema. Chromium confirma por CDP que es instalable. Solo Android. → Siguiente: instalarlo en el móvil, PR, archivo y hito v0.1.0.
 
 - **2026-10-08 · casa** — `add-reminders` mergeado como PR #11, **otra vez sin archivar** (tercera vez, tras `add-access-auth` y `add-tasks`). Archivado después en `chore/archive-add-reminders` con la spec `reminders` (15 requisitos) y las 10 specs validadas. En producción: secretos de Telegram, `db:migrate:remote` y deploy hechos; **el aviso de prueba y uno real llegan bien**. Como recordarlo no ha bastado, la CI tiene un job nuevo, `OpenSpec (validated and archived)`: valida todas las specs y falla en una rama `change/<id>` mientras `openspec/changes/<id>/` exista. Solo bloquea si **S7** está hecho. → Siguiente: S7 y `add-pwa`.
 

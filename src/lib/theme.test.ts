@@ -4,6 +4,7 @@ import {
 	DARK_SCHEME_QUERY,
 	readStoredPreference,
 	resolveTheme,
+	THEME_COLORS,
 	THEME_STORAGE_KEY,
 } from "./theme";
 
@@ -134,5 +135,29 @@ describe("applyTheme", () => {
 
 		expect(readStoredPreference(document)).toBeNull();
 		expect(applyTheme(document)).toBe("dark");
+	});
+
+	it("gives the status bar the background of the painted theme", () => {
+		const meta = document.createElement("meta");
+		meta.name = "theme-color";
+		meta.content = "#000000";
+		document.head.append(meta);
+		stubEnvironment({ prefersDark: false });
+
+		try {
+			applyTheme(document);
+			expect(meta.content).toBe(THEME_COLORS.light);
+
+			applyTheme(document, "dark");
+			expect(meta.content).toBe(THEME_COLORS.dark);
+		} finally {
+			meta.remove();
+		}
+	});
+
+	it("paints without a theme-color meta, as in a test page", () => {
+		stubEnvironment({ prefersDark: true });
+
+		expect(() => applyTheme(document)).not.toThrow();
 	});
 });

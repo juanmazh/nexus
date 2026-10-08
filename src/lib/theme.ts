@@ -17,6 +17,16 @@ export type ThemePreference = "system" | "light" | "dark";
 /** What actually gets painted. */
 export type ResolvedTheme = "light" | "dark";
 
+/**
+ * `--background` of each theme in `src/index.css`, for the `theme-color` meta:
+ * the status bar of the installed app takes the colour of the page behind it
+ * (add-pwa design.md D4). A test keeps the two in step.
+ */
+export const THEME_COLORS: Record<ResolvedTheme, string> = {
+	light: "#f6f7f2",
+	dark: "#14170f",
+};
+
 export function isThemePreference(value: unknown): value is ThemePreference {
 	return value === "system" || value === "light" || value === "dark";
 }
@@ -88,6 +98,7 @@ export function applyTheme(
 
 	doc.documentElement.classList.toggle("dark", resolved === "dark");
 	doc.documentElement.classList.toggle("light", resolved === "light");
+	doc.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLORS[resolved]);
 
 	return resolved;
 }
