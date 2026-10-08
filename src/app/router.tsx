@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { createBrowserRouter } from "react-router";
 import { AppShell } from "@/app/layout/app-shell";
 import { NotFoundView } from "@/app/layout/not-found-view";
+import { SectionError } from "@/app/layout/section-error";
 
 /**
  * The shell is a layout route, so it survives navigation instead of being torn
@@ -29,11 +30,18 @@ export const router = createBrowserRouter([
 	{
 		element: <AppShell />,
 		children: [
-			{ path: "/", element: <TodayPage /> },
-			{ path: "/tasks", element: <TasksPage /> },
-			{ path: "/notes", element: <NotesPage /> },
-			{ path: "/more", element: <MorePage /> },
-			{ path: "*", element: <NotFoundView /> },
+			{
+				// Pathless, so an error in a section replaces only the section and
+				// the shell stays (reload-on-stale-chunk design.md D2).
+				errorElement: <SectionError />,
+				children: [
+					{ path: "/", element: <TodayPage /> },
+					{ path: "/tasks", element: <TasksPage /> },
+					{ path: "/notes", element: <NotesPage /> },
+					{ path: "/more", element: <MorePage /> },
+					{ path: "*", element: <NotFoundView /> },
+				],
+			},
 		],
 	},
 ]);

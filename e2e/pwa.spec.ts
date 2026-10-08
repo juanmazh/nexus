@@ -1,4 +1,11 @@
-import { expect, gotoRoute, test } from "./fixtures";
+import type { Page } from "@playwright/test";
+import {
+	expect,
+	expectNoHorizontalScroll,
+	expectTactileTargets,
+	gotoRoute,
+	test,
+} from "./fixtures";
 
 /**
  * The installable app against the built assets served by `vite preview`, where
@@ -111,5 +118,57 @@ test.describe("installable app", () => {
 
 		expect(sentCookie).toContain(true);
 		expect(errors).toEqual([]);
+	});
+});
+
+/**
+ * After a deploy, the file of a section that had not been opened yet no longer
+ * exists and the Worker answers it with `index.html` (reload-on-stale-chunk).
+ * `failures` is how many times that file is answered that way.
+ */
+async function staleMoreSection(page: Page, failures: number) {
+	let served = 0;
+	await page.route(/\/assets\/more-page-[^/]+\.js$/, async (route) => {
+		if (served++ < failures) {
+			return route.fulfill({
+				status: 200,
+				contentType: "text/html",
+				body: '<!doctype html><title>Nexus</title><div id="root"></div>',
+			});
+		}
+		return route.continue();
+	});
+	let loads = 0;
+	page.on("load", () => {
+		loads++;
+	});
+	return () => loads;
+}
+
+test.describe("after a deploy", () => {
+	test("reloads once and opens the section with the new version", async ({ page }) => {
+		const loads = await staleMoreSection(page, 1);
+		await gotoRoute(page, "/tasks");
+
+		await page.getByRole("link", { name: "Más" }).first().click();
+
+		await expect(page.locator("[data-slot='view-header'] h1")).toHaveText("Más");
+		expect(loads()).toBe(2);
+		await expect(page).toHaveURL(/\/more$/);
+	});
+
+	test("does not loop: one reload, then the error inside the shell", async ({ page }) => {
+		const loads = await staleMoreSection(page, Number.POSITIVE_INFINITY);
+		await gotoRoute(page, "/tasks");
+
+		await page.getByRole("link", { name: "Más" }).first().click();
+
+		const alert = page.getByRole("alert");
+		await expect(alert).toContainText("No se ha podido cargar esta sección");
+		await page.waitForTimeout(1_000);
+		expect(loads()).toBe(2);
+		await expect(page.locator("[data-slot='capture-bar']")).toBeVisible();
+		await expectTactileTargets(alert.getByRole("button", { name: "Recargar" }));
+		await expectNoHorizontalScroll(page);
 	});
 });
