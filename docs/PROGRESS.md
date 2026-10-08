@@ -12,10 +12,10 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 1 — MVP: tareas y recordatorios |
-| **Paso / cambio** | Cambio 1.1 `add-tasks` **mergeado** (PR #9) y **archivado** (`openspec/specs/tasks/` creada, `app-shell` actualizada). Siguiente: 1.2 `add-reminders` |
-| **Rama** | `chore/archive-add-tasks` (PR del archivo) |
-| **Siguiente acción exacta** | Mergear el PR del archivo con la CI en verde → confirmar que en producción se hizo `pnpm db:migrate:remote` **antes** de `pnpm deploy` (si no, hacerlo ahora en ese orden) → verificación 8.3 en un **móvil real** sobre el despliegue y anotarla aquí → `/opsx-propose add-reminders` con el prompt de `docs/ROADMAP.md` y revisarlo antes del apply |
-| **Bloqueos** | Ninguno. La 8.3 (DevTools y **móvil real**) es manual |
+| **Paso / cambio** | Cambio 1.1 `add-tasks` **cerrado**: mergeado (PR #9), archivado (PR #10), migrado, desplegado y verificado en un móvil real. Siguiente: 1.2 `add-reminders` |
+| **Rama** | `change/add-reminders` |
+| **Siguiente acción exacta** | `/opsx-propose add-reminders` con el prompt de `docs/ROADMAP.md` → revisar `proposal.md`, `design.md` y `tasks.md` con Claude **antes** del apply (primer cambio con secretos y con cron) → `/opsx-apply add-reminders` |
+| **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-08 · casa |
 
 ---
@@ -160,7 +160,7 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
 | Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
 
-- **2026-10-08 · casa** — `add-tasks` mergeado como PR #9 y archivado después con `/opsx-archive add-tasks` en `chore/archive-add-tasks`: nueva spec `tasks` (17 requisitos) y requisito *Barra de captura que crea tareas* en `app-shell`; `openspec validate --all --strict` con las 9 specs en verde. Se volvió a mergear **antes** de archivar: el archivo va siempre en el PR del cambio, no después. Limpieza: borrada la rama `change/add-tasks` y el stash de OpenCode. Pendiente: confirmar migración remota y deploy, y la 8.3 en un móvil real. → Siguiente: `/opsx-propose add-reminders`.
+- **2026-10-08 · casa** — `add-tasks` mergeado como PR #9 y archivado después con `/opsx-archive add-tasks` en `chore/archive-add-tasks`: nueva spec `tasks` (17 requisitos) y requisito *Barra de captura que crea tareas* en `app-shell`; `openspec validate --all --strict` con las 9 specs en verde. Se volvió a mergear **antes** de archivar: el archivo va siempre en el PR del cambio, no después. Limpieza: borrada la rama `change/add-tasks` y el stash de OpenCode. Después: `pnpm db:migrate:remote`, `pnpm deploy` y **8.3 verificada en un móvil real** sobre el despliegue (lista, captura, completar y deshacer, detalle como hoja inferior con el teclado abierto, borrado confirmado, modo claro y oscuro: todo bien). → Siguiente: `/opsx-propose add-reminders`.
 
 - **2026-10-07 · casa** — `/opsx-apply add-tasks`: **34/35 tareas**. OpenCode hizo los grupos 0–3 con errores de tipos y de formato (corregidos) y se quedó sin cuota gratuita; Claude cerró 3–9. Worker: `routes/tasks.ts` con validadores propios que devuelven `{ error: { code, message } }`, `405` con `Allow`, `PATCH` que separa `status` (va a `updateTaskStatus`, único escritor de `completed_at`) del resto de campos. SPA: `features/tasks/` con tipos derivados del cliente RPC, mutaciones optimistas con rollback, secciones Vencidas / Hoy / Próximas / Sin fecha, `Hechas (N)`, detalle en `ResponsiveDialog` con borrado confirmado, y la barra de captura conectada desde el shell. **Desviaciones del `design.md`, deliberadas y ya reflejadas en él:** (1) la barra devuelve el texto cuando la promesa de `onSubmit` se rechaza, sin modo controlado `value`/`onValueChange`; (2) una fila optimista no se puede completar ni abrir hasta que llega su id real, porque su id provisional daría un `400`; (3) el botón "Borrar tarea" va con borde rojo en vez de relleno, porque blanco sobre el rojo del modo oscuro no llega a AA; (4) la comprobación de scroll horizontal de la suite e2e ignora los nodos recortados a nada (`sr-only`, *focus guards* de Base UI), que daban falsos positivos. La 9.2 pedía marcar el cambio en `docs/ROADMAP.md`, pero ese documento no lleva estado: el estado vive aquí. → Siguiente: revisar, PR, `pnpm db:migrate:remote`, `pnpm deploy`, 8.3 en un móvil real y `/opsx-archive add-tasks` antes del merge.
 
@@ -179,4 +179,11 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 ## ❓ Decisiones pendientes
 
 - Nombre del dominio para la fase 3 (`nexus` estará cogido en casi todos los TLD; valorar algo como `juanmazh.dev`, con Nexus en una ruta o subdominio).
+- **Landing pública del proyecto** (idea del 2026-10-08, aparcada). Página para exponer Nexus como proyecto de portfolio con un botón "Acceder" a la app. Planteamiento acordado para cuando se retome:
+  - **Sin login propio:** "Acceder" enlaza a la app y Cloudflare Access hace de login (código por email), coherente con ADR-002. La página de login de Access se puede personalizar con la marca desde Zero Trust.
+  - **La landing como sitio estático aparte en el mismo repo** (`landing/` con su propio `wrangler.jsonc`, HTML + Tailwind con los tokens "olivar", sin React), publicada en su propia URL de `workers.dev`. La app no se toca. Coste 0 € (los assets estáticos no gastan invocaciones). Requiere una ADR nueva, porque ADR-001 dice "un único Worker".
+  - **No** proteger por ruta (`/` pública y `/app/*` tras Access) en `workers.dev`: la documentación de Cloudflare no confirma que las aplicaciones por ruta funcionen en ese hostname.
+  - Con el dominio de la fase 3 solo se asignan dominios (p. ej. `nexus.<dominio>` para la landing y `app.nexus.<dominio>` para la app), sin rehacer nada.
+  - Contenido: capturas reales en móvil y escritorio, el stack, las decisiones clave (ADRs), el enlace al repo y al flujo OpenSpec. Segunda fase opcional: demo pública con datos ficticios reutilizando el stub en memoria de los e2e.
+  - Se haría como un cambio propio de OpenSpec (`add-landing`). Por decidir: cuándo intercalarlo y si se adelanta la compra del dominio.
 - Licencia del repo (MIT si quieres que sea reutilizable; sin licencia si solo quieres enseñarlo).
