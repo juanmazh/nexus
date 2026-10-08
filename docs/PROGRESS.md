@@ -12,11 +12,11 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 1 — MVP: tareas y recordatorios |
-| **Paso / cambio** | Cambio 1.1 `add-tasks` **implementado y verificado** (34/35 tareas), pendiente de revisión, PR, deploy y archivo |
-| **Rama** | `change/add-tasks` (sin PR todavía) |
-| **Siguiente acción exacta** | Revisar el código → `git push` y abrir el PR con la CI en verde → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → en el despliegue real, comprobar que `/tasks` carga, que crear desde la barra de captura funciona y que `GET /api/health` sigue en `200` → verificación manual 8.3 en un **móvil real** → `/opsx-archive add-tasks` **antes** de mergear → merge a `main` |
-| **Bloqueos** | Ninguno. Queda la 8.3 (DevTools y **móvil real**), que el agente no puede hacer |
-| **Última actualización** | 2026-10-07 · casa |
+| **Paso / cambio** | Cambio 1.1 `add-tasks` **mergeado** (PR #9) y **archivado** (`openspec/specs/tasks/` creada, `app-shell` actualizada). Siguiente: 1.2 `add-reminders` |
+| **Rama** | `chore/archive-add-tasks` (PR del archivo) |
+| **Siguiente acción exacta** | Mergear el PR del archivo con la CI en verde → confirmar que en producción se hizo `pnpm db:migrate:remote` **antes** de `pnpm deploy` (si no, hacerlo ahora en ese orden) → verificación 8.3 en un **móvil real** sobre el despliegue y anotarla aquí → `/opsx-propose add-reminders` con el prompt de `docs/ROADMAP.md` y revisarlo antes del apply |
+| **Bloqueos** | Ninguno. La 8.3 (DevTools y **móvil real**) es manual |
+| **Última actualización** | 2026-10-08 · casa |
 
 ---
 
@@ -79,7 +79,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | 0.1 | `bootstrap-project` | ✅ | PR #3 y #4 | — |
 | 0.2 | `add-access-auth` | ✅ | PR #6 | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` **antes** del primer deploy con el middleware montado → `pnpm deploy` → comprobar las tres rutas a mano |
 | 0.3 | `add-app-shell` | ✅ | PR #7 | `pnpm exec playwright install chromium` en cada equipo nuevo → validar en un **móvil real** la dirección visual "olivar" (`docs/DESIGN.md §5`) → `pnpm deploy` y comprobar en el despliegue real que no hay violaciones de CSP, que las fuentes van al propio origen y que el tema no destella |
-| 1.1 | `add-tasks` | 🟡 | `change/add-tasks` (sin PR) | `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → comprobar `/tasks` y la captura en el despliegue real y en un **móvil real** |
+| 1.1 | `add-tasks` | ✅ | PR #9 (+ PR del archivo) | `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → comprobar `/tasks` y la captura en el despliegue real y en un **móvil real** |
 | 1.2 | `add-reminders` | ⬜ | | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; migración remota; deploy; esperar un aviso real |
 | 1.3 | `add-pwa` | ⬜ | | Instalar la app en tu móvil (Android: Chrome › Instalar; iOS: Safari › Añadir a pantalla de inicio) |
 | — | **Hito v0.1.0** | ⬜ | | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
@@ -159,6 +159,8 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | `openspec validate add-app-shell --strict` | ✅ sin errores |
 | Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
 | Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
+
+- **2026-10-08 · casa** — `add-tasks` mergeado como PR #9 y archivado después con `/opsx-archive add-tasks` en `chore/archive-add-tasks`: nueva spec `tasks` (17 requisitos) y requisito *Barra de captura que crea tareas* en `app-shell`; `openspec validate --all --strict` con las 9 specs en verde. Se volvió a mergear **antes** de archivar: el archivo va siempre en el PR del cambio, no después. Limpieza: borrada la rama `change/add-tasks` y el stash de OpenCode. Pendiente: confirmar migración remota y deploy, y la 8.3 en un móvil real. → Siguiente: `/opsx-propose add-reminders`.
 
 - **2026-10-07 · casa** — `/opsx-apply add-tasks`: **34/35 tareas**. OpenCode hizo los grupos 0–3 con errores de tipos y de formato (corregidos) y se quedó sin cuota gratuita; Claude cerró 3–9. Worker: `routes/tasks.ts` con validadores propios que devuelven `{ error: { code, message } }`, `405` con `Allow`, `PATCH` que separa `status` (va a `updateTaskStatus`, único escritor de `completed_at`) del resto de campos. SPA: `features/tasks/` con tipos derivados del cliente RPC, mutaciones optimistas con rollback, secciones Vencidas / Hoy / Próximas / Sin fecha, `Hechas (N)`, detalle en `ResponsiveDialog` con borrado confirmado, y la barra de captura conectada desde el shell. **Desviaciones del `design.md`, deliberadas y ya reflejadas en él:** (1) la barra devuelve el texto cuando la promesa de `onSubmit` se rechaza, sin modo controlado `value`/`onValueChange`; (2) una fila optimista no se puede completar ni abrir hasta que llega su id real, porque su id provisional daría un `400`; (3) el botón "Borrar tarea" va con borde rojo en vez de relleno, porque blanco sobre el rojo del modo oscuro no llega a AA; (4) la comprobación de scroll horizontal de la suite e2e ignora los nodos recortados a nada (`sr-only`, *focus guards* de Base UI), que daban falsos positivos. La 9.2 pedía marcar el cambio en `docs/ROADMAP.md`, pero ese documento no lleva estado: el estado vive aquí. → Siguiente: revisar, PR, `pnpm db:migrate:remote`, `pnpm deploy`, 8.3 en un móvil real y `/opsx-archive add-tasks` antes del merge.
 

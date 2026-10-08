@@ -46,12 +46,12 @@ contenido SHALL volver al principio, de modo que el título quede siempre visibl
 - **THEN** el título de la nueva sección aparece en la parte superior del contenido
 - **AND** el contenido comienza por el principio y no en un punto intermedio del scroll
 
-### Requirement: Barra de captura
+### Requirement: Barra de captura que crea tareas
 
-La aplicación SHALL mantener una barra de captura visible en todo momento. Por debajo de 1024 px
-SHALL estar encima de la barra de pestañas; a partir de 1024 px SHALL estar en la cabecera, y su
-campo SHALL poder enfocarse con la tecla `N`. En este cambio la barra SHALL ser solo interfaz: no
-persiste nada y no llama a la API.
+La aplicación SHALL mantener una barra de captura visible en todo momento: encima de la barra de
+pestañas por debajo de 1024 px y en la cabecera a partir de 1024 px, enfocable con la tecla `N`.
+Enviar un texto SHALL crear una tarea con ese título, sin fecha y desde cualquier sección, con
+actualización optimista y sin perder el texto si la API falla.
 
 #### Scenario: La acción de capturar está al alcance del pulgar (360 px)
 
@@ -74,11 +74,23 @@ persiste nada y no llama a la API.
 - **AND** la pulsación conserva su comportamiento normal (por ejemplo, escribir una "n" o abrir una
   ventana nueva con Ctrl+N)
 
-#### Scenario: La barra de captura todavía no guarda nada
+#### Scenario: Capturar una tarea desde cualquier sección
 
 - **WHEN** se escribe un texto en la barra de captura y se envía
-- **THEN** la aplicación no persiste el texto en ninguna parte
-- **AND** la barra de captura no llama a la API
+- **THEN** se crea una tarea con ese título y sin fecha de vencimiento
+- **AND** la tarea aparece en la lista antes de que la API responda
+- **AND** tras la respuesta la barra queda vacía
+
+#### Scenario: La captura falla y no pierde el texto
+
+- **WHEN** se envía un título desde la barra de captura y la API responde con error
+- **THEN** la tarea desaparece de la lista y se avisa de que no se ha podido guardar
+- **AND** el texto vuelve a estar en la barra de captura
+
+#### Scenario: Enviar la barra vacía no hace nada
+
+- **WHEN** se envía la barra de captura sin texto o solo con espacios
+- **THEN** no se crea ninguna tarea y no se muestra ningún error
 
 ### Requirement: Estados de cada sección
 
