@@ -14,7 +14,7 @@
 | **Fase** | 1 — MVP: tareas y recordatorios |
 | **Paso / cambio** | Cambio 1.2 `add-reminders` **mergeado** (PR #11) y **archivado** en `chore/archive-add-reminders` (spec `reminders` nueva). Siguiente: 1.3 `add-pwa` |
 | **Rama** | `chore/archive-add-reminders` (PR del archivo y del job de CI que exige archivar) |
-| **Siguiente acción exacta** | Mergear el PR del archivo → **S7**: proteger `main` exigiendo los tres jobs de la CI, incluido `OpenSpec (validated and archived)` → confirmar aquí que se hicieron los secretos de Telegram, `db:migrate:remote`, el deploy y la prueba real de avisos → `add-pwa` |
+| **Siguiente acción exacta** | Mergear el PR del archivo → **S7**: proteger `main` exigiendo los tres jobs de la CI, incluido `OpenSpec (validated and archived)` → `add-pwa` |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-08 · casa |
 
@@ -177,7 +177,7 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
 | Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
 
-- **2026-10-08 · casa** — `add-reminders` mergeado como PR #11, **otra vez sin archivar** (tercera vez, tras `add-access-auth` y `add-tasks`). Archivado después en `chore/archive-add-reminders` con la spec `reminders` (15 requisitos) y las 10 specs validadas. Como recordarlo no ha bastado, la CI tiene un job nuevo, `OpenSpec (validated and archived)`: valida todas las specs y falla en una rama `change/<id>` mientras `openspec/changes/<id>/` exista. Solo bloquea si **S7** está hecho. → Siguiente: S7 y `add-pwa`.
+- **2026-10-08 · casa** — `add-reminders` mergeado como PR #11, **otra vez sin archivar** (tercera vez, tras `add-access-auth` y `add-tasks`). Archivado después en `chore/archive-add-reminders` con la spec `reminders` (15 requisitos) y las 10 specs validadas. En producción: secretos de Telegram, `db:migrate:remote` y deploy hechos; **el aviso de prueba y uno real llegan bien**. Como recordarlo no ha bastado, la CI tiene un job nuevo, `OpenSpec (validated and archived)`: valida todas las specs y falla en una rama `change/<id>` mientras `openspec/changes/<id>/` exista. Solo bloquea si **S7** está hecho. → Siguiente: S7 y `add-pwa`.
 
 - **2026-10-08 · casa** — `add-reminders` propuesto e implementado por Claude, porque OpenCode se quedó sin cuota. Decisiones de producto tomadas por la persona dueña antes de la propuesta: atajos fijos más "El día que vence 9:00", campana en la fila, cancelar con confirmación y sin editar la hora, deshacer no reactiva avisos, botón de aviso de prueba en Más, mensaje con título, vencimiento y prioridad alta, sin aviso automático y un solo cambio aunque pase de 600 líneas. **Lo que destaparon los tests:**
   - **Bug de Drizzle con subconsultas correlacionadas:** escribe `${tasks.id}` como un `"id"` sin cualificar, que dentro de la subconsulta es el de `reminders`. Devolvía `null` en silencio; las columnas se cualifican a mano.
