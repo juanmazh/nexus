@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
 	$post: vi.fn(),
 	$patch: vi.fn(),
 	$delete: vi.fn(),
+	reminders: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -25,7 +26,13 @@ vi.mock("@/lib/api", () => ({
 		api: {
 			tasks: Object.assign(
 				{ $get: api.$get, $post: api.$post },
-				{ ":id": { $patch: api.$patch, $delete: api.$delete } },
+				{
+					":id": {
+						$patch: api.$patch,
+						$delete: api.$delete,
+						reminders: { $get: api.reminders },
+					},
+				},
 			),
 		},
 	},
@@ -40,13 +47,14 @@ function deferred<T>() {
 	return { promise, resolve };
 }
 
-function renderTasks() {
+function renderAt(path: string) {
 	const { wrapper: Wrapper } = withQueryClient();
 	return render(
 		<Wrapper>
-			<MemoryRouter initialEntries={["/tasks"]}>
+			<MemoryRouter initialEntries={[path]}>
 				<Routes>
 					<Route element={<AppShell />}>
+						<Route path="/" element={<p>Vista de Hoy</p>} />
 						<Route path="/tasks" element={<TasksPage />} />
 					</Route>
 				</Routes>
@@ -54,6 +62,8 @@ function renderTasks() {
 		</Wrapper>,
 	);
 }
+
+const renderTasks = () => renderAt("/tasks");
 
 async function capture(text: string) {
 	const user = userEvent.setup();
@@ -66,6 +76,7 @@ async function capture(text: string) {
 beforeEach(() => {
 	Element.prototype.scrollTo = vi.fn();
 	api.$get.mockResolvedValue(okJson([]));
+	api.reminders.mockResolvedValue(okJson([]));
 });
 
 afterEach(() => {
@@ -96,9 +107,28 @@ describe("Capturing a task from the bar", () => {
 		api.$get.mockResolvedValue(okJson([saved]));
 		answer.resolve(okJson(saved, 201));
 
+		// Once the API answers, the detail of the real task opens on top
+		// (open-detail-on-capture).
+		const dialog = await screen.findByRole("dialog", { name: "Detalle de la tarea" });
+		expect(within(dialog).getByLabelText("Título")).toHaveValue("Comprar pan");
+
+		await userEvent.setup().keyboard("{Escape}");
 		await waitFor(() =>
-			expect(screen.getByRole("button", { name: "Completar Comprar pan" })).toBeEnabled(),
+			expect(screen.queryByRole("dialog", { name: "Detalle de la tarea" })).toBeNull(),
 		);
+		expect(screen.getByRole("button", { name: "Completar Comprar pan" })).toBeEnabled();
+	});
+
+	it("opens the detail over another section, without leaving it", async () => {
+		const saved = makeTask({ title: "Llamar al taller" });
+		api.$post.mockResolvedValue(okJson(saved, 201));
+		renderAt("/");
+
+		await capture("Llamar al taller");
+
+		const dialog = await screen.findByRole("dialog", { name: "Detalle de la tarea" });
+		expect(within(dialog).getByLabelText("Título")).toHaveValue("Llamar al taller");
+		expect(screen.getByText("Vista de Hoy")).toBeInTheDocument();
 	});
 
 	it("takes the task away, says so and gives the text back when the API fails", async () => {
@@ -115,6 +145,7 @@ describe("Capturing a task from the bar", () => {
 
 		expect(await screen.findByText("No se ha podido guardar la tarea")).toBeInTheDocument();
 		await waitFor(() => expect(input).toHaveValue("Comprar pan"));
+		expect(screen.queryByRole("dialog", { name: "Detalle de la tarea" })).toBeNull();
 		const list = screen.queryByRole("list");
 		expect(list === null || within(list).queryByText("Comprar pan") === null).toBe(true);
 	});

@@ -20,7 +20,7 @@ function overlaySlot(isMobile: boolean) {
 }
 
 test.describe("tasks", () => {
-	test("creates a task from the capture bar", async ({ page, tasks }) => {
+	test("creates a task from the capture bar", async ({ page, tasks, isMobile }) => {
 		await gotoRoute(page, "/tasks");
 		await expect(page.getByText("Sin tareas")).toBeVisible();
 
@@ -29,8 +29,15 @@ test.describe("tasks", () => {
 		await input.press("Enter");
 
 		await expect(input).toHaveValue("");
-		await expect(page.getByRole("button", { name: "Completar Comprar pan" })).toBeEnabled();
 		expect(tasks.map((task) => task.title)).toEqual(["Comprar pan"]);
+
+		// The detail of the new task opens at once (open-detail-on-capture).
+		const overlay = page.locator(overlaySlot(isMobile));
+		await expect(overlay.getByLabel("Título")).toHaveValue("Comprar pan");
+		await page.keyboard.press("Escape");
+		await expect(overlay).toHaveCount(0);
+
+		await expect(page.getByRole("button", { name: "Completar Comprar pan" })).toBeEnabled();
 
 		await expectNoHorizontalScroll(page);
 		await expectTactileTargets(page.getByRole("button", { name: /^Completar / }));
@@ -116,5 +123,39 @@ test.describe("tasks", () => {
 
 		await expect(page.getByText("Alta")).toBeVisible();
 		await expectNoHorizontalScroll(page);
+	});
+
+	test("opens the detail of a captured task over the section it was captured in", async ({
+		page,
+		isMobile,
+	}) => {
+		await gotoRoute(page, "/");
+		const input = page.locator("[data-slot='capture-bar'] input");
+		await input.fill("Llamar al taller");
+		await input.press("Enter");
+
+		const overlay = page.locator(overlaySlot(isMobile));
+		await expect(overlay.getByLabel("Título")).toHaveValue("Llamar al taller");
+		await expect(page).toHaveURL(/\/$/);
+
+		await page.keyboard.press("Escape");
+		await expect(overlay).toHaveCount(0);
+		await expect(page.getByRole("heading", { level: 1 })).toHaveText("Hoy");
+	});
+
+	test("does not pop the virtual keyboard when the detail opens on a phone", async ({
+		page,
+		isMobile,
+	}) => {
+		test.skip(!isMobile, "only a phone has a virtual keyboard to pop");
+		await gotoRoute(page, "/tasks");
+		const input = page.locator("[data-slot='capture-bar'] input");
+		await input.fill("Comprar pan");
+		await input.press("Enter");
+
+		const overlay = page.locator(overlaySlot(true));
+		await expect(overlay.getByLabel("Título")).toHaveValue("Comprar pan");
+		// The focus lands on the sheet itself, not on a text field.
+		await expect(overlay.getByLabel("Título")).not.toBeFocused();
 	});
 });

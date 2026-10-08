@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
 import { ToastHost } from "@/components/toast-host";
+import { TaskDetailProvider, useTaskDetail } from "@/features/tasks/task-detail-context";
 import { useCreateTask } from "@/features/tasks/use-tasks";
 import { useIsDesktop } from "@/lib/use-media-query";
 import { CaptureBar } from "./capture-bar";
@@ -29,13 +30,29 @@ import { TabBar } from "./tab-bar";
  * one action there (the theme switcher in "Más").
  */
 export function AppShell() {
+	return (
+		<TaskDetailProvider>
+			<Shell />
+		</TaskDetailProvider>
+	);
+}
+
+function Shell() {
 	const isDesktop = useIsDesktop();
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const { pathname } = useLocation();
 	// One mutation for both bars: whichever is on screen creates the task, from
 	// any section (design.md D10).
 	const createTask = useCreateTask();
-	const capture = (title: string) => createTask.mutateAsync({ title });
+	const { openTask } = useTaskDetail();
+	// The detail opens once the API has answered, with the real row: the
+	// optimistic one has a provisional id and could not take reminders. A
+	// rejection propagates, so the bar gets its text back and nothing opens
+	// (open-detail-on-capture design.md D2).
+	const capture = async (title: string) => {
+		const saved = await createTask.mutateAsync({ title });
+		openTask({ ...saved, next_reminder_at: null });
+	};
 
 	// A new section starts at its own beginning, never halfway down.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `pathname` is the trigger, not something the body reads
