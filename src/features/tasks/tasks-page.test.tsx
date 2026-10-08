@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TaskDetailProvider } from "./task-detail-context";
 import { TasksPage } from "./tasks-page";
 import { failJson, makeTask, okJson, withQueryClient } from "./test-helpers";
 
@@ -37,8 +38,15 @@ function serve(todo: unknown[], done: unknown[] = []) {
 }
 
 function renderPage() {
-	const { wrapper } = withQueryClient();
-	return render(<TasksPage />, { wrapper });
+	const { wrapper: Wrapper } = withQueryClient();
+	// The detail lives in the shell now; the provider is what the shell mounts.
+	return render(
+		<Wrapper>
+			<TaskDetailProvider>
+				<TasksPage />
+			</TaskDetailProvider>
+		</Wrapper>,
+	);
 }
 
 beforeEach(() => {

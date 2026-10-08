@@ -6,7 +6,7 @@ import { APP_TIMEZONE } from "@/lib/datetime";
 import type { Task } from "./api";
 import { pendingCountLabel } from "./format";
 import { groupTasks } from "./group";
-import { TaskDetailSheet } from "./task-detail-sheet";
+import { useTaskDetail } from "./task-detail-context";
 import { TaskRow } from "./task-row";
 import { useSetTaskStatus, useTasks } from "./use-tasks";
 
@@ -27,7 +27,7 @@ export function TasksPage() {
 	const completed = useTasks("done");
 	const setStatus = useSetTaskStatus();
 	const [showDone, setShowDone] = useState(false);
-	const [selected, setSelected] = useState<Task | null>(null);
+	const { openTask } = useTaskDetail();
 
 	const toggle = (task: Task) =>
 		setStatus.mutate({ task, status: task.status === "done" ? "todo" : "done" });
@@ -82,7 +82,7 @@ export function TasksPage() {
 								</h2>
 								<ul>
 									{list.map((task) => (
-										<TaskRow key={task.id} task={task} onOpen={setSelected} onToggle={toggle} />
+										<TaskRow key={task.id} task={task} onOpen={openTask} onToggle={toggle} />
 									))}
 								</ul>
 							</section>
@@ -103,14 +103,12 @@ export function TasksPage() {
 					{showDone ? (
 						<ul>
 							{doneTasks.map((task) => (
-								<TaskRow key={task.id} task={task} onOpen={setSelected} onToggle={toggle} />
+								<TaskRow key={task.id} task={task} onOpen={openTask} onToggle={toggle} />
 							))}
 						</ul>
 					) : null}
 				</section>
 			) : null}
-
-			<TaskDetailSheet task={selected} onClose={() => setSelected(null)} />
 		</>
 	);
 }
