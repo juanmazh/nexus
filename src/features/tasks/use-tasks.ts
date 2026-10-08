@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/toast-host";
+import { remindersQueryKey } from "@/features/reminders/use-reminders";
 import type { CreateTaskBody, Task, TaskListStatus, UpdateTaskBody } from "./api";
 import { createTask, deleteTask, fetchTasks, updateTask } from "./api";
 
@@ -146,8 +147,14 @@ export function useSetTaskStatus() {
 						: "No se ha podido deshacer la tarea",
 			});
 		},
-		onSettled() {
-			return cache.refresh();
+		onSettled(_data, _error, { task }) {
+			// Completing cancelled the task's reminders on the server. Without this,
+			// a detail reopened within the stale time would still list them as
+			// pending, and a reminder that will never arrive looks like it will.
+			return Promise.all([
+				cache.refresh(),
+				cache.queryClient.invalidateQueries({ queryKey: remindersQueryKey(task.id) }),
+			]);
 		},
 	});
 }

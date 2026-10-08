@@ -36,6 +36,10 @@
 		"ACCESS_TEAM_DOMAIN": "juanmazh.cloudflareaccess.com"
 	},
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		// Trazas apagadas a propósito: registrarían la URL de cada `fetch` saliente,
+		// y la de Telegram lleva el token del bot en la ruta (/bot<token>/...).
+		// Los logs no la incluyen: el código nunca la escribe (add-reminders D8).
+		"traces": { "enabled": false }
 	}
 }

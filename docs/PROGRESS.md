@@ -133,7 +133,7 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | Punto | Estado |
 |---|---|
 | Todas las tareas de `tasks.md` marcadas | ✅ todas las automáticas; los pasos manuales están en "Ahora mismo" |
-| `pnpm typecheck`, `pnpm lint` y `pnpm test` en `0` | ✅ `0`, `0`, **368 tests** (worker contra D1 real + web) |
+| `pnpm typecheck`, `pnpm lint` y `pnpm test` en `0` | ✅ `0`, `0`, **371 tests** (worker contra D1 real + web) |
 | `pnpm build` | ✅ sin errores |
 | Migración | ✅ `migrations/0001_graceful_mad_thinker.sql` (tabla `reminders`, FK con cascada y dos índices), aplicada en local; la remota va **antes** del deploy |
 | Cron | ✅ `*/5 * * * *` en `wrangler.jsonc`; `scheduled` verificado en local con `wrangler dev --test-scheduled` (sin secretos registra lo que falta y no toca nada) |
@@ -182,6 +182,7 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
   - **Bug previo de `ResponsiveDialog` en escritorio:** recortaba en vez de hacer scroll cualquier contenido más alto que la pantalla. Commit propio `fix(ui)` y e2e de regresión que falla sin el arreglo.
   - **La confirmación de cancelar el último aviso quedaba por debajo de lo visible;** ahora se desplaza a la vista.
   - **El 10 de octubre de 2026 es sábado,** no viernes como decían los ejemplos de la propuesta: corregido.
+  - **Revisión independiente** (un agente que no vio el desarrollo): nada se salta Access, el token no se filtra y se respetan los límites del plan. Encontró dos bugs y un riesgo, corregidos con tests que fallan sin el arreglo: el detalle podía listar avisos ya cancelados tras completar y deshacer (caché); un aviso creado justo al completar la tarea podía enviarse; y las trazas de Cloudflare, si se activaran, registrarían el token (ahora apagadas explícitamente).
 
   → Siguiente: revisión, PR, secretos, migración remota, deploy, prueba con Telegram real y `/opsx-archive` antes del merge.
 

@@ -63,12 +63,18 @@ function PendingTaskReminders({ task }: { task: Task }) {
 	const create = useCreateReminder(task.id);
 	const [custom, setCustom] = useState("");
 	const [error, setError] = useState<string | null>(null);
+	const [shortcutError, setShortcutError] = useState<string | null>(null);
 
-	function add(remindAt: string) {
+	/**
+	 * Each source of a time reports its own rejection: a refused shortcut must
+	 * not mark the "Otra hora" field as invalid when the person never touched it.
+	 */
+	function add(remindAt: string, from: "shortcut" | "field") {
 		setError(null);
+		setShortcutError(null);
 		create.mutate(remindAt, {
 			onSuccess: () => setCustom(""),
-			onError: (failure) => setError(failure.message),
+			onError: (failure) => (from === "field" ? setError : setShortcutError)(failure.message),
 		});
 	}
 
@@ -87,7 +93,7 @@ function PendingTaskReminders({ task }: { task: Task }) {
 								key={shortcut.label}
 								type="button"
 								disabled={create.isPending}
-								onClick={() => add(shortcut.value)}
+								onClick={() => add(shortcut.value, "shortcut")}
 								className={`${buttonClass} rounded-full border border-border text-foreground`}
 							>
 								{shortcut.label}
@@ -95,6 +101,12 @@ function PendingTaskReminders({ task }: { task: Task }) {
 						))}
 					</div>
 				</fieldset>
+			) : null}
+
+			{shortcutError ? (
+				<p role="alert" className="text-sm text-destructive">
+					{shortcutError}
+				</p>
 			) : null}
 
 			<form
@@ -106,7 +118,7 @@ function PendingTaskReminders({ task }: { task: Task }) {
 						setError("Elige la fecha y la hora del aviso.");
 						return;
 					}
-					add(custom);
+					add(custom, "field");
 				}}
 			>
 				<label htmlFor="aviso-hora" className="text-sm font-medium text-foreground">

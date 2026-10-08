@@ -57,7 +57,12 @@ export async function runReminders(
 		})
 		.from(reminders)
 		.innerJoin(tasks, eq(tasks.id, reminders.task_id))
-		.where(and(eq(reminders.status, "pending"), lte(reminders.remind_at, now)))
+		// `tasks.status = 'todo'` too: a reminder created in the same instant the
+		// task was completed can slip past the cancelling batch, and it must not
+		// go out for a task that is already done.
+		.where(
+			and(eq(reminders.status, "pending"), lte(reminders.remind_at, now), eq(tasks.status, "todo")),
+		)
 		.orderBy(asc(reminders.remind_at))
 		.limit(BATCH_SIZE)
 		.all();

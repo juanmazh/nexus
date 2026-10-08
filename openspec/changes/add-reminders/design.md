@@ -113,6 +113,16 @@ si no devuelve fila se pregunta si existe, para distinguir `404` de `409`.
 
 `updateTaskStatus` sigue siendo la única escritura de `completed_at`. Solo crece en un statement.
 
+**Carrera que el `batch` no cierra solo** (encontrada en la revisión independiente): crear un aviso
+comprueba la tarea y luego inserta. Si alguien la completa justo entre las dos cosas, el aviso nuevo
+queda `pending` sobre una tarea `done`. El job filtra además por `tasks.status = 'todo'`, así que
+ese aviso nunca sale. La misma ventana permite, en teoría, pasar de 10 avisos con dos altas
+simultáneas: el límite es un freno, no una regla de negocio (D3), y se acepta.
+
+**La caché del front tiene que seguir al servidor.** Completar invalida también la consulta de
+avisos de esa tarea. Si no, un detalle reabierto dentro del `staleTime` listaría como pendientes
+avisos que el servidor ya canceló.
+
 ### D6 · El próximo aviso viaja en la lista de tareas, en la misma consulta
 
 La campana de la fila necesita, para cada tarea, la hora de su próximo aviso pendiente. Pedirlo
@@ -167,6 +177,9 @@ que los tests fijen el reloj.
 - **Qué es un fallo:** cualquier respuesta no 2xx, o un cuerpo con `ok: false`, o un error de red.
   Un `429` también cuenta como intento. Con 3 intentos separados 5 minutos, un límite de ritmo
   puntual no hace perder el aviso, y distinguirlo no compensa el código.
+- **Trazas apagadas.** `observability.traces.enabled` está a `false` explícitamente en
+  `wrangler.jsonc`: las trazas automáticas registran la URL de cada `fetch` saliente, y la de Telegram
+  lleva el token en la ruta. Los logs siguen activos porque el código nunca escribe esa URL.
 - **El token nunca sale de la función.** El mensaje de error se construye con el código y la
   `description` de Telegram, se le quita cualquier aparición del token (por si un error de red
   incluye la URL) y se recorta a 500 caracteres. Hay un test que lo comprueba con un `fetch` que

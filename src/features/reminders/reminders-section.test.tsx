@@ -123,6 +123,21 @@ describe("RemindersSection", () => {
 		expect(field).toHaveAttribute("aria-describedby", message.id);
 	});
 
+	it("reports a refused shortcut on its own, without marking the time field", async () => {
+		const user = userEvent.setup();
+		api.create.mockResolvedValue(
+			failJson("Esta tarea ya tiene 10 avisos pendientes, que es el máximo.", 409),
+		);
+		renderSection();
+
+		await user.click(screen.getByRole("button", { name: "Mañana 9:00" }));
+
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			"Esta tarea ya tiene 10 avisos pendientes, que es el máximo.",
+		);
+		expect(screen.getByLabelText("Otra hora")).not.toHaveAttribute("aria-invalid");
+	});
+
 	it("asks for a time instead of sending an empty one", async () => {
 		const user = userEvent.setup();
 		renderSection();

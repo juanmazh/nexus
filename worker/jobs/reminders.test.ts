@@ -153,4 +153,18 @@ describe("runReminders", () => {
 		expect(logged).toHaveBeenCalledWith(expect.stringContaining("TELEGRAM_BOT_TOKEN"));
 		expect(logged).not.toHaveBeenCalledWith(expect.stringContaining(TOKEN));
 	});
+
+	it("does not send a reminder whose task is already done", async () => {
+		// The race design.md D5 cannot close on its own: a reminder created in the
+		// same instant the task was completed slips past the cancelling batch.
+		const taskId = await insertTask();
+		const id = await insertReminder(taskId);
+		await db.update(tasks).set({ status: "done", completed_at: NOW }).where(eq(tasks.id, taskId));
+		const fetchImpl = telegramOk();
+
+		await runReminders(jobEnv(), NOW, fetchImpl);
+
+		expect(fetchImpl).not.toHaveBeenCalled();
+		expect(await rowOf(id)).toMatchObject({ status: "pending", attempts: 0 });
+	});
 });
