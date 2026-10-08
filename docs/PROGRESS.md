@@ -11,10 +11,10 @@
 
 | Campo | Valor |
 |---|---|
-| **Fase** | 1 — MVP: tareas y recordatorios, **completa** con este merge |
-| **Paso / cambio** | Cambio 1.3 `add-pwa` **verificado en un Android real** (se instala desde Chrome, abre a pantalla completa) y **archivado** en su propia rama. Siguiente: el hito v0.1.0 |
-| **Rama** | `change/add-pwa` (PR #13) |
-| **Siguiente acción exacta** | Mergear el PR #13 con la CI en verde → en `main`: `git tag -a v0.1.0 -m "Nexus v0.1.0: MVP de tareas y avisos"` y `git push origin v0.1.0` → **una semana de uso real desde el móvil**, anotando aquí lo que moleste → después, fase 2 con `add-notes` |
+| **Fase** | 1 — MVP cerrado (v0.1.0); ajustes surgidos al usarlo |
+| **Paso / cambio** | `open-detail-on-capture` **implementado, verificado y archivado** en su rama: al capturar se abre el detalle de la tarea, en la sección en la que se esté. Siguiente: `add-recurring-reminders` |
+| **Rama** | `change/open-detail-on-capture` (sin PR) |
+| **Siguiente acción exacta** | Corregir el tag `v0.1.0` (apunta al #12, sin la PWA) → push y PR de esta rama → `pnpm deploy` y probar en el móvil capturando desde Tareas y desde Hoy → merge → `add-recurring-reminders` |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-08 · casa |
 
@@ -82,7 +82,9 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | 1.1 | `add-tasks` | ✅ | PR #9 (+ PR del archivo) | `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → comprobar `/tasks` y la captura en el despliegue real y en un **móvil real** |
 | 1.2 | `add-reminders` | ✅ | PR #11 + PR #12 (archivo y arreglo de fechas) | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → aviso de prueba desde Más y un aviso real en el móvil |
 | 1.3 | `add-pwa` | ✅ | PR #13 | `pnpm deploy` → en Android, Chrome ⋮ › "Instalar aplicación" → comprobar pantalla completa, barra de estado y safe areas |
-| — | **Hito v0.1.0** | 🟡 | tras el PR #13 | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
+| 1.4 | `open-detail-on-capture` | 🟡 | `change/open-detail-on-capture` (sin PR) | `pnpm deploy` → capturar desde Tareas y desde Hoy en el móvil |
+| 1.5 | `add-recurring-reminders` | ⬜ | | Avisos "cada N horas o días" por tarea, hasta completarla, con franja de silencio configurable |
+| — | **Hito v0.1.0** | ✅ | tag `v0.1.0` | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
 | 2.1 | `add-notes` | ⬜ | | |
 | 2.2 | `add-quick-links` | ⬜ | | |
 | 2.3 | `add-home-dashboard` | ⬜ | | Configurar el deploy automático (GitHub Actions + `CLOUDFLARE_API_TOKEN`) |
@@ -176,6 +178,12 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | `openspec validate add-app-shell --strict` | ✅ sin errores |
 | Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
 | Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
+
+- **2026-10-08 · casa** — Tras probar el MVP instalado ("legible, estético y funciona bien"), dos peticiones: abrir el detalle al capturar y avisos periódicos. Decidido por la persona dueña:
+  - **Detalle al capturar:** se abre siempre, encima de la sección en la que se esté, sabiendo que capturar varias seguidas obliga a cerrarlo.
+  - **Avisos periódicos:** por tarea y hasta completarla; cada N horas o días con un mínimo de 1 h; varios por tarea; franja de silencio configurable.
+
+  `open-detail-on-capture` implementado: el detalle pasa a un provider en el shell. En móvil el foco cae en el panel y no salta el teclado. → Siguiente: `add-recurring-reminders`.
 
 - **2026-10-08 · casa** — `add-pwa` probado en el móvil: al principio Chrome solo ofrecía un acceso directo. El navegador pide el manifest **sin cookies** y Cloudflare Access le respondía con su página de login. Se arregló con `crossorigin="use-credentials"` en el `<link>`, y un e2e que simula a Access cubre el caso. Ya se instala bien en Android. De paso, dos tests de Playwright que fallaban solo en la CI: la objeción `in-incognito` (el Chromium de la CI no la pone) y los 44 px medidos durante la animación del diálogo. Archivado en la rama (spec `installable-app`). Lección de proceso: no pulsar "Update branch" en un PR que se va a reapoyar. → Siguiente: merge, tag `v0.1.0` y una semana de uso real.
 

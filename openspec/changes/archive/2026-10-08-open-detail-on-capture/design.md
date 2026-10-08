@@ -32,7 +32,7 @@ contexto, y al cerrarlo la persona sigue donde estaba.
 | Riesgo | Mitigación |
 |---|---|
 | **Capturar varias seguidas obliga a cerrar el panel** | Aceptado por la persona dueña. `Escape` o el gesto de arrastrar lo cierran. |
-| **El teclado virtual se abre sobre el panel** si el foco cae en un campo | Se verifica en el e2e qué recibe el foco al abrir; la tarea ya tiene título, así que no debe ser el campo de título en móvil. |
+| **El teclado virtual se abre sobre el panel** si el foco cae en un campo | Verificado: en móvil el foco va al propio panel (no salta el teclado) y en escritorio al campo Título, cómodo con teclado físico. Un e2e lo fija para móvil. |
 
 ## Migration Plan
 
