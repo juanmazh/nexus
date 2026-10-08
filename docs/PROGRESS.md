@@ -14,7 +14,7 @@
 | **Fase** | 1 — MVP: tareas y recordatorios |
 | **Paso / cambio** | Cambio 1.2 `add-reminders` **mergeado** (PR #11) y **archivado** en `chore/archive-add-reminders` (spec `reminders` nueva). Siguiente: 1.3 `add-pwa` |
 | **Rama** | `chore/archive-add-reminders` (PR del archivo y del job de CI que exige archivar) |
-| **Siguiente acción exacta** | Mergear el PR del archivo → **S7**: proteger `main` exigiendo los tres jobs de la CI, incluido `OpenSpec (validated and archived)` → `add-pwa` |
+| **Siguiente acción exacta** | Mergear el PR del archivo → añadir `OpenSpec (validated and archived)` a los checks obligatorios del ruleset de `main` en cuanto aparezca (S7 hecho el 2026-10-08) → `add-pwa` |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-08 · casa |
 
@@ -66,7 +66,7 @@ Decisión: modelos **gratuitos de OpenCode en modo anónimo**; sin OpenRouter y 
 
 ### S7 · Proteger `main` (después del cambio 0.1, cuando exista la CI)
 
-- [ ] GitHub → Settings → Branches → regla para `main`: exigir PR y que pasen los tres jobs de la CI (`Lint, typecheck, test and build`, `Responsive (Playwright)` y `OpenSpec (validated and archived)`), y prohibir force push. **Sin esto el job de OpenSpec avisa pero no impide el merge.**
+- [x] GitHub → Settings → Branches → regla para `main`: exigir PR y que pasen los tres jobs de la CI (`Lint, typecheck, test and build`, `Responsive (Playwright)` y `OpenSpec (validated and archived)`), y prohibir force push. **Sin esto el job de OpenSpec avisa pero no impide el merge.**
 
 ---
 
