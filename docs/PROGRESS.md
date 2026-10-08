@@ -12,10 +12,10 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 1 — MVP: tareas y recordatorios |
-| **Paso / cambio** | Cambio 1.2 `add-reminders` **implementado y verificado** en local (25/25 tareas de `tasks.md`), pendiente de los pasos manuales, el PR y el archivo |
-| **Rama** | `change/add-reminders` (sin PR todavía) |
-| **Siguiente acción exacta** | Revisar el código → `git push -u origin change/add-reminders` y abrir el PR con la CI en verde → `pnpm wrangler secret put TELEGRAM_BOT_TOKEN` y `pnpm wrangler secret put TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` y comprobar en el panel que el Worker tiene el Cron Trigger → en el móvil: "Enviar aviso de prueba" en Más, un aviso real a pocos minutos, cancelar otro y completar una tarea con aviso → `/opsx-archive add-reminders` **en esta rama, antes del merge** → merge |
-| **Bloqueos** | Ninguno. Los secretos y la prueba con Telegram real son pasos manuales |
+| **Paso / cambio** | Cambio 1.2 `add-reminders` **mergeado** (PR #11) y **archivado** en `chore/archive-add-reminders` (spec `reminders` nueva). Siguiente: 1.3 `add-pwa` |
+| **Rama** | `chore/archive-add-reminders` (PR del archivo y del job de CI que exige archivar) |
+| **Siguiente acción exacta** | Mergear el PR del archivo → **S7**: proteger `main` exigiendo los tres jobs de la CI, incluido `OpenSpec (validated and archived)` → confirmar aquí que se hicieron los secretos de Telegram, `db:migrate:remote`, el deploy y la prueba real de avisos → `add-pwa` |
+| **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-08 · casa |
 
 ---
@@ -66,7 +66,7 @@ Decisión: modelos **gratuitos de OpenCode en modo anónimo**; sin OpenRouter y 
 
 ### S7 · Proteger `main` (después del cambio 0.1, cuando exista la CI)
 
-- [ ] GitHub → Settings → Branches → regla para `main`: exigir PR y que pase la CI, y prohibir force push.
+- [ ] GitHub → Settings → Branches → regla para `main`: exigir PR y que pasen los tres jobs de la CI (`Lint, typecheck, test and build`, `Responsive (Playwright)` y `OpenSpec (validated and archived)`), y prohibir force push. **Sin esto el job de OpenSpec avisa pero no impide el merge.**
 
 ---
 
@@ -80,7 +80,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | 0.2 | `add-access-auth` | ✅ | PR #6 | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` **antes** del primer deploy con el middleware montado → `pnpm deploy` → comprobar las tres rutas a mano |
 | 0.3 | `add-app-shell` | ✅ | PR #7 | `pnpm exec playwright install chromium` en cada equipo nuevo → validar en un **móvil real** la dirección visual "olivar" (`docs/DESIGN.md §5`) → `pnpm deploy` y comprobar en el despliegue real que no hay violaciones de CSP, que las fuentes van al propio origen y que el tema no destella |
 | 1.1 | `add-tasks` | ✅ | PR #9 (+ PR del archivo) | `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → comprobar `/tasks` y la captura en el despliegue real y en un **móvil real** |
-| 1.2 | `add-reminders` | 🟡 | `change/add-reminders` (sin PR) | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → aviso de prueba desde Más y un aviso real en el móvil |
+| 1.2 | `add-reminders` | ✅ | PR #11 (+ PR del archivo) | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → aviso de prueba desde Más y un aviso real en el móvil |
 | 1.3 | `add-pwa` | ⬜ | | Instalar la app en tu móvil (Android: Chrome › Instalar; iOS: Safari › Añadir a pantalla de inicio) |
 | — | **Hito v0.1.0** | ⬜ | | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
 | 2.1 | `add-notes` | ⬜ | | |
@@ -176,6 +176,8 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | `openspec validate add-app-shell --strict` | ✅ sin errores |
 | Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
 | Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
+
+- **2026-10-08 · casa** — `add-reminders` mergeado como PR #11, **otra vez sin archivar** (tercera vez, tras `add-access-auth` y `add-tasks`). Archivado después en `chore/archive-add-reminders` con la spec `reminders` (15 requisitos) y las 10 specs validadas. Como recordarlo no ha bastado, la CI tiene un job nuevo, `OpenSpec (validated and archived)`: valida todas las specs y falla en una rama `change/<id>` mientras `openspec/changes/<id>/` exista. Solo bloquea si **S7** está hecho. → Siguiente: S7 y `add-pwa`.
 
 - **2026-10-08 · casa** — `add-reminders` propuesto e implementado por Claude, porque OpenCode se quedó sin cuota. Decisiones de producto tomadas por la persona dueña antes de la propuesta: atajos fijos más "El día que vence 9:00", campana en la fila, cancelar con confirmación y sin editar la hora, deshacer no reactiva avisos, botón de aviso de prueba en Más, mensaje con título, vencimiento y prioridad alta, sin aviso automático y un solo cambio aunque pase de 600 líneas. **Lo que destaparon los tests:**
   - **Bug de Drizzle con subconsultas correlacionadas:** escribe `${tasks.id}` como un `"id"` sin cualificar, que dentro de la subconsulta es el de `reminders`. Devolvía `null` en silencio; las columnas se cualifican a mano.
