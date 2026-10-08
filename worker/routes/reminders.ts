@@ -49,11 +49,14 @@ export const reminders = new Hono<DataEnv>()
 		validated("param", taskIdParamSchema),
 		validated("json", createReminderSchema),
 		async (c) => {
+			const { remind_at, repeat } = c.req.valid("json");
 			const result = await reminderService.createReminder(
 				createDb(c.env),
 				c.req.valid("param").id,
-				c.req.valid("json").remind_at,
+				remind_at,
 				c.env.APP_TIMEZONE ?? DEFAULT_TIMEZONE,
+				Date.now(),
+				repeat,
 			);
 			if (result.ok) {
 				return c.json(result.reminder, 201);

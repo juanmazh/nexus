@@ -66,6 +66,11 @@ export const reminders = sqliteTable(
 		last_error: text("last_error"),
 		sent_at: integer("sent_at", { mode: "number" }),
 		created_at: integer("created_at", { mode: "number" }).notNull(),
+		// A recurring reminder has both, a one-off one neither (add-recurring-reminders
+		// design.md D1). On each send it moves to its next occurrence instead of
+		// becoming `sent`; `sent_at` then holds the last send.
+		repeat_every: integer("repeat_every", { mode: "number" }),
+		repeat_unit: text("repeat_unit", { enum: ["hours", "days"] }),
 	},
 	(table) => [
 		// The cron's only read: pending reminders whose time has come, oldest first.
@@ -75,3 +80,16 @@ export const reminders = sqliteTable(
 		index("reminders_task_status_remind_at_idx").on(table.task_id, table.status, table.remind_at),
 	],
 );
+
+/**
+ * Settings of the single person using Nexus: one row, `id = 1`. Today only the
+ * quiet hours of recurring reminders, as `HH:mm` in Europe/Madrid; both null
+ * means "no quiet hours", and a missing row means the default 23:00–08:00
+ * (add-recurring-reminders design.md D3).
+ */
+export const settings = sqliteTable("settings", {
+	id: integer("id", { mode: "number" }).primaryKey(),
+	quiet_start: text("quiet_start"),
+	quiet_end: text("quiet_end"),
+	updated_at: integer("updated_at", { mode: "number" }).notNull(),
+});

@@ -107,6 +107,46 @@ describe("POST /api/tasks/:id/reminders", () => {
 		expect(await res.json()).toEqual({ error: { code: "validation_error", message } });
 	});
 
+	it("answers 201 with the repetition, and lists it with the pending ones", async () => {
+		const taskId = await newTask();
+
+		const res = await call(`/api/tasks/${taskId}/reminders`, {
+			method: "POST",
+			body: JSON.stringify({ remind_at: inHours(2), repeat: { every: 3, unit: "hours" } }),
+		});
+		const list = await call(`/api/tasks/${taskId}/reminders`);
+
+		expect(res.status).toBe(201);
+		expect(await res.json()).toMatchObject({ repeat_every: 3, repeat_unit: "hours" });
+		expect(await list.json()).toEqual([
+			expect.objectContaining({ repeat_every: 3, repeat_unit: "hours", status: "pending" }),
+		]);
+	});
+
+	it("leaves the repetition empty on a one-off reminder", async () => {
+		const res = await addReminder(await newTask(), inHours(2));
+
+		expect(await res.json()).toMatchObject({ repeat_every: null, repeat_unit: null });
+	});
+
+	it.each([
+		[{ every: 0, unit: "hours" }, "El intervalo mínimo es 1."],
+		[{ every: 1.5, unit: "hours" }, "El intervalo tiene que ser un número entero."],
+		[{ every: 721, unit: "hours" }, "Como mucho cada 720 horas o cada 30 días."],
+		[{ every: 31, unit: "days" }, "Como mucho cada 720 horas o cada 30 días."],
+		[{ every: 2, unit: "minutes" }, "La unidad solo puede ser horas o días."],
+	])("answers 400 for the repetition %j", async (repeat, message) => {
+		const taskId = await newTask();
+
+		const res = await call(`/api/tasks/${taskId}/reminders`, {
+			method: "POST",
+			body: JSON.stringify({ remind_at: inHours(2), repeat }),
+		});
+
+		expect(res.status).toBe(400);
+		expect(await res.json()).toEqual({ error: { code: "validation_error", message } });
+	});
+
 	it("answers 400 for an unknown property instead of ignoring it", async () => {
 		const taskId = await newTask();
 

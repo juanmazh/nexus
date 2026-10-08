@@ -1,13 +1,15 @@
+import { nextOccurrence } from "@shared/recurrence";
 import { and, asc, eq, lte, sql } from "drizzle-orm";
 import type { AnyD1Database } from "drizzle-orm/d1";
 import { createDb } from "../db/client";
-import { reminders, tasks } from "../db/schema";
+import { reminders, settings, tasks } from "../db/schema";
 import {
 	buildReminderMessage,
 	sendTelegramMessage,
 	type TelegramBindings,
 	telegramConfig,
 } from "../integrations/telegram";
+import { quietHoursFromRow, SETTINGS_ID } from "../services/settings";
 
 /**
  * The job the Cron Trigger runs every 5 minutes (`docs/ARCHITECTURE.md §3.3`,
@@ -51,12 +53,23 @@ export async function runReminders(
 		.select({
 			id: reminders.id,
 			attempts: reminders.attempts,
+			remind_at: reminders.remind_at,
+			repeat_every: reminders.repeat_every,
+			repeat_unit: reminders.repeat_unit,
 			title: tasks.title,
 			due_at: tasks.due_at,
 			priority: tasks.priority,
+			// The quiet hours ride along in the same read (add-recurring-reminders
+			// design.md D4): a second query would cost a subrequest per run for a
+			// row that changes a few times a year. `settings_id` tells "no row, use
+			// the default" apart from "row with the quiet hours turned off".
+			settings_id: settings.id,
+			quiet_start: settings.quiet_start,
+			quiet_end: settings.quiet_end,
 		})
 		.from(reminders)
 		.innerJoin(tasks, eq(tasks.id, reminders.task_id))
+		.leftJoin(settings, eq(settings.id, SETTINGS_ID))
 		// `tasks.status = 'todo'` too: a reminder created in the same instant the
 		// task was completed can slip past the cancelling batch, and it must not
 		// go out for a task that is already done.
@@ -71,13 +84,22 @@ export async function runReminders(
 		return { status: "done", sent: 0, retrying: 0, failed: 0 };
 	}
 
+	const [firstDue] = due;
+	const quiet = quietHoursFromRow(firstDue?.settings_id == null ? undefined : firstDue);
+
+	/** The repetition of a periodic reminder, or `null` for a one-off one. */
+	const repeatOf = (reminder: (typeof due)[number]) =>
+		reminder.repeat_every !== null && reminder.repeat_unit !== null
+			? { every: reminder.repeat_every, unit: reminder.repeat_unit }
+			: null;
+
 	// Waiting for the network costs no CPU time, and in parallel the invocation
 	// lasts as long as the slowest send instead of the sum of all of them.
 	const results = await Promise.allSettled(
 		due.map((reminder) =>
 			sendTelegramMessage(
 				telegram.config,
-				buildReminderMessage(reminder, now, timezone),
+				buildReminderMessage({ ...reminder, repeat: repeatOf(reminder) }, now, timezone),
 				fetchImpl,
 			),
 		),
@@ -97,12 +119,24 @@ export async function runReminders(
 		// `status = 'pending'` in every WHERE: a reminder cancelled while it was
 		// being sent stays cancelled instead of being written over.
 		const stillPending = and(eq(reminders.id, reminder.id), eq(reminders.status, "pending"));
+		const repeat = repeatOf(reminder);
+		// A periodic reminder never ends while its task is pending: instead of
+		// `sent` or `failed`, it moves on to its next occurrence (design.md D4).
+		const next = () =>
+			repeat
+				? nextOccurrence({ from: reminder.remind_at, ...repeat, now, tz: timezone, quiet })
+				: null;
 
 		if (outcome.ok) {
 			sent++;
+			const nextAt = next();
 			return db
 				.update(reminders)
-				.set({ status: "sent", sent_at: now, last_error: null })
+				.set(
+					nextAt === null
+						? { status: "sent", sent_at: now, last_error: null }
+						: { remind_at: nextAt, sent_at: now, attempts: 0, last_error: null },
+				)
 				.where(stillPending);
 		}
 
@@ -112,6 +146,15 @@ export async function runReminders(
 			failed++;
 		} else {
 			retrying++;
+		}
+		const nextAt = isFinal ? next() : null;
+		if (nextAt !== null) {
+			// That repetition is lost, not the series: the next one starts afresh,
+			// keeping the error so the detail can still show what went wrong.
+			return db
+				.update(reminders)
+				.set({ remind_at: nextAt, attempts: 0, last_error: outcome.error })
+				.where(stillPending);
 		}
 		return db
 			.update(reminders)

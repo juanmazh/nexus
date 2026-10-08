@@ -15,6 +15,13 @@
       "when": 1791465468723,
       "tag": "0001_graceful_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791492881301,
+      "tag": "0002_romantic_wild_pack",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,5 @@
 import { localDateTimeToEpochMs } from "@shared/dates";
+import type { RepeatUnit } from "@shared/recurrence";
 import { MAX_PENDING_REMINDERS_PER_TASK } from "@shared/reminders";
 import type { InferSelectModel } from "drizzle-orm";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
@@ -54,6 +55,8 @@ export async function createReminder(
 	remindAt: string,
 	timezone: string,
 	now: number = Date.now(),
+	/** Makes it recurring; `remindAt` is then its first occurrence. */
+	repeat?: { every: number; unit: RepeatUnit },
 ): Promise<CreateReminderResult> {
 	const parsed = localDateTimeToEpochMs(remindAt, timezone);
 	if (!parsed.ok) {
@@ -95,6 +98,8 @@ export async function createReminder(
 			status: "pending",
 			attempts: 0,
 			created_at: now,
+			repeat_every: repeat?.every ?? null,
+			repeat_unit: repeat?.unit ?? null,
 		})
 		.returning();
 
