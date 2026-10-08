@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/toast-host";
+import { remindersQueryKey } from "@/features/reminders/use-reminders";
 import type { CreateTaskBody, Task, TaskListStatus, UpdateTaskBody } from "./api";
 import { createTask, deleteTask, fetchTasks, updateTask } from "./api";
 
@@ -88,6 +89,7 @@ export function useCreateTask() {
 				completed_at: null,
 				created_at: now,
 				updated_at: now,
+				next_reminder_at: null,
 			};
 			cache.set("todo", (list) => appendPending(list, optimistic));
 			return { snapshot, optimisticId: optimistic.id };
@@ -96,7 +98,9 @@ export function useCreateTask() {
 			// Swap in the real row right away, so it can be completed or opened
 			// without waiting for the refetch below.
 			cache.set("todo", (list) =>
-				list.map((task) => (task.id === context?.optimisticId ? saved : task)),
+				list.map((task) =>
+					task.id === context?.optimisticId ? { ...saved, next_reminder_at: null } : task,
+				),
 			);
 		},
 		onError(error, _body, context) {
@@ -125,6 +129,9 @@ export function useSetTaskStatus() {
 				...task,
 				status,
 				completed_at: status === "done" ? (task.completed_at ?? Date.now()) : null,
+				// Completing cancels its reminders on the server, and undoing does not
+				// bring them back (add-reminders design.md D5): the bell goes either way.
+				next_reminder_at: null,
 			};
 			const from = status === "done" ? "todo" : "done";
 			cache.set(from, (list) => list.filter((item) => item.id !== task.id));
@@ -140,8 +147,14 @@ export function useSetTaskStatus() {
 						: "No se ha podido deshacer la tarea",
 			});
 		},
-		onSettled() {
-			return cache.refresh();
+		onSettled(_data, _error, { task }) {
+			// Completing cancelled the task's reminders on the server. Without this,
+			// a detail reopened within the stale time would still list them as
+			// pending, and a reminder that will never arrive looks like it will.
+			return Promise.all([
+				cache.refresh(),
+				cache.queryClient.invalidateQueries({ queryKey: remindersQueryKey(task.id) }),
+			]);
 		},
 	});
 }
@@ -152,8 +165,13 @@ export function useUpdateTask() {
 
 	return useMutation({
 		mutationFn: ({ id, body }: { id: string; body: UpdateTaskBody }) => updateTask(id, body),
-		onSuccess(task) {
-			cache.set(task.status, (list) => list.map((item) => (item.id === task.id ? task : item)));
+		onSuccess(saved) {
+			// Editing never touches the reminders, so the bell keeps what it had.
+			cache.set(saved.status, (list) =>
+				list.map((item) =>
+					item.id === saved.id ? { ...saved, next_reminder_at: item.next_reminder_at } : item,
+				),
+			);
 			toast.add({ title: "Tarea guardada" });
 		},
 		onSettled() {

@@ -1,19 +1,36 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskDetailSheet } from "./task-detail-sheet";
 import { makeTask, okJson, withQueryClient } from "./test-helpers";
 
-const api = vi.hoisted(() => ({ $patch: vi.fn(), $delete: vi.fn() }));
+const api = vi.hoisted(() => ({ $patch: vi.fn(), $delete: vi.fn(), reminders: vi.fn() }));
 
 vi.mock("@/lib/api", () => ({
-	client: { api: { tasks: { ":id": { $patch: api.$patch, $delete: api.$delete } } } },
+	client: {
+		api: {
+			tasks: {
+				":id": {
+					$patch: api.$patch,
+					$delete: api.$delete,
+					// The reminders section of the detail; its own tests are in
+					// features/reminders. Here it only has to load quietly.
+					reminders: { $get: api.reminders },
+				},
+			},
+		},
+	},
 }));
+
+beforeEach(() => {
+	api.reminders.mockResolvedValue(okJson([]));
+});
 
 afterEach(() => {
 	cleanup();
 	api.$patch.mockReset();
 	api.$delete.mockReset();
+	api.reminders.mockReset();
 });
 
 function renderSheet(task = makeTask({ title: "Original", notes: "Notas" })) {

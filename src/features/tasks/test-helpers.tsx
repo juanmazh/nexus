@@ -13,6 +13,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
 		completed_at: null,
 		created_at: 0,
 		updated_at: 0,
+		next_reminder_at: null,
 		...overrides,
 	};
 }

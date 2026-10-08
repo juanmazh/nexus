@@ -12,10 +12,10 @@
 | Campo | Valor |
 |---|---|
 | **Fase** | 1 — MVP: tareas y recordatorios |
-| **Paso / cambio** | Cambio 1.1 `add-tasks` **mergeado** (PR #9) y **archivado** (`openspec/specs/tasks/` creada, `app-shell` actualizada). Siguiente: 1.2 `add-reminders` |
-| **Rama** | `chore/archive-add-tasks` (PR del archivo) |
-| **Siguiente acción exacta** | Mergear el PR del archivo con la CI en verde → confirmar que en producción se hizo `pnpm db:migrate:remote` **antes** de `pnpm deploy` (si no, hacerlo ahora en ese orden) → verificación 8.3 en un **móvil real** sobre el despliegue y anotarla aquí → `/opsx-propose add-reminders` con el prompt de `docs/ROADMAP.md` y revisarlo antes del apply |
-| **Bloqueos** | Ninguno. La 8.3 (DevTools y **móvil real**) es manual |
+| **Paso / cambio** | Cambio 1.2 `add-reminders` **implementado y verificado** en local (25/25 tareas de `tasks.md`), pendiente de los pasos manuales, el PR y el archivo |
+| **Rama** | `change/add-reminders` (sin PR todavía) |
+| **Siguiente acción exacta** | Revisar el código → `git push -u origin change/add-reminders` y abrir el PR con la CI en verde → `pnpm wrangler secret put TELEGRAM_BOT_TOKEN` y `pnpm wrangler secret put TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` y comprobar en el panel que el Worker tiene el Cron Trigger → en el móvil: "Enviar aviso de prueba" en Más, un aviso real a pocos minutos, cancelar otro y completar una tarea con aviso → `/opsx-archive add-reminders` **en esta rama, antes del merge** → merge |
+| **Bloqueos** | Ninguno. Los secretos y la prueba con Telegram real son pasos manuales |
 | **Última actualización** | 2026-10-08 · casa |
 
 ---
@@ -80,7 +80,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | 0.2 | `add-access-auth` | ✅ | PR #6 | Copiar el **AUD tag** de la aplicación de Access del Worker (Zero Trust → Access → Applications) → `pnpm wrangler secret put ACCESS_AUD` **antes** del primer deploy con el middleware montado → `pnpm deploy` → comprobar las tres rutas a mano |
 | 0.3 | `add-app-shell` | ✅ | PR #7 | `pnpm exec playwright install chromium` en cada equipo nuevo → validar en un **móvil real** la dirección visual "olivar" (`docs/DESIGN.md §5`) → `pnpm deploy` y comprobar en el despliegue real que no hay violaciones de CSP, que las fuentes van al propio origen y que el tema no destella |
 | 1.1 | `add-tasks` | ✅ | PR #9 (+ PR del archivo) | `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → comprobar `/tasks` y la captura en el despliegue real y en un **móvil real** |
-| 1.2 | `add-reminders` | ⬜ | | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; migración remota; deploy; esperar un aviso real |
+| 1.2 | `add-reminders` | 🟡 | `change/add-reminders` (sin PR) | `wrangler secret put TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` → `pnpm db:migrate:remote` **antes** del deploy → `pnpm deploy` → aviso de prueba desde Más y un aviso real en el móvil |
 | 1.3 | `add-pwa` | ⬜ | | Instalar la app en tu móvil (Android: Chrome › Instalar; iOS: Safari › Añadir a pantalla de inicio) |
 | — | **Hito v0.1.0** | ⬜ | | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
 | 2.1 | `add-notes` | ⬜ | | |
@@ -128,6 +128,23 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 
 Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 
+### Estado de la definición de hecho (`AGENTS.md §9`) para `add-reminders`
+
+| Punto | Estado |
+|---|---|
+| Todas las tareas de `tasks.md` marcadas | ✅ todas las automáticas; los pasos manuales están en "Ahora mismo" |
+| `pnpm typecheck`, `pnpm lint` y `pnpm test` en `0` | ✅ `0`, `0`, **371 tests** (worker contra D1 real + web) |
+| `pnpm build` | ✅ sin errores |
+| Migración | ✅ `migrations/0001_graceful_mad_thinker.sql` (tabla `reminders`, FK con cascada y dos índices), aplicada en local; la remota va **antes** del deploy |
+| Cron | ✅ `*/5 * * * *` en `wrangler.jsonc`; `scheduled` verificado en local con `wrangler dev --test-scheduled` (sin secretos registra lo que falta y no toca nada) |
+| Cada requisito nuevo con al menos un test | ✅ Vitest + Playwright (**72 en dos viewports**, 10 nuevos de avisos) |
+| UI nueva con carga, vacío y error | ✅ esqueleto, "Sin avisos." y error con "Reintentar" en el detalle |
+| Responsive verificado (`docs/DESIGN.md §6`) | ✅ automático en verde. ⚠️ Falta probarlo en el **móvil real** con Telegram |
+| `docs/ARCHITECTURE.md` actualizado | ✅ §2.1, §2.3, §3.3 y §4 |
+| `openspec validate add-reminders --strict` | ✅ sin errores |
+| Presupuesto de la carga inicial | ✅ **148,9 kB de JS comprimido** (antes 148,6; presupuesto: 200 kB) |
+| Auditoría de secretos | ✅ ningún token ni `chat_id` real; los de los tests son ficticios (`123456789:AAFake…`, `424242`) |
+
 ### Estado de la definición de hecho (`AGENTS.md §9`) para `add-tasks`
 
 | Punto | Estado |
@@ -160,7 +177,16 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 | Presupuesto de la carga inicial | ✅ **135,63 kB de JS comprimido** (presupuesto: 200 kB) |
 | Auditoría de secretos | ✅ `git grep` de `token`/`secret`/`password` sin resultados; el email de los fixtures solo vive en `e2e/` |
 
-- **2026-10-08 · casa** — `add-tasks` mergeado como PR #9 y archivado después con `/opsx-archive add-tasks` en `chore/archive-add-tasks`: nueva spec `tasks` (17 requisitos) y requisito *Barra de captura que crea tareas* en `app-shell`; `openspec validate --all --strict` con las 9 specs en verde. Se volvió a mergear **antes** de archivar: el archivo va siempre en el PR del cambio, no después. Limpieza: borrada la rama `change/add-tasks` y el stash de OpenCode. Pendiente: confirmar migración remota y deploy, y la 8.3 en un móvil real. → Siguiente: `/opsx-propose add-reminders`.
+- **2026-10-08 · casa** — `add-reminders` propuesto e implementado por Claude, porque OpenCode se quedó sin cuota. Decisiones de producto tomadas por la persona dueña antes de la propuesta: atajos fijos más "El día que vence 9:00", campana en la fila, cancelar con confirmación y sin editar la hora, deshacer no reactiva avisos, botón de aviso de prueba en Más, mensaje con título, vencimiento y prioridad alta, sin aviso automático y un solo cambio aunque pase de 600 líneas. **Lo que destaparon los tests:**
+  - **Bug de Drizzle con subconsultas correlacionadas:** escribe `${tasks.id}` como un `"id"` sin cualificar, que dentro de la subconsulta es el de `reminders`. Devolvía `null` en silencio; las columnas se cualifican a mano.
+  - **Bug previo de `ResponsiveDialog` en escritorio:** recortaba en vez de hacer scroll cualquier contenido más alto que la pantalla. Commit propio `fix(ui)` y e2e de regresión que falla sin el arreglo.
+  - **La confirmación de cancelar el último aviso quedaba por debajo de lo visible;** ahora se desplaza a la vista.
+  - **El 10 de octubre de 2026 es sábado,** no viernes como decían los ejemplos de la propuesta: corregido.
+  - **Revisión independiente** (un agente que no vio el desarrollo): nada se salta Access, el token no se filtra y se respetan los límites del plan. Encontró dos bugs y un riesgo, corregidos con tests que fallan sin el arreglo: el detalle podía listar avisos ya cancelados tras completar y deshacer (caché); un aviso creado justo al completar la tarea podía enviarse; y las trazas de Cloudflare, si se activaran, registrarían el token (ahora apagadas explícitamente).
+
+  → Siguiente: revisión, PR, secretos, migración remota, deploy, prueba con Telegram real y `/opsx-archive` antes del merge.
+
+- **2026-10-08 · casa** — `add-tasks` mergeado como PR #9 y archivado después con `/opsx-archive add-tasks` en `chore/archive-add-tasks`: nueva spec `tasks` (17 requisitos) y requisito *Barra de captura que crea tareas* en `app-shell`; `openspec validate --all --strict` con las 9 specs en verde. Se volvió a mergear **antes** de archivar: el archivo va siempre en el PR del cambio, no después. Limpieza: borrada la rama `change/add-tasks` y el stash de OpenCode. Después: `pnpm db:migrate:remote`, `pnpm deploy` y **8.3 verificada en un móvil real** sobre el despliegue (lista, captura, completar y deshacer, detalle como hoja inferior con el teclado abierto, borrado confirmado, modo claro y oscuro: todo bien). → Siguiente: `/opsx-propose add-reminders`.
 
 - **2026-10-07 · casa** — `/opsx-apply add-tasks`: **34/35 tareas**. OpenCode hizo los grupos 0–3 con errores de tipos y de formato (corregidos) y se quedó sin cuota gratuita; Claude cerró 3–9. Worker: `routes/tasks.ts` con validadores propios que devuelven `{ error: { code, message } }`, `405` con `Allow`, `PATCH` que separa `status` (va a `updateTaskStatus`, único escritor de `completed_at`) del resto de campos. SPA: `features/tasks/` con tipos derivados del cliente RPC, mutaciones optimistas con rollback, secciones Vencidas / Hoy / Próximas / Sin fecha, `Hechas (N)`, detalle en `ResponsiveDialog` con borrado confirmado, y la barra de captura conectada desde el shell. **Desviaciones del `design.md`, deliberadas y ya reflejadas en él:** (1) la barra devuelve el texto cuando la promesa de `onSubmit` se rechaza, sin modo controlado `value`/`onValueChange`; (2) una fila optimista no se puede completar ni abrir hasta que llega su id real, porque su id provisional daría un `400`; (3) el botón "Borrar tarea" va con borde rojo en vez de relleno, porque blanco sobre el rojo del modo oscuro no llega a AA; (4) la comprobación de scroll horizontal de la suite e2e ignora los nodos recortados a nada (`sr-only`, *focus guards* de Base UI), que daban falsos positivos. La 9.2 pedía marcar el cambio en `docs/ROADMAP.md`, pero ese documento no lleva estado: el estado vive aquí. → Siguiente: revisar, PR, `pnpm db:migrate:remote`, `pnpm deploy`, 8.3 en un móvil real y `/opsx-archive add-tasks` antes del merge.
 
@@ -179,4 +205,11 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 ## ❓ Decisiones pendientes
 
 - Nombre del dominio para la fase 3 (`nexus` estará cogido en casi todos los TLD; valorar algo como `juanmazh.dev`, con Nexus en una ruta o subdominio).
+- **Landing pública del proyecto** (idea del 2026-10-08, aparcada). Página para exponer Nexus como proyecto de portfolio con un botón "Acceder" a la app. Planteamiento acordado para cuando se retome:
+  - **Sin login propio:** "Acceder" enlaza a la app y Cloudflare Access hace de login (código por email), coherente con ADR-002. La página de login de Access se puede personalizar con la marca desde Zero Trust.
+  - **La landing como sitio estático aparte en el mismo repo** (`landing/` con su propio `wrangler.jsonc`, HTML + Tailwind con los tokens "olivar", sin React), publicada en su propia URL de `workers.dev`. La app no se toca. Coste 0 € (los assets estáticos no gastan invocaciones). Requiere una ADR nueva, porque ADR-001 dice "un único Worker".
+  - **No** proteger por ruta (`/` pública y `/app/*` tras Access) en `workers.dev`: la documentación de Cloudflare no confirma que las aplicaciones por ruta funcionen en ese hostname.
+  - Con el dominio de la fase 3 solo se asignan dominios (p. ej. `nexus.<dominio>` para la landing y `app.nexus.<dominio>` para la app), sin rehacer nada.
+  - Contenido: capturas reales en móvil y escritorio, el stack, las decisiones clave (ADRs), el enlace al repo y al flujo OpenSpec. Segunda fase opcional: demo pública con datos ficticios reutilizando el stub en memoria de los e2e.
+  - Se haría como un cambio propio de OpenSpec (`add-landing`). Por decidir: cuándo intercalarlo y si se adelanta la compra del dominio.
 - Licencia del repo (MIT si quieres que sea reutilizable; sin licencia si solo quieres enseñarlo).

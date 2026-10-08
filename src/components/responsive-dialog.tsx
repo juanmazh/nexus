@@ -82,7 +82,10 @@ export function ResponsiveDialog({
 					<DialogTitle>{title}</DialogTitle>
 					{description ? <DialogDescription>{description}</DialogDescription> : null}
 				</DialogHeader>
-				<div className="flex items-start justify-between gap-3">
+				{/* `min-h-0 flex-1` on the row too: without them the row grows with its
+				    content, the scroll box below never gets a height to overflow, and
+				    anything taller than the screen is clipped instead of scrolled. */}
+				<div className="flex min-h-0 flex-1 justify-between gap-3">
 					<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
 					{close}
 				</div>

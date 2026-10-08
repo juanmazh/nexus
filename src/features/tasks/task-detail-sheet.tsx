@@ -2,6 +2,7 @@ import { epochMsToDueDate } from "@shared/dates";
 import { updateTaskSchema } from "@shared/tasks";
 import { useState } from "react";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
+import { RemindersSection } from "@/features/reminders/reminders-section";
 import { APP_TIMEZONE } from "@/lib/datetime";
 import type { Task, UpdateTaskBody } from "./api";
 import { useDeleteTask, useUpdateTask } from "./use-tasks";
@@ -133,77 +134,80 @@ function TaskForm({ task, onClose }: { task: Task; onClose: () => void }) {
 	}
 
 	return (
-		<form
-			noValidate
-			className="flex flex-col gap-4 pb-4"
-			onSubmit={(event) => {
-				event.preventDefault();
-				save();
-			}}
-		>
-			<TextField
-				id="tarea-titulo"
-				label="Título"
-				value={values.title}
-				onChange={set("title")}
-				error={errors.title}
-			/>
-			<div className="flex flex-col gap-1.5">
-				<label htmlFor="tarea-notas" className="text-sm font-medium text-foreground">
-					Notas
-				</label>
-				<textarea
-					id="tarea-notas"
-					rows={3}
-					value={values.notes}
-					onChange={(event) => set("notes")(event.target.value)}
-					className={`${fieldClass} py-2`}
-				/>
-			</div>
-			<div className="grid grid-cols-2 gap-3">
-				<div className="flex min-w-0 flex-col gap-1.5">
-					<label htmlFor="tarea-prioridad" className="text-sm font-medium text-foreground">
-						Prioridad
-					</label>
-					<select
-						id="tarea-prioridad"
-						value={values.priority}
-						onChange={(event) => set("priority")(event.target.value)}
-						className={fieldClass}
-					>
-						{Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-							<option key={value} value={value}>
-								{label}
-							</option>
-						))}
-					</select>
-				</div>
+		<>
+			<form
+				noValidate
+				className="flex flex-col gap-4 pb-4"
+				onSubmit={(event) => {
+					event.preventDefault();
+					save();
+				}}
+			>
 				<TextField
-					id="tarea-fecha"
-					label="Vence"
-					type="date"
-					value={values.due_date}
-					onChange={set("due_date")}
-					error={errors.due_date}
+					id="tarea-titulo"
+					label="Título"
+					value={values.title}
+					onChange={set("title")}
+					error={errors.title}
 				/>
-			</div>
-			<div className="flex flex-col gap-2 pt-2 sm:flex-row-reverse sm:justify-between">
-				<button
-					type="submit"
-					disabled={update.isPending}
-					className={`${buttonClass} bg-primary text-primary-foreground disabled:opacity-60`}
-				>
-					Guardar tarea
-				</button>
-				<button
-					type="button"
-					className={`${buttonClass} text-destructive`}
-					onClick={() => setConfirmingDelete(true)}
-				>
-					Borrar
-				</button>
-			</div>
-		</form>
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor="tarea-notas" className="text-sm font-medium text-foreground">
+						Notas
+					</label>
+					<textarea
+						id="tarea-notas"
+						rows={3}
+						value={values.notes}
+						onChange={(event) => set("notes")(event.target.value)}
+						className={`${fieldClass} py-2`}
+					/>
+				</div>
+				<div className="grid grid-cols-2 gap-3">
+					<div className="flex min-w-0 flex-col gap-1.5">
+						<label htmlFor="tarea-prioridad" className="text-sm font-medium text-foreground">
+							Prioridad
+						</label>
+						<select
+							id="tarea-prioridad"
+							value={values.priority}
+							onChange={(event) => set("priority")(event.target.value)}
+							className={fieldClass}
+						>
+							{Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+								<option key={value} value={value}>
+									{label}
+								</option>
+							))}
+						</select>
+					</div>
+					<TextField
+						id="tarea-fecha"
+						label="Vence"
+						type="date"
+						value={values.due_date}
+						onChange={set("due_date")}
+						error={errors.due_date}
+					/>
+				</div>
+				<div className="flex flex-col gap-2 pt-2 sm:flex-row-reverse sm:justify-between">
+					<button
+						type="submit"
+						disabled={update.isPending}
+						className={`${buttonClass} bg-primary text-primary-foreground disabled:opacity-60`}
+					>
+						Guardar tarea
+					</button>
+					<button
+						type="button"
+						className={`${buttonClass} text-destructive`}
+						onClick={() => setConfirmingDelete(true)}
+					>
+						Borrar
+					</button>
+				</div>
+			</form>
+			<RemindersSection task={task} />
+		</>
 	);
 }
 

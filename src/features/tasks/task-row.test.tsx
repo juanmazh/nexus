@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskRow } from "./task-row";
 import { makeTask } from "./test-helpers";
 
@@ -59,5 +59,48 @@ describe("TaskRow", () => {
 			"true",
 		);
 		expect(screen.getByText(/Hecha el vie 9 oct/)).toBeInTheDocument();
+	});
+});
+
+describe("TaskRow and its next reminder", () => {
+	/** Wednesday 2026-10-07 at 16:00 in Madrid. */
+	const NOW = Date.UTC(2026, 9, 7, 14, 0);
+
+	beforeEach(() => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(NOW);
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it("shows only the time, on the oil fill, for a reminder of today", () => {
+		renderRow(makeTask({ title: "Llamar", next_reminder_at: Date.UTC(2026, 9, 7, 16, 0) }));
+
+		const reminder = screen.getByText("18:00");
+		expect(reminder.textContent).toBe("Aviso: 18:00");
+		expect(reminder.className).toContain("bg-accent");
+	});
+
+	it("adds the date for another day, without the fill", () => {
+		renderRow(makeTask({ title: "Llamar", next_reminder_at: Date.UTC(2026, 9, 9, 7, 0) }));
+
+		const reminder = screen.getByText("vie 9 oct 9:00");
+		expect(reminder.className).not.toContain("bg-accent");
+	});
+
+	it("shows no bell without a pending reminder, nor on a completed task", () => {
+		renderRow(makeTask({ title: "Sin aviso" }));
+		renderRow(
+			makeTask({
+				title: "Hecha",
+				status: "done",
+				completed_at: NOW,
+				next_reminder_at: Date.UTC(2026, 9, 9, 7, 0),
+			}),
+		);
+
+		expect(screen.queryByText(/Aviso:/)).toBeNull();
 	});
 });
