@@ -55,6 +55,22 @@ export function noteTitle(content: string): string {
 	return first === undefined ? "Nota sin título" : cut(first, NOTE_TITLE_MAX);
 }
 
+/**
+ * The content without the line that gives the note its title, for the
+ * formatted view: the title is already the heading of the page, and showing it
+ * twice reads like a mistake.
+ */
+export function noteBody(content: string): string {
+	const lines = content.split(/\r?\n/);
+	const titleLine = lines.findIndex((line) => plainLine(line) !== "");
+	return titleLine === -1
+		? ""
+		: lines
+				.slice(titleLine + 1)
+				.join("\n")
+				.replace(/^\s*\n/, "");
+}
+
 /** What follows the title, flattened into one line of at most 140 characters. */
 export function noteExcerpt(content: string): string {
 	return cut(meaningfulLines(content).slice(1).join(" · "), NOTE_EXCERPT_MAX);

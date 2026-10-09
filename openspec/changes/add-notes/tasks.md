@@ -13,12 +13,12 @@
 
 ## 3. SPA
 
-- [ ] 3.1 `marked` y `dompurify`; `renderMarkdown` saneado, enlaces a otra pestaña y tablas y código con su propio scroll (D5). Tests de XSS.
-- [ ] 3.2 Lista con búsqueda (300 ms), "Fijadas", extracto y fecha; estados de carga, error, vacío y sin resultados.
-- [ ] 3.3 Ruta `/notes/:id`: ver/editar, fijar, eliminar con confirmación, nota inexistente (D4, D5).
-- [ ] 3.4 Autoguardado (D6): espera de 1 s, guardar al ver, al salir y en segundo plano, sin dos a la vez, indicador y reintento; nota vacía eliminada al salir.
-- [ ] 3.5 Barra de captura: en la lista de Notas crea una nota y abre su detalle en edición; oculta en el detalle (D4, D7).
-- [ ] 3.6 Tests de componentes de todo lo anterior.
+- [x] 3.1 `marked` y `dompurify`; `renderMarkdown` saneado, enlaces a otra pestaña y tablas y código con su propio scroll (D5). Tests de XSS.
+- [x] 3.2 Lista con búsqueda (300 ms), "Fijadas", extracto y fecha; estados de carga, error, vacío y sin resultados.
+- [x] 3.3 Ruta `/notes/:id`: ver/editar, fijar, eliminar con confirmación, nota inexistente (D4, D5).
+- [x] 3.4 Autoguardado (D6): espera de 1 s, guardar al ver, al salir y en segundo plano, sin dos a la vez, indicador y reintento; nota vacía eliminada al salir.
+- [x] 3.5 Barra de captura: en la lista de Notas crea una nota y abre su detalle en edición; oculta en el detalle (D4, D7).
+- [x] 3.6 Tests de componentes de todo lo anterior.
 
 ## 4. End-to-end y cierre
 

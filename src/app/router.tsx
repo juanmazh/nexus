@@ -22,6 +22,10 @@ const TasksPage = lazy(() =>
 const NotesPage = lazy(() =>
 	import("@/features/notes/notes-page").then((module) => ({ default: module.NotesPage })),
 );
+// Its own file: the Markdown renderer only loads when a note is opened.
+const NotePage = lazy(() =>
+	import("@/features/notes/note-page").then((module) => ({ default: module.NotePage })),
+);
 const MorePage = lazy(() =>
 	import("@/features/more/more-page").then((module) => ({ default: module.MorePage })),
 );
@@ -38,6 +42,7 @@ export const router = createBrowserRouter([
 					{ path: "/", element: <TodayPage /> },
 					{ path: "/tasks", element: <TasksPage /> },
 					{ path: "/notes", element: <NotesPage /> },
+					{ path: "/notes/:id", element: <NotePage /> },
 					{ path: "/more", element: <MorePage /> },
 					{ path: "*", element: <NotFoundView /> },
 				],

@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { ToastHost } from "@/components/toast-host";
+import type { NotePageState } from "@/features/notes/note-page";
+import { useCreateNote } from "@/features/notes/use-notes";
 import { TaskDetailProvider, useTaskDetail } from "@/features/tasks/task-detail-context";
 import { useCreateTask } from "@/features/tasks/use-tasks";
 import { useIsDesktop } from "@/lib/use-media-query";
@@ -49,10 +51,25 @@ function Shell() {
 	// optimistic one has a provisional id and could not take reminders. A
 	// rejection propagates, so the bar gets its text back and nothing opens
 	// (open-detail-on-capture design.md D2).
-	const capture = async (title: string) => {
+	const captureTask = async (title: string) => {
 		const saved = await createTask.mutateAsync({ title });
 		openTask({ ...saved, next_reminder_at: null });
 	};
+
+	// In the list of notes the bar writes notes, and opens the new one in the
+	// editor; in a note it is not shown, the editor needs the height
+	// (add-notes design.md D4, D7).
+	const navigate = useNavigate();
+	const createNote = useCreateNote();
+	const inNotesList = pathname === "/notes";
+	const inNote = pathname.startsWith("/notes/");
+	const captureNote = async (text: string) => {
+		const note = await createNote.mutateAsync(text);
+		const state: NotePageState = { edit: true };
+		navigate(`/notes/${note.id}`, { state });
+	};
+	const capture = inNotesList ? captureNote : captureTask;
+	const placeholder = inNotesList ? "Añade una nota…" : "Añade una tarea…";
 
 	// A new section starts at its own beginning, never halfway down.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `pathname` is the trigger, not something the body reads
@@ -65,18 +82,14 @@ function Shell() {
 			{isDesktop ? <Sidebar /> : null}
 
 			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
-				{isDesktop ? (
+				{isDesktop && !inNote ? (
 					<header
 						data-slot="app-header"
 						className="shrink-0 border-b border-border bg-background pt-[env(safe-area-inset-top)]"
 					>
 						{/* Aligned with the content column, not stretched across the whole window. */}
 						<div className="mx-auto w-full max-w-2xl">
-							<CaptureBar
-								placeholder="Añade una tarea…"
-								className="border-t-0"
-								onSubmit={capture}
-							/>
+							<CaptureBar placeholder={placeholder} className="border-t-0" onSubmit={capture} />
 						</div>
 					</header>
 				) : null}
@@ -92,7 +105,7 @@ function Shell() {
 					</div>
 				</main>
 
-				{isDesktop ? null : <CaptureBar placeholder="Añade una tarea…" onSubmit={capture} />}
+				{isDesktop || inNote ? null : <CaptureBar placeholder={placeholder} onSubmit={capture} />}
 
 				{isDesktop ? null : <TabBar />}
 			</div>

@@ -5,6 +5,7 @@ import {
 	listNotesQuerySchema,
 	NOTE_CONTENT_MAX,
 	normalizeForSearch,
+	noteBody,
 	noteExcerpt,
 	noteSearchText,
 	noteTitle,
@@ -31,6 +32,16 @@ describe("noteTitle", () => {
 
 		expect(title).toHaveLength(120);
 		expect(title.endsWith("…")).toBe(true);
+	});
+});
+
+describe("noteBody", () => {
+	it("is the content after the title line, keeping its Markdown", () => {
+		expect(noteBody("\n# Compra\n\n- pan\n- **leche**")).toBe("- pan\n- **leche**");
+	});
+
+	it("is empty for a note with only a title", () => {
+		expect(noteBody("Solo el título")).toBe("");
 	});
 });
 
