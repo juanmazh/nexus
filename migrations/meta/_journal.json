@@ -22,6 +22,13 @@
       "when": 1791492881301,
       "tag": "0002_romantic_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791549693703,
+      "tag": "0003_omniscient_spirit",
+      "breakpoints": true
     }
   ]
 }

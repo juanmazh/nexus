@@ -2,14 +2,14 @@
 
 ## 1. Modelo y reglas compartidas
 
-- [ ] 1.1 Tabla `notes` (`design.md D1`); `pnpm db:generate` (solo `CREATE TABLE` e índice) y `db:migrate:local`.
-- [ ] 1.2 `shared/notes.ts`: `noteTitle`, `noteExcerpt`, `normalizeForSearch`, `escapeLike` y los esquemas de crear, editar, listar e id. Tests, incluidos los marcadores de Markdown, las tildes y `%`/`_`.
+- [x] 1.1 Tabla `notes` (`design.md D1`); `pnpm db:generate` (solo `CREATE TABLE` e índice) y `db:migrate:local`.
+- [x] 1.2 `shared/notes.ts`: `noteTitle`, `noteExcerpt`, `normalizeForSearch`, `escapeLike` y los esquemas de crear, editar, listar e id. Tests, incluidos los marcadores de Markdown, las tildes y `%`/`_`.
 
 ## 2. Worker
 
-- [ ] 2.1 `services/notes.ts`: listar con búsqueda (D2), crear, leer, editar (recalcula título y `search_text`; fijar no toca `updated_at`) y eliminar.
-- [ ] 2.2 `routes/notes.ts` montado en `app.ts`, con `405` y la forma de error del proyecto (D3).
-- [ ] 2.3 Tests de servicio y de rutas: orden, búsqueda sin tildes y con `%`, `400`, `404`, fijar sin cambiar la fecha.
+- [x] 2.1 `services/notes.ts`: listar con búsqueda (D2), crear, leer, editar (recalcula título y `search_text`; fijar no toca `updated_at`) y eliminar.
+- [x] 2.2 `routes/notes.ts` montado en `app.ts`, con `405` y la forma de error del proyecto (D3).
+- [x] 2.3 Tests de servicio y de rutas: orden, búsqueda sin tildes y con `%`, `400`, `404`, fijar sin cambiar la fecha.
 
 ## 3. SPA
 

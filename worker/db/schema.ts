@@ -93,3 +93,28 @@ export const settings = sqliteTable("settings", {
 	quiet_end: text("quiet_end"),
 	updated_at: integer("updated_at", { mode: "number" }).notNull(),
 });
+
+/**
+ * Notes in Markdown (add-notes design.md D1). `title` and `search_text` are
+ * derived from `content` by the Worker on every write and never accepted from
+ * the API: the list is painted from `title` and searched through `search_text`
+ * without reading every note in full.
+ */
+export const notes = sqliteTable(
+	"notes",
+	{
+		id: text("id").primaryKey(),
+		title: text("title").notNull(),
+		content: text("content").notNull(),
+		// Title and content in lower case and without diacritics, so "cancion"
+		// finds "Canción" with a plain LIKE (design.md D2).
+		search_text: text("search_text").notNull(),
+		pinned: integer("pinned", { mode: "boolean" }).notNull().default(false),
+		created_at: integer("created_at", { mode: "number" }).notNull(),
+		updated_at: integer("updated_at", { mode: "number" }).notNull(),
+	},
+	(table) => [
+		// The list: pinned first, then the most recently changed.
+		index("notes_pinned_updated_at_idx").on(table.pinned, table.updated_at),
+	],
+);
