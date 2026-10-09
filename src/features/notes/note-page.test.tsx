@@ -56,6 +56,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	cleanup();
+	localStorage.clear();
 	vi.useRealTimers();
 	for (const fn of Object.values(api)) {
 		fn.mockReset();
@@ -87,10 +88,10 @@ describe("NotePage", () => {
 		await act(() => vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS));
 
 		expect(api.patch).toHaveBeenCalledTimes(1);
-		expect(api.patch).toHaveBeenCalledWith({
-			param: { id: ID },
-			json: { content: `${note().content}\n- huevos` },
-		});
+		expect(api.patch).toHaveBeenCalledWith(
+			{ param: { id: ID }, json: { content: `${note().content}\n- huevos` } },
+			undefined,
+		);
 		expect(await screen.findByText("Guardado")).toBeInTheDocument();
 	});
 
@@ -137,7 +138,10 @@ describe("NotePage", () => {
 
 		await u.click(await screen.findByRole("button", { name: "Fijar" }));
 
-		expect(api.patch).toHaveBeenCalledWith({ param: { id: ID }, json: { pinned: true } });
+		expect(api.patch).toHaveBeenCalledWith(
+			{ param: { id: ID }, json: { pinned: true } },
+			undefined,
+		);
 		expect(await screen.findByRole("button", { name: "Fijada" })).toHaveAttribute(
 			"aria-pressed",
 			"true",
@@ -183,10 +187,69 @@ describe("NotePage", () => {
 		await u.click(screen.getByRole("link", { name: /Notas/ }));
 
 		expect(await screen.findByText("Lista de notas")).toBeInTheDocument();
-		expect(api.patch).toHaveBeenCalledWith({
-			param: { id: ID },
-			json: { content: `${note().content}?` },
-		});
+		// Leaving the page may be the last thing it does: `keepalive` lets it finish.
+		expect(api.patch).toHaveBeenCalledWith(
+			{ param: { id: ID }, json: { content: `${note().content}?` } },
+			{ init: { keepalive: true } },
+		);
+	});
+
+	it("keeps what failed to save after leaving, and saves it when the note reopens", async () => {
+		const u = user();
+		api.patch.mockResolvedValueOnce(failJson("sin conexión", 503));
+		renderNote({ edit: true });
+		await u.type(await screen.findByRole("textbox"), " offline");
+		await u.click(screen.getByRole("link", { name: /Notas/ }));
+
+		expect(await screen.findByText("No se ha podido guardar la nota")).toBeInTheDocument();
+		cleanup();
+
+		renderNote({ edit: true });
+
+		expect(await screen.findByRole("textbox")).toHaveValue(`${note().content} offline`);
+		expect(await screen.findByText("Guardado")).toBeInTheDocument();
+		expect(api.patch).toHaveBeenLastCalledWith(
+			{ param: { id: ID }, json: { content: `${note().content} offline` } },
+			undefined,
+		);
+		expect(localStorage.length).toBe(0);
+	});
+
+	it("keeps saving after a delete that failed", async () => {
+		const u = user();
+		api.remove.mockResolvedValue(failJson("caída"));
+		renderNote({ edit: true });
+
+		await u.type(await screen.findByRole("textbox"), "!");
+		await u.click(screen.getByRole("button", { name: "Eliminar" }));
+		await u.click(screen.getByRole("button", { name: "Eliminar nota" }));
+
+		expect(await screen.findByText("No se ha podido eliminar la nota")).toBeInTheDocument();
+		expect(await screen.findByText("Guardado")).toBeInTheDocument();
+		expect(api.patch).toHaveBeenCalledWith(
+			{ param: { id: ID }, json: { content: `${note().content}!` } },
+			undefined,
+		);
+	});
+
+	it("keeps the editor open when a refetch in the background fails", async () => {
+		const u = user();
+		const { queryClient, wrapper: Wrapper } = withQueryClient();
+		render(
+			<Wrapper>
+				<MemoryRouter initialEntries={[{ pathname: `/notes/${ID}`, state: { edit: true } }]}>
+					<Routes>
+						<Route path="/notes/:id" element={<NotePage />} />
+					</Routes>
+				</MemoryRouter>
+			</Wrapper>,
+		);
+		await u.type(await screen.findByRole("textbox"), " y más");
+
+		api.read.mockResolvedValue(failJson("caída"));
+		await act(() => queryClient.refetchQueries());
+
+		expect(screen.getByRole("textbox")).toHaveValue(`${note().content} y más`);
 	});
 
 	it("says the note does not exist for a 404", async () => {

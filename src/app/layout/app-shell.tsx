@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
-import { ToastHost } from "@/components/toast-host";
+import { Outlet, useLocation, useMatch, useNavigate } from "react-router";
+import { ToastHost, toast } from "@/components/toast-host";
 import type { NotePageState } from "@/features/notes/note-page";
 import { useCreateNote } from "@/features/notes/use-notes";
 import { TaskDetailProvider, useTaskDetail } from "@/features/tasks/task-detail-context";
@@ -61,12 +61,24 @@ function Shell() {
 	// (add-notes design.md D4, D7).
 	const navigate = useNavigate();
 	const createNote = useCreateNote();
-	const inNotesList = pathname === "/notes";
-	const inNote = pathname.startsWith("/notes/");
+	// The router's own matching: it ignores case and a trailing slash, as it
+	// does to pick the page.
+	const inNotesList = useMatch("/notes") !== null;
+	const inNote = useMatch("/notes/:id") !== null;
+	// Where the person is when the API answers, not when they sent it.
+	const pathnameRef = useRef(pathname);
+	pathnameRef.current = pathname;
 	const captureNote = async (text: string) => {
+		const from = pathnameRef.current;
 		const note = await createNote.mutateAsync(text);
-		const state: NotePageState = { edit: true };
-		navigate(`/notes/${note.id}`, { state });
+		// Only open it if they are still where they captured it; otherwise the
+		// note is in the list and a toast says so.
+		if (pathnameRef.current === from) {
+			const state: NotePageState = { edit: true };
+			navigate(`/notes/${note.id}`, { state });
+		} else {
+			toast.add({ title: "Nota creada" });
+		}
 	};
 	const capture = inNotesList ? captureNote : captureTask;
 	const placeholder = inNotesList ? "Añade una nota…" : "Añade una tarea…";

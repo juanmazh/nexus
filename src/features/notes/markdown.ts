@@ -41,9 +41,11 @@ export function renderMarkdown(source: string): string {
 	const html = parser.parse(source) as string;
 	return DOMPurify.sanitize(html, {
 		USE_PROFILES: { html: true },
-		// Styles and forms have no business in a note, and `style` could make
-		// something look like part of the app.
-		FORBID_TAGS: ["style", "form"],
-		FORBID_ATTR: ["style"],
+		// Styles and controls have no business in a note: `style` could make
+		// something look like part of the app, and an `id` or `name` could clash
+		// with the app's own (`#root`). The task boxes of GFM are the only
+		// `input`, and marked writes them disabled.
+		FORBID_TAGS: ["style", "form", "button", "select", "textarea"],
+		FORBID_ATTR: ["style", "id", "name"],
 	});
 }

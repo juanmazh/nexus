@@ -27,6 +27,13 @@ export function NotePage() {
 	const note = useNote(id);
 	const startEditing = (location.state as NotePageState | null)?.edit === true;
 
+	// With data, the editor stays even if a refetch in the background fails:
+	// closing it while the person types would be the bug (design.md D6).
+	if (note.data) {
+		// `key`: another note is another editor, with its own draft and timers.
+		return <NoteEditor key={note.data.id} note={note.data} startEditing={startEditing} />;
+	}
+
 	if (note.isPending) {
 		return (
 			<div role="status" aria-live="polite" className="flex flex-col gap-3 px-4 pt-4">
@@ -37,44 +44,39 @@ export function NotePage() {
 		);
 	}
 
-	if (note.isError) {
-		const missing =
-			note.error instanceof ApiError && (note.error.status === 404 || note.error.status === 400);
-		return missing ? (
-			<>
-				<BackToNotes />
-				<ViewHeader title="Nota no encontrada" className="pt-0" />
-				<EmptyState
-					title="Esta nota no existe"
-					description="Puede que se haya eliminado o que el enlace esté mal."
-					action={
-						<Link to="/notes" className={`${buttonClass} bg-primary text-primary-foreground`}>
-							Volver a Notas
-						</Link>
-					}
-				/>
-			</>
-		) : (
-			<>
-				<BackToNotes />
-				<div role="alert" className="flex flex-col items-start gap-2 px-4 pt-4">
-					<p className="font-medium text-destructive">No se ha podido cargar la nota.</p>
-					<button
-						type="button"
-						className={`${buttonClass} border border-border text-foreground`}
-						onClick={() => {
-							void note.refetch();
-						}}
-					>
-						Reintentar
-					</button>
-				</div>
-			</>
-		);
-	}
-
-	// `key`: another note is another editor, with its own draft and timers.
-	return <NoteEditor key={note.data.id} note={note.data} startEditing={startEditing} />;
+	const missing =
+		note.error instanceof ApiError && (note.error.status === 404 || note.error.status === 400);
+	return missing ? (
+		<>
+			<BackToNotes />
+			<ViewHeader title="Nota no encontrada" className="pt-0" />
+			<EmptyState
+				title="Esta nota no existe"
+				description="Puede que se haya eliminado o que el enlace esté mal."
+				action={
+					<Link to="/notes" className={`${buttonClass} bg-primary text-primary-foreground`}>
+						Volver a Notas
+					</Link>
+				}
+			/>
+		</>
+	) : (
+		<>
+			<BackToNotes />
+			<div role="alert" className="flex flex-col items-start gap-2 px-4 pt-4">
+				<p className="font-medium text-destructive">No se ha podido cargar la nota.</p>
+				<button
+					type="button"
+					className={`${buttonClass} border border-border text-foreground`}
+					onClick={() => {
+						void note.refetch();
+					}}
+				>
+					Reintentar
+				</button>
+			</div>
+		</>
+	);
 }
 
 function BackToNotes() {
@@ -195,13 +197,15 @@ function NoteEditor({ note, startEditing }: { note: Note; startEditing: boolean 
 							disabled={remove.isPending}
 							className={`${buttonClass} border-2 border-destructive text-destructive`}
 							onClick={() => {
-								autosave.discard();
+								autosave.pause();
 								remove.mutate(note.id, {
 									onSuccess() {
+										autosave.forget();
 										toast.add({ title: "Nota eliminada" });
 										navigate("/notes");
 									},
 									onError(error) {
+										autosave.resume();
 										toast.add({
 											title: "No se ha podido eliminar la nota",
 											description: error.message,

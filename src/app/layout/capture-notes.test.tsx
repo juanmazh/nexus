@@ -81,6 +81,15 @@ describe("the capture bar in Notas", () => {
 		expect(screen.getByText("Lista de notas")).toBeInTheDocument();
 	});
 
+	it("matches the list like the router does, with a trailing slash", () => {
+		renderShell("/notes/");
+
+		expect(screen.getByRole("textbox", { name: "Añadir algo" })).toHaveAttribute(
+			"placeholder",
+			"Añade una nota…",
+		);
+	});
+
 	it("is not shown inside a note, and keeps creating tasks elsewhere", () => {
 		renderShell("/notes/nota-1");
 		expect(screen.queryByRole("textbox", { name: "Añadir algo" })).toBeNull();

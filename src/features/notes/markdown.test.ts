@@ -32,6 +32,8 @@ describe("renderMarkdown", () => {
 		['<a href="#" style="position:fixed">x</a>', "style="],
 		['<iframe src="https://example.test"></iframe>', "<iframe"],
 		["<form><input name=x></form>", "<form"],
+		['<a id="root" href="#x">x</a>', 'id="root"'],
+		["<button>Pulsa</button>", "<button"],
 	])("removes %j", (source, forbidden) => {
 		expect(renderMarkdown(source)).not.toContain(forbidden);
 	});

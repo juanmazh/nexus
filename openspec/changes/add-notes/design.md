@@ -81,7 +81,15 @@ tiene sentido. Las pestañas siguen.
   cambiar de app en el móvil.
 - Nunca dos `PATCH` a la vez: si hay uno en vuelo, el siguiente espera y manda solo el último texto.
 - Un indicador con `role="status"`: "Guardando…", "Guardado" o "No se ha podido guardar" con
-  **Reintentar**. Mientras haya cambios sin guardar, el texto sigue en pantalla: nunca se pierde.
+  **Reintentar**. Mientras haya cambios sin guardar, el texto sigue en pantalla.
+- **El texto sin guardar también se guarda en el navegador** (`localStorage`, por nota) hasta que la
+  API lo tiene. Si el guardado falla después de salir de la nota, o el móvil cierra la app sin
+  conexión, la nota se reabre con ese texto y lo guarda; un aviso lo dice en el momento.
+- Los guardados al salir y al pasar a segundo plano van con `keepalive`, para que terminen aunque la
+  página se vaya, salvo que el cuerpo pase de 60 KB (el límite del navegador es 64 KiB).
+- Si una recarga en segundo plano de la nota falla, el editor sigue abierto: solo se muestra el error
+  cuando no hay nota que enseñar.
+- "Eliminar" pausa el autoguardado y, si la API falla, lo reanuda con lo escrito.
 - **Una nota que se queda vacía no se guarda**: al salir de ella se elimina, con el aviso "Nota vacía
   eliminada", que es lo que hacen Keep y Notas.
 

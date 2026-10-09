@@ -34,11 +34,24 @@ export async function createNote(content: string): Promise<Note> {
 	return response.json();
 }
 
+/** Browsers cap the bodies of `keepalive` requests at 64 KiB, all of them together. */
+const KEEPALIVE_LIMIT = 60_000;
+
+/**
+ * `keepalive` lets a save started while the page is going away (app switched,
+ * tab closed) finish anyway. Only for bodies that fit the browser's limit: a
+ * long note goes as a normal request.
+ */
 export async function updateNote(
 	id: string,
 	patch: { content?: string; pinned?: boolean },
+	{ keepalive = false }: { keepalive?: boolean } = {},
 ): Promise<Note> {
-	const response = await client.api.notes[":id"].$patch({ param: { id }, json: patch });
+	const fits = new TextEncoder().encode(JSON.stringify(patch)).length < KEEPALIVE_LIMIT;
+	const response = await client.api.notes[":id"].$patch(
+		{ param: { id }, json: patch },
+		keepalive && fits ? { init: { keepalive: true } } : undefined,
+	);
 	if (!response.ok) {
 		throw await failure(response);
 	}
