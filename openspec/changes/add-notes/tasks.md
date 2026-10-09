@@ -22,5 +22,5 @@
 
 ## 4. End-to-end y cierre
 
-- [ ] 4.1 Stub de `/api/notes` y e2e: capturar una nota, escribir y ver que se guarda, verla con formato, buscar sin tilde, fijar y eliminar; una tabla ancha sin scroll horizontal de página; 44 px; en los dos viewports.
-- [ ] 4.2 `docs/ARCHITECTURE.md` (§2, §4 y ADR de la búsqueda), `docs/ROADMAP.md`, `docs/PROGRESS.md`. Comprobar que la carga inicial sigue por debajo de 200 KB. Definición de hecho de `AGENTS.md §9`.
+- [x] 4.1 Stub de `/api/notes` y e2e: capturar una nota, escribir y ver que se guarda, verla con formato, buscar sin tilde, fijar y eliminar; una tabla ancha sin scroll horizontal de página; 44 px; en los dos viewports.
+- [x] 4.2 `docs/ARCHITECTURE.md` (§2 y §4, con el porqué de la búsqueda), `docs/PROGRESS.md`. Comprobar que la carga inicial sigue por debajo de 200 KB. Definición de hecho de `AGENTS.md §9`.

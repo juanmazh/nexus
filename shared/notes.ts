@@ -23,15 +23,26 @@ const UNDERSCORE_EMPHASIS = /(^|[\s(])_+|_+(?=[\s).,;:!?]|$)/g;
 /** `[text](url)` → `text`, for the preview. */
 const LINK = /!?\[([^\]]*)\]\([^)]*\)/g;
 
+/** Lines that are only structure: a table separator, a rule, a code fence. */
+const STRUCTURE_ONLY = /^(?:\|?[\s:|-]*-[\s:|-]*|[-*_]{3,}|`{3,}.*|~{3,}.*)$/;
+
 function plainLine(line: string): string {
-	return line
-		.trim()
-		.replace(LINE_MARKERS, "")
-		.replace(LINK, "$1")
-		.replace(INLINE_MARKERS, "")
-		.replace(UNDERSCORE_EMPHASIS, "$1")
-		.replace(/\s+/g, " ")
-		.trim();
+	const trimmed = line.trim();
+	if (STRUCTURE_ONLY.test(trimmed)) {
+		return "";
+	}
+	return (
+		trimmed
+			// Table cells read as words separated by spaces.
+			.replace(/\s*\|\s*/g, " ")
+			.trim()
+			.replace(LINE_MARKERS, "")
+			.replace(LINK, "$1")
+			.replace(INLINE_MARKERS, "")
+			.replace(UNDERSCORE_EMPHASIS, "$1")
+			.replace(/\s+/g, " ")
+			.trim()
+	);
 }
 
 function cut(text: string, max: number): string {

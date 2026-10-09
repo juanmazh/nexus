@@ -54,6 +54,14 @@ describe("noteExcerpt", () => {
 		expect(noteExcerpt("Solo el título")).toBe("");
 	});
 
+	it("skips table separators, rules and code fences, and drops the pipes", () => {
+		expect(
+			noteExcerpt(
+				"T\n| producto | precio |\n|---|:---:|\n| aceite | 8 € |\n---\n```js\nx = 1\n```",
+			),
+		).toBe("producto precio · aceite 8 € · x = 1");
+	});
+
 	it("is at most 140 characters", () => {
 		expect(noteExcerpt(`T\n${"palabra ".repeat(60)}`).length).toBeLessThanOrEqual(140);
 	});
