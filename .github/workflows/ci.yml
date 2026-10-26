@@ -8,10 +8,17 @@ on:
 
 # No deployment step and no secrets: the first deploy is manual
 # (add-home-dashboard, roadmap 2.3).
+#
+# A pinned runner image, not `ubuntu-latest`: the latest label moves to a new
+# Ubuntu on GitHub's schedule, and that move should be a reviewed change here,
+# not a surprise in the middle of a PR. Every job has a time limit: a hung step
+# (a stuck `apt` while installing Chromium kept PR #17 running for 34 minutes)
+# must fail in minutes instead of burning the free Actions minutes for hours.
 jobs:
   verify:
     name: Lint, typecheck, test and build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
 
@@ -45,7 +52,10 @@ jobs:
   # so it needs neither ACCESS_AUD nor the local bypass (design.md D8).
   e2e:
     name: Responsive (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    # Above the two step limits below, so the report is still uploaded when one
+    # of them is the one that hangs.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
 
@@ -62,14 +72,28 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # Only Chromium: on ubuntu-latest some of its system libraries are missing,
+      # Only Chromium: on the Ubuntu runner some of its system libraries are missing,
       # and Firefox or WebKit would multiply the time without finding a bug that
       # the mobile-first rules describe today.
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
+        timeout-minutes: 5
 
       - name: Responsive tests
         run: pnpm test:e2e
+        timeout-minutes: 10
+
+      # A flaky test passes on a retry and leaves a trace of the attempt that
+      # failed (`trace: "on-first-retry"`); without it the only evidence is one
+      # line of the log. Nothing is uploaded when every test passed first time.
+      - name: Upload Playwright traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
   # The step that kept being forgotten (PRs #9 and #11 were merged with the
   # change still unarchived): a PR from `change/<id>` cannot go green while
@@ -79,7 +103,8 @@ jobs:
   openspec:
     name: OpenSpec (validated and archived)
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
 
