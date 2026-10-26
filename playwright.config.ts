@@ -20,6 +20,10 @@ export default defineConfig({
 	use: {
 		baseURL: `http://localhost:${PREVIEW_PORT}`,
 		locale: "es-ES",
+		// Only when a test is retried, which only happens in CI: a flaky test then
+		// leaves a trace (DOM, network, console) of the attempt that failed, and
+		// the workflow uploads it.
+		trace: "on-first-retry",
 		timezoneId: "Europe/Madrid",
 	},
 	projects: [
