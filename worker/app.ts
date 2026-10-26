@@ -6,6 +6,7 @@ import { notFound, onError } from "./middleware/errors";
 import { securityHeaders } from "./middleware/security-headers";
 import { HEALTH_PATH, health } from "./routes/health";
 import { me } from "./routes/me";
+import { notes } from "./routes/notes";
 import { reminders } from "./routes/reminders";
 import { settingsRoutes } from "./routes/settings";
 import { tasks } from "./routes/tasks";
@@ -45,6 +46,7 @@ export function createApp(deps: AppDeps = {}) {
 		.route("/health", health)
 		.route("/me", me)
 		.route("/tasks", tasks)
+		.route("/notes", notes)
 		.route("/telegram", telegram)
 		.route("/settings", settingsRoutes)
 		.route("/", reminders);

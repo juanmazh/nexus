@@ -228,3 +228,115 @@
 		scroll-behavior: auto !important;
 	}
 }
+
+/*
+ * The rendered Markdown of a note (add-notes design.md D5). Written here rather
+ * than with a typography plugin: a dozen rules on the existing tokens weigh
+ * less than a whole prose system. Tables and code blocks scroll on their own,
+ * so a wide one never gives the page a horizontal scroll.
+ */
+.markdown {
+	overflow-wrap: anywhere;
+	line-height: 1.6;
+}
+
+.markdown > * + * {
+	margin-top: 0.75rem;
+}
+
+.markdown :is(h1, h2, h3, h4, h5, h6) {
+	font-family: var(--font-heading);
+	font-weight: 600;
+	line-height: 1.25;
+	margin-top: 1.25rem;
+}
+
+/* One level down from what the text says (`#` is an h2): see markdown.ts. */
+.markdown h2 {
+	font-size: 1.375rem;
+}
+
+.markdown h3 {
+	font-size: 1.1875rem;
+}
+
+.markdown :is(h4, h5, h6) {
+	font-size: 1.0625rem;
+}
+
+.markdown :is(ul, ol) {
+	padding-left: 1.5rem;
+}
+
+.markdown ul {
+	list-style: disc;
+}
+
+.markdown ol {
+	list-style: decimal;
+}
+
+.markdown li + li {
+	margin-top: 0.25rem;
+}
+
+.markdown li:has(> input[type="checkbox"]) {
+	list-style: none;
+	margin-left: -1.5rem;
+}
+
+.markdown input[type="checkbox"] {
+	margin-right: 0.5rem;
+	accent-color: var(--primary);
+}
+
+.markdown a {
+	color: var(--primary);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.markdown blockquote {
+	border-left: 3px solid var(--border);
+	padding-left: 0.75rem;
+	color: var(--muted-foreground);
+}
+
+.markdown :is(code, pre) {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.875em;
+}
+
+.markdown :not(pre) > code {
+	background: var(--muted);
+	border-radius: 0.25rem;
+	padding: 0.1rem 0.3rem;
+}
+
+.markdown pre {
+	background: var(--muted);
+	border-radius: 0.5rem;
+	padding: 0.75rem;
+	overflow-x: auto;
+}
+
+.markdown table {
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
+	border-collapse: collapse;
+}
+
+.markdown :is(th, td) {
+	border: 1px solid var(--border);
+	padding: 0.375rem 0.625rem;
+	text-align: left;
+}
+
+.markdown hr {
+	border-color: var(--border);
+}
+
+.markdown img {
+	max-width: 100%;
+}

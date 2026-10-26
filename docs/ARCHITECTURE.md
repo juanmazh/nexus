@@ -59,16 +59,19 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
 | `middleware/validation.ts` | `validated` (el `400` con la forma del proyecto), `onlyMethods` (el `405` con `Allow`) y el tipo `DataEnv` de las rutas de datos |
 | `routes/tasks.ts` | `GET`/`POST /api/tasks` y `PATCH`/`DELETE /api/tasks/:id`. Valida json, query y param con los esquemas de `shared/tasks.ts` y responde `400`/`404`/`405` con la forma `{ error: { code, message } }`. Un `PATCH` con `status` pasa por `updateTaskStatus` |
 | `routes/reminders.ts` | `GET`/`POST /api/tasks/:id/reminders` y `DELETE /api/reminders/:id` (cancela, no borra). Cada resultado del servicio se traduce a `400`/`404`/`409` |
+| `routes/notes.ts` | `GET`/`POST /api/notes` (`?q=` busca) y `GET`/`PATCH`/`DELETE /api/notes/:id` |
 | `routes/settings.ts` | `GET`/`PUT /api/settings/quiet-hours`: la franja de silencio de los avisos periódicos (`null` la desactiva) |
 | `routes/telegram.ts` | `POST /api/telegram/test`: aviso de prueba al momento; `204`, `503` sin secretos o `502` con el error saneado |
 | `services/*` | Lógica de negocio. Recibe `db` y datos ya validados. Testeable sin HTTP |
 | `services/tasks.ts` | `listTasks`, `createTask`, `updateTask`, `updateTaskStatus` y `deleteTask`: una consulta por lectura y una escritura por mutación. `updateTaskStatus` es el **único** que escribe `completed_at`. Completar cancela los avisos pendientes y borrar borra los avisos, cada uno en un `db.batch()`. La lista lleva `next_reminder_at` en la misma consulta |
 | `services/reminders.ts` | `listPendingReminders`, `createReminder` (hora local → UTC, futura, tarea pendiente, máximo 10 pendientes, con `repeat` opcional) y `cancelReminder`, con resultados como valores en vez de excepciones |
+| `services/notes.ts` | `listNotes` (fijadas primero, extracto calculado aquí para no mandar el contenido), `createNote`, `getNote`, `updateNote` (fijar no toca `updated_at`) y `deleteNote` |
 | `services/settings.ts` | La franja de silencio en la fila única de `settings`: sin fila, 23:00–08:00; con las dos columnas a `NULL`, desactivada |
 | `db/schema.ts` | Esquema Drizzle: fuente única del modelo de datos |
 | `db/client.ts` | `createDb(env)`: la instancia de Drizzle sobre el binding `DB` |
 | `shared/tasks.ts` | Esquemas Zod de la tarea, compartidos por el Worker (validación) y la SPA (formulario de detalle) |
 | `shared/dates.ts` | `dueDateToEpochMs`, `zonedDayStart`, `zonedDayNumber` y `localDateTimeToEpochMs`: la única regla de "qué día y qué hora es" en `Europe/Madrid`. La hora que no existe en marzo se rechaza; la que se repite en octubre se toma la primera vez |
+| `shared/notes.ts` | `noteTitle`, `noteBody`, `noteExcerpt`, `normalizeForSearch` y `likePattern`, y los esquemas de la API de notas |
 | `shared/recurrence.ts` | `nextOccurrence`, `isQuiet` y `describeInterval`: cuándo toca la siguiente repetición (horas reales, días a la misma hora de reloj), sin ráfagas y fuera de la franja de silencio |
 | `shared/reminders.ts`, `shared/format.ts` | Esquemas del recordatorio; formato de fecha y hora común al mensaje de Telegram y a la SPA |
 | `jobs/reminders.ts` | `runReminders(env, now)`: una lectura (como mucho 20 vencidos con su tarea), envíos en paralelo y un `db.batch()` con los resultados. Sin secretos no toca nada |
@@ -78,9 +81,9 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
 
 | Pieza | Responsabilidad |
 |---|---|
-| `src/app/router.tsx` | Ruta de layout con las cuatro secciones (`/`, `/tasks`, `/notes`, `/more`) y `*`, cada una con `lazy()` |
+| `src/app/router.tsx` | Ruta de layout con las cuatro secciones (`/`, `/tasks`, `/notes`, `/more`), el detalle de una nota (`/notes/:id`) y `*`, cada una con `lazy()` |
 | `src/app/navigation.ts` | `NAV_ITEMS`: la lista única que recorren la tab bar y la barra lateral |
-| `src/app/layout/` | El shell: `h-dvh`, cabecera, `<Outlet/>` con scroll interno, barra de captura y navegación. El shell monta `useCreateTask` y se lo pasa a sus dos barras de captura: capturar crea una tarea desde cualquier sección |
+| `src/app/layout/` | El shell: `h-dvh`, cabecera, `<Outlet/>` con scroll interno, barra de captura y navegación. El shell monta `useCreateTask` y `useCreateNote` y se los pasa a sus dos barras de captura: capturar crea una nota en la lista de Notas y una tarea en el resto; dentro de una nota no hay barra |
 | `src/app/providers.tsx` | `QueryClientProvider` y `ThemeProvider` |
 | `src/lib/api.ts` | Cliente `hc<AppType>('/')`: llamadas tipadas de extremo a extremo sin generar código |
 | `src/lib/theme.ts` | `resolveTheme` (puro) y `applyTheme`, llamado por `main.tsx` antes del primer pintado. También pone en `<meta name="theme-color">` el fondo del tema pintado, que es el color de la barra de estado de la app instalada |
@@ -88,6 +91,7 @@ y Access protege solo `/admin/*` y `/api/*` mediante una aplicación de Access p
 | `src/lib/use-media-query.ts` | `useSyncExternalStore` sobre `matchMedia`, para el breakpoint de 1024 px |
 | `src/features/*` | Una carpeta por feature con sus componentes, hooks de TanStack Query y tipos |
 | `src/features/tasks/` | `api.ts` (una función por endpoint, tipos derivados del cliente RPC), `use-tasks.ts` (queries y mutaciones optimistas con rollback), `group.ts` (Vencidas / Hoy / Próximas / Sin fecha, sin reordenar), `task-row.tsx`, `task-detail-sheet.tsx` y `tasks-page.tsx` |
+| `src/features/notes/` | `notes-page.tsx` (lista y búsqueda), `note-page.tsx` (ver con formato y editar), `use-autosave.ts` (autoguardado sin dos peticiones a la vez) y `markdown.ts` (`marked` + DOMPurify). El detalle es su propio fichero: el renderizador solo se descarga al abrir una nota |
 | `src/lib/datetime.ts` | `APP_TIMEZONE`: la zona con la que la SPA presenta y agrupa las fechas |
 | `src/components/ui/` | Componentes de shadcn/ui |
 | `src/components/responsive-dialog.tsx` | **El único overlay**: `Drawer` por debajo de 1024 px, `Dialog` a partir de 1024 px |
@@ -252,6 +256,25 @@ Una sola fila (`id = 1`), creada con el primer `PUT`.
 | `updated_at` | integer NOT NULL | epoch ms UTC |
 
 Sin fila, la franja es 23:00–08:00.
+
+### `notes`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | text PK | `crypto.randomUUID()` |
+| `title` | text NOT NULL | derivado: la primera línea con texto, sin marcadores de Markdown, ≤ 120 caracteres |
+| `content` | text NOT NULL | Markdown, ≤ 50 000 caracteres, nunca en blanco |
+| `search_text` | text NOT NULL | derivado: título + contenido en minúsculas y sin diacríticos |
+| `pinned` | integer NOT NULL | booleano, default 0 |
+| `created_at` / `updated_at` | integer NOT NULL | epoch ms UTC. Fijar no cambia `updated_at` |
+
+Índice: `(pinned, updated_at)`, el orden de la lista.
+
+**Búsqueda sin FTS5.** `GET /api/notes?q=` normaliza el término igual que `search_text` y filtra con
+`LIKE '%…%' ESCAPE '\'`, con `%`, `_` y `\` escapados. D1 admite FTS5, pero sus tablas virtuales no
+salen en `wrangler d1 export` (y el backup del backlog depende de eso) y Drizzle no las genera. A esta
+escala (una persona, cientos de notas) recorrer la tabla cuesta milisegundos; si algún día no basta,
+se añade FTS5 sin cambiar la API (`add-notes` design.md D2).
 
 ---
 

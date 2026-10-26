@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { test as base, expect } from "@playwright/test";
+import { normalizeForSearch, noteExcerpt, noteSearchText, noteTitle } from "../shared/notes";
 
 /**
  * Shared fixtures for the responsive suite (docs/DESIGN.md §6).
@@ -128,11 +129,37 @@ function dueDateToMs(date: string | null | undefined): number | null {
  */
 export type StubQuietHours = { start: string; end: string } | null;
 
+export type StubNote = {
+	id: string;
+	content: string;
+	pinned: boolean;
+	created_at: number;
+	updated_at: number;
+};
+
+export function stubNote(content: string, overrides: Partial<StubNote> = {}): StubNote {
+	const now = Date.now();
+	return {
+		id: crypto.randomUUID(),
+		content,
+		pinned: false,
+		created_at: now,
+		updated_at: now,
+		...overrides,
+	};
+}
+
+/** The note as the API answers it: the title is derived like the Worker does. */
+function noteResponse(note: StubNote) {
+	return { ...note, title: noteTitle(note.content) };
+}
+
 export type StubState = {
 	tasks: StubTask[];
 	reminders: StubReminder[];
 	/** Boxed so a test can read what the page saved: `api.settings.quiet`. */
 	settings: { quiet: StubQuietHours };
+	notes: StubNote[];
 };
 
 export async function stubApi(
@@ -141,6 +168,7 @@ export async function stubApi(
 		tasks: [],
 		reminders: [],
 		settings: { quiet: { start: "23:00", end: "08:00" } },
+		notes: [],
 	},
 ): Promise<StubState> {
 	const { tasks, reminders } = state;
@@ -186,6 +214,54 @@ export async function stubApi(
 
 		if (pathname.endsWith("/api/telegram/test")) {
 			return route.fulfill({ status: 204 });
+		}
+
+		if (pathname.endsWith("/api/notes")) {
+			const { notes } = state;
+			if (request.method() === "POST") {
+				const note = stubNote((request.postDataJSON() as { content: string }).content);
+				notes.push(note);
+				return json(201, noteResponse(note));
+			}
+			const query = normalizeForSearch(url.searchParams.get("q") ?? "");
+			return json(
+				200,
+				notes
+					.filter((note) => noteSearchText(note.content).includes(query))
+					.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.updated_at - a.updated_at)
+					.map((note) => ({
+						id: note.id,
+						title: noteTitle(note.content),
+						excerpt: noteExcerpt(note.content),
+						pinned: note.pinned,
+						updated_at: note.updated_at,
+					})),
+			);
+		}
+
+		const noteId = pathname.match(/\/api\/notes\/([^/]+)$/)?.[1];
+		if (noteId !== undefined) {
+			const { notes } = state;
+			const index = notes.findIndex((note) => note.id === noteId);
+			const note = notes[index];
+			if (note === undefined) {
+				return json(404, { error: { code: "not_found", message: "Esta nota ya no existe." } });
+			}
+			if (request.method() === "DELETE") {
+				notes.splice(index, 1);
+				return route.fulfill({ status: 204 });
+			}
+			if (request.method() === "PATCH") {
+				const patch = request.postDataJSON() as { content?: string; pinned?: boolean };
+				if (patch.content !== undefined) {
+					note.content = patch.content;
+					note.updated_at = Date.now();
+				}
+				if (patch.pinned !== undefined) {
+					note.pinned = patch.pinned;
+				}
+			}
+			return json(200, noteResponse(note));
 		}
 
 		if (pathname.endsWith("/api/settings/quiet-hours")) {
@@ -320,6 +396,23 @@ export async function expectNoHorizontalScroll(page: Page): Promise<void> {
 	const { scrollWidth, innerWidth, offenders } = await page.evaluate(() => {
 		const offenders: string[] = [];
 
+		/**
+		 * The tables and code blocks of a note scroll sideways on their own, on
+		 * purpose: content past the edge is reached by scrolling them, not cut
+		 * off. Only those. Any box with `overflow-y: auto` (the content column,
+		 * the scroll box of a sheet) also computes `overflow-x: auto`, so
+		 * trusting the computed style would hide a real overflow inside them.
+		 */
+		const OWN_SCROLLERS = ".markdown table, .markdown pre";
+		const inOwnScroller = (element: HTMLElement): boolean => {
+			const box = element.parentElement?.closest<HTMLElement>(OWN_SCROLLERS);
+			if (!box) {
+				return false;
+			}
+			const rect = box.getBoundingClientRect();
+			return rect.left >= -0.5 && rect.right <= window.innerWidth + 0.5;
+		};
+
 		for (const element of document.querySelectorAll<HTMLElement>("body *")) {
 			const rect = element.getBoundingClientRect();
 			if (rect.width === 0 && rect.height === 0) {
@@ -332,7 +425,7 @@ export async function expectNoHorizontalScroll(page: Page): Promise<void> {
 			if (style.clip === "rect(0px, 0px, 0px, 0px)" || style.clipPath === "inset(50%)") {
 				continue;
 			}
-			if (rect.right > window.innerWidth + 0.5 || rect.left < -0.5) {
+			if ((rect.right > window.innerWidth + 0.5 || rect.left < -0.5) && !inOwnScroller(element)) {
 				const name = `${element.tagName.toLowerCase()}${
 					element.getAttribute("data-slot") === null
 						? ""
@@ -414,7 +507,12 @@ export async function expectTactileTargets(targets: Locator): Promise<void> {
 	}
 }
 
-export const test = base.extend<{ api: StubState; tasks: StubTask[]; reminders: StubReminder[] }>({
+export const test = base.extend<{
+	api: StubState;
+	tasks: StubTask[];
+	reminders: StubReminder[];
+	notes: StubNote[];
+}>({
 	// Automatic, so every test runs against the stub whether it reads the state
 	// or not. One state per test: seed it before navigating, read it after acting.
 	api: [
@@ -428,6 +526,9 @@ export const test = base.extend<{ api: StubState; tasks: StubTask[]; reminders: 
 	},
 	reminders: async ({ api }, use) => {
 		await use(api.reminders);
+	},
+	notes: async ({ api }, use) => {
+		await use(api.notes);
 	},
 });
 
