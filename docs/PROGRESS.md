@@ -11,10 +11,10 @@
 
 | Campo | Valor |
 |---|---|
-| **Fase** | 1 — MVP cerrado (v0.1.0); ajustes surgidos al usarlo |
-| **Paso / cambio** | 1.4 y 1.5 mergeados (#14 y #15). `reload-on-stale-chunk` (1.6) **implementado, verificado y archivado** en su rama |
-| **Rama** | `change/reload-on-stale-chunk` (sin PR) |
-| **Siguiente acción exacta** | Si no está hecho: `pnpm db:migrate:remote` (0002) y `pnpm deploy` de `main` → PR de la 1.6, deploy y probarla en el móvil (app abierta, otro deploy, entrar en una sección no abierta) → merge |
+| **Fase** | 2 — Notas, enlaces y página de inicio |
+| **Paso / cambio** | `reload-on-stale-chunk` (1.6) y `add-notes` (2.1) **implementados, verificados y archivados**. La rama de notas va encima de la de la 1.6 |
+| **Rama** | `change/reload-on-stale-chunk` → `change/add-notes` (sin PR) |
+| **Siguiente acción exacta** | Push de las dos ramas → PR de la 1.6 y merge → PR de notas y merge → `pnpm install`, `pnpm db:migrate:remote` (0002 si falta y 0003) y `pnpm deploy` → probar notas en el móvil |
 | **Bloqueos** | Ninguno |
 | **Última actualización** | 2026-10-08 · casa |
 
@@ -86,7 +86,7 @@ Leyenda: ⬜ pendiente · 🟡 en curso · 👀 en revisión · ✅ hecho y desp
 | 1.5 | `add-recurring-reminders` | 👀 | PR #15 | `pnpm db:migrate:remote` (0002: tabla `settings` y dos columnas en `reminders`) **antes** del deploy → `pnpm deploy` → crear "cada 1 h" en una tarea y ver llegar dos avisos → revisar el silencio nocturno en Más |
 | 1.6 | `reload-on-stale-chunk` | 👀 | `change/reload-on-stale-chunk` (sin PR) | `pnpm deploy` → con la app abierta en el móvil, hacer otro deploy y entrar en una sección no abierta: debe recargar sola |
 | — | **Hito v0.1.0** | ✅ | tag `v0.1.0` | Tag `v0.1.0` + una semana de uso real **desde el móvil** |
-| 2.1 | `add-notes` | ⬜ | | |
+| 2.1 | `add-notes` | 👀 | `change/add-notes` (sin PR, encima de la 1.6) | `pnpm install` (marked y dompurify) → `pnpm db:migrate:remote` (0003: tabla `notes`) **antes** del deploy → `pnpm deploy` → en el móvil: capturar una nota en Notas, escribir, salir y volver; buscar sin tilde; fijar |
 | 2.2 | `add-quick-links` | ⬜ | | |
 | 2.3 | `add-home-dashboard` | ⬜ | | Configurar el deploy automático (GitHub Actions + `CLOUDFLARE_API_TOKEN`) |
 | 3.0 | — | ⬜ | | **Comprar el dominio** (Cloudflare Registrar) |
@@ -189,6 +189,8 @@ Una línea por sesión: fecha · lugar · qué se hizo · siguiente paso.
 - **2026-10-08 · casa** — `add-recurring-reminders` implementado por Claude. Un periódico es un recordatorio con `repeat_every`/`repeat_unit` que, en vez de cerrarse al enviarse, pasa a su siguiente repetición: horas reales o días a la misma hora de reloj, la primera posterior a ahora (sin ráfagas tras una parada) y fuera del silencio nocturno (23:00–08:00 por defecto, configurable o desactivable en Más; nunca mueve la primera vez). Al tercer fallo se pierde esa repetición, no la serie. La franja viaja en la misma consulta del cron (`LEFT JOIN settings`), así que el presupuesto de subpeticiones no cambia. Rama apilada sobre `open-detail-on-capture` para no pisar este fichero. → Siguiente: PR de la 1.4, rebase de esta, migración remota y deploy.
 
 - **2026-10-08 · casa** — Pregunta de la persona dueña: "¿se actualiza sola la app?". Sí al abrirla tras un `pnpm deploy`, pero había un hueco: con la app viva en segundo plano, abrir una sección no cargada pedía un fichero JS ya borrado por el deploy. `reload-on-stale-chunk` recarga una vez con `vite:preloadError` (sin bucles: 10 s y sin conexión) y, si aun así falla, muestra un error propio dentro de la shell. Los dos e2e fallan sin el arreglo. → Siguiente: PR, deploy y prueba en el móvil.
+
+- **2026-10-09 · casa** — `add-notes` (2.1) implementado por Claude, empezado antes de la semana de uso por decisión de la persona dueña. Decidido con ella: el título es la primera línea, autoguardado, la barra de captura crea notas en Notas y la nota se lee con formato. Técnico: búsqueda con una columna normalizada y `LIKE` en vez de FTS5 (que no sale en `wrangler d1 export`), cada nota en su ruta `/notes/:id` sin barra de captura, `marked` + DOMPurify solo en el fichero del detalle. Una revisión independiente encontró tres formas de perder texto en el autoguardado (un borrado fallido, un guardado fallido al salir y una recarga fallida en segundo plano); corregidas, con lo no guardado también en `localStorage` hasta que la API lo tiene. **Aviso:** la carga inicial ya estaba en ~197 KB de 200 desde `open-detail-on-capture`, que metió el panel de la tarea en la shell; las notas suman ~1,5 KB. → Siguiente: subir y desplegar; después, cargar el panel de la tarea bajo demanda.
 
 - **2026-10-08 · casa** — `add-pwa` probado en el móvil: al principio Chrome solo ofrecía un acceso directo. El navegador pide el manifest **sin cookies** y Cloudflare Access le respondía con su página de login. Se arregló con `crossorigin="use-credentials"` en el `<link>`, y un e2e que simula a Access cubre el caso. Ya se instala bien en Android. De paso, dos tests de Playwright que fallaban solo en la CI: la objeción `in-incognito` (el Chromium de la CI no la pone) y los 44 px medidos durante la animación del diálogo. Archivado en la rama (spec `installable-app`). Lección de proceso: no pulsar "Update branch" en un PR que se va a reapoyar. → Siguiente: merge, tag `v0.1.0` y una semana de uso real.
 
